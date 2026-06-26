@@ -13,9 +13,10 @@
   .sub{color:#6b6470;margin:0 0 1.4rem;font-size:.95rem;}
   .card{background:#fff;border:1px solid var(--border);border-radius:1rem;
         box-shadow:0 3px 10px rgba(16,40,34,.06);padding:1.3rem 1.4rem;margin-bottom:1.2rem;}
-  #drop{border:2px dashed #b9a9b8;border-radius:1rem;background:#fff;padding:2.2rem 1rem;text-align:center;
+  #drop{border:2px dashed #7a6e79;border-radius:1rem;background:#fff;padding:2.2rem 1rem;text-align:center;
         cursor:pointer;transition:.15s;color:#6b6470;}
-  #drop.hot{border-color:var(--green);background:#f0faf2;color:var(--forest);}
+  #drop.hot{border-color:var(--forest);background:#f0faf2;color:var(--forest);}
+  #drop:focus-visible{outline:3px solid var(--egg);outline-offset:2px;}
   #drop strong{color:var(--egg);font-size:1.05rem;}
   .opts{display:flex;flex-wrap:wrap;gap:1.2rem;align-items:center;margin-top:1rem;font-size:.92rem;}
   .opts label{display:flex;align-items:center;gap:.4rem;}
@@ -25,14 +26,17 @@
   .go:disabled{background:#c8bcc7;cursor:not-allowed;}
   .dl{display:inline-block;background:var(--forest);color:#fff;text-decoration:none;border-radius:.6rem;
       padding:.6rem 1rem;margin:.35rem .5rem .35rem 0;font-weight:700;font-size:.92rem;}
-  .dl.safe{background:var(--green);}
+  .dl.safe{background:#067a3a;}
   #log{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;background:#0f1b18;color:#cfe9da;
        border-radius:.7rem;padding:.9rem 1rem;white-space:pre-wrap;max-height:340px;overflow:auto;margin-top:1rem;display:none;}
   .pass{color:#7ee0a6;font-weight:700;} .warn{color:#ffd27d;font-weight:700;} .err{color:#ff9b9b;font-weight:700;}
   .pill{display:inline-block;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
         background:#f0e8f0;color:var(--egg);border-radius:1rem;padding:.15rem .6rem;margin-left:.5rem;}
-  .muted{color:#8a8390;font-size:.85rem;}
+  .muted{color:#6b6470;font-size:.85rem;}
   .hide{display:none;}
+  .linkbtn{background:none;border:0;padding:0;font:inherit;color:var(--forest);text-decoration:underline;
+        text-underline-offset:2px;cursor:pointer;font-weight:600;}
+  .linkbtn:hover{color:var(--egg);}
   .steps{list-style:none;counter-reset:s;padding:0;margin:.4rem 0 0;}
   .steps li{counter-increment:s;position:relative;padding:.55rem 0 .55rem 2.6rem;border-top:1px solid var(--border);}
   .steps li:first-child{border-top:0;}
@@ -50,10 +54,11 @@
   .modrow input{width:1.1rem;height:1.1rem;flex-shrink:0;}
 </style></head>
 <body><div class="wrap">
-  <h1>RDP Course Rebrand <span class="pill">runs on your computer</span></h1>
+  <h1>RDP Course Rebrand</h1>
   <p class="sub">This gives your Brightspace course the RDP look. Your wording, links, files and pictures
-     stay exactly the same — only the design changes. Your course never leaves this computer; everything
-     happens right here in your web browser.</p>
+     stay exactly the same — only the design changes. Everything happens right here in your web browser:
+     your course is never uploaded, and your real Brightspace course is never touched — this only makes a
+     new file from the copy you export. <span class="muted">Works best in an up-to-date Chrome or Edge.</span></p>
 
   <div class="card">
     <h2 style="margin:.1rem 0 .3rem;color:var(--forest);font-size:1.1rem;">Step 1 &nbsp;Get your course file out of Brightspace</h2>
@@ -62,33 +67,41 @@
     <ol class="steps">
       <li><b>Course Admin</b> (or the gear / settings menu)</li>
       <li><b>Import / Export / Copy Components</b></li>
-      <li>Choose <b>Export as Common Cartridge</b>, then start the export</li>
-      <li>When it finishes, <b>download</b> the file it gives you and remember where it saved
-          (usually your <span class="path">Downloads</span> folder)</li>
+      <li>Choose <b>Export as Common Cartridge</b> — <u>not</u> "Export as Brightspace Package" and
+          <u>not</u> "Thin Common Cartridge". Only plain <b>Common Cartridge</b> includes your actual page content.</li>
+      <li>Click <b>Export</b> and wait a moment while Brightspace builds it. When it's ready a
+          <b>download link appears</b> (you may need to refresh the page) — click it to save the file.
+          <span class="muted">If you leave without clicking that link, you'll have to export again.</span></li>
     </ol>
-    <p style="margin:.7rem 0 0;">That download is your course file. <b>Its name ends in <span class="ext">.imscc</span></b>
-       — that is the one you want.</p>
-    <div class="note">⚠️ Use the file just as Brightspace gave it to you. <b>Don't zip or unzip anything</b> —
-       you want the one file ending in <span class="ext">.imscc</span>, not a <code>.zip</code>.</div>
+    <p style="margin:.7rem 0 0;">That download is your course file — it'll be named something like
+       <span class="path">YourCourse.imscc</span>.
+       <span class="muted">Can't see the ".imscc" part on the end? That's normal — Windows usually hides it.
+       As long as you chose <b>Common Cartridge</b> above, it's the right file.</span></p>
+    <div class="note">⚠️ Use the file exactly as Brightspace gave it — <b>don't open, unzip, or re-zip it</b>.
+       <span class="muted">(On a Mac, if Safari unzips it into a <i>folder</i> on its own, turn off
+       Safari → Settings → General → "Open safe files after downloading," then download again.)</span></div>
   </div>
 
   <div class="card">
     <h2 style="margin:.1rem 0 .6rem;color:var(--forest);font-size:1.1rem;">Step 2 &nbsp;Drop that file here</h2>
-    <div id="drop"><strong>Drag your <span class="ext">.imscc</span> file onto this box</strong><br>
+    <div id="drop" role="button" tabindex="0"
+         aria-label="Upload your .imscc course file: drag and drop here, or press Enter to browse">
+      <strong>Drag your course file onto this box</strong><br>
       <span class="muted">…or click here to find it on your computer</span>
-      <input id="file" type="file" accept=".imscc,.zip" class="hide"></div>
+      <input id="file" type="file" accept=".imscc,.zip" aria-label="Choose your .imscc course file" class="hide"></div>
 
     <div id="combinebox" class="hide" style="margin-top:1.2rem;">
       <p style="margin:.2rem 0 .3rem;font-weight:700;">Want fewer pages to click through?
         <span class="muted" style="font-weight:400;">(optional)</span></p>
-      <p class="muted" style="margin:0 0 .5rem;">Here are the sections of your course. <b>Tick the ones you'd like combined</b> —
-        I'll merge the short pages in them (the ones with just a sentence or a single link) into fewer, fuller pages,
-        so students do less clicking. Leave a section unticked to keep all its pages exactly as they are.
-        &nbsp;<a href="#" id="ticktoggle">Tick all</a></p>
-      <div id="modlist"></div>
+      <p class="muted" style="margin:0 0 .5rem;">Here are the <b>modules</b> of your course. <b>Tick the ones you'd like combined</b> —
+        I'll merge the short pages in them (just a sentence or a single link) into fewer, fuller pages,
+        so students do less clicking. Leave a module unticked to keep all its pages exactly as they are.
+        &nbsp;<button type="button" id="ticktoggle" class="linkbtn">Tick all</button></p>
+      <div id="modlist" aria-live="polite"></div>
+      <p class="muted" style="margin:.5rem 0 0;">Tick nothing and both downloads will look the same — that's fine.</p>
     </div>
 
-    <div style="margin-top:1.2rem"><button id="go" class="go" disabled>Make it RDP →</button>
+    <div style="margin-top:1.2rem"><button id="go" class="go" disabled>Give my course the RDP look</button>
       <span id="fname" class="muted"></span></div>
 
     <details style="margin-top:1rem;">
@@ -100,21 +113,27 @@
       </div>
     </details>
     <div id="downloads" style="margin-top:.8rem"></div>
-    <pre id="log"></pre>
+    <pre id="log" role="status" aria-live="polite"></pre>
   </div>
 
   <div class="card">
     <h2 style="margin:.1rem 0 .6rem;color:var(--forest);font-size:1.1rem;">Step 3 &nbsp;Put it back into Brightspace</h2>
-    <p style="margin:.1rem 0;">When it's done, you'll get <b>download button(s)</b> above. You'll usually see two files:</p>
+    <p style="margin:.1rem 0;">When it's done, you'll see one or two <b>download buttons</b> above:</p>
     <ul style="margin:.4rem 0 .2rem 1.2rem;padding:0;">
       <li><b>REBRANDED</b> — the new look, same pages as before <span class="muted">(the safe choice)</span></li>
-      <li><b>REBRANDED (combined)</b> — the new look, with the very short pages merged together so there's less clicking</li>
+      <li><b>REBRANDED (combined)</b> — the new look, with very short pages merged together for less clicking</li>
     </ul>
-    <p style="margin:.5rem 0 0;">Import one of these back into Brightspace the same way you'd import any course
-       (Course Admin → Import/Export/Copy Components → <b>Import</b>). <b>Try it in a practice/sandbox course
-       first</b> and click around. If anything looks off in the combined one, use the plain <b>REBRANDED</b> file instead.</p>
-    <div class="note" style="background:#f0e8f0;border-color:#d8c4d7;">💡 <b>Tip:</b> importing <i>adds</i> content,
-       so delete the old modules in your course first or you'll end up with two copies.</div>
+    <p style="margin:.6rem 0 0;">Import one back into Brightspace:
+       <b>Course Admin → Import / Export / Copy Components → Import Components → Start → Upload your file → Import All Components</b>.</p>
+    <p style="margin:.5rem 0 0;"><b>Always import into a practice / sandbox course first</b> and click around —
+       especially your <b>quizzes, assignments, discussions and any release conditions</b>, since those don't always
+       carry across the Common Cartridge format perfectly (your pages, files, images and links are what this tool protects).
+       <span class="muted">No sandbox? Ask CTLS / LMS support for one.</span> If the combined version looks off,
+       use the plain <b>REBRANDED</b> file instead.</p>
+    <div class="note" style="background:#f0e8f0;border-color:#d8c4d7;">💡 <b>Good to know:</b> this tool never changes
+       your real course — it only makes a new file. When you import into your live course, the import <i>adds</i>
+       pages as new modules (it never overwrites), so delete the old modules first to avoid two copies.
+       Your exported <span class="path">.imscc</span> also makes a handy backup.</div>
   </div>
 </div>
 <script>
@@ -439,6 +458,8 @@ async function buildCombine(zip,man,m,keepSep,reorder){
  const visit=it=>{let run=[];
    const flush=()=>{if(run.length>=2)groups.push({sub:titleOf(it),members:run.slice()});run=[];};
    for(const c of [...it.children].filter(x=>x.tagName==='item')){
+     // honor keepSep at EVERY level — real modules often sit under an untitled wrapper item.
+     if(keepSep.has(titleOf(c))){flush();continue;}
      const he=m.htmlEntry(c);
      if(he&&!INSTR(titleOf(c)))run.push(c);
      else{flush();if([...c.children].some(x=>x.tagName==='item'))visit(c);}}
@@ -535,9 +556,16 @@ async function setFile(f){
    $('#go').disabled=false;
  }catch(err){$('#modlist').innerHTML='<span class="err">Could not read this file: '+esc(err.message)+'</span>';console.error(err);}
 }
+// The real top-level modules often sit under a single untitled wrapper <item>; descend to them.
+function topModules(org){
+ let kids=[...org.children].filter(c=>c.tagName==='item');
+ while(kids.length===1 && !titleOf(kids[0]).trim() && [...kids[0].children].some(c=>c.tagName==='item'))
+   kids=[...kids[0].children].filter(c=>c.tagName==='item');
+ return kids;
+}
 function renderModules(m){
- const tops=[...m.org.children].filter(c=>c.tagName==='item');
- if(!tops.length){$('#modlist').innerHTML='<span class="muted">No sections found in this course.</span>';return;}
+ const tops=topModules(m.org);
+ if(!tops.length){$('#modlist').innerHTML='<span class="muted">No modules found in this course.</span>';return;}
  // Default: nothing ticked — the user picks which sections to combine (opt-in).
  $('#modlist').innerHTML=tops.map((it,i)=>{
    const t=titleOf(it)||('(untitled section '+(i+1)+')');
@@ -551,12 +579,14 @@ $('#ticktoggle').addEventListener('click',e=>{e.preventDefault();
  $('#ticktoggle').textContent=turnOn?'Untick all':'Tick all';});
 $('#file').addEventListener('change',e=>setFile(e.target.files[0]));
 $('#drop').addEventListener('click',()=>$('#file').click());
+$('#drop').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('#file').click();}});
 ['dragover','dragenter'].forEach(ev=>$('#drop').addEventListener(ev,e=>{e.preventDefault();$('#drop').classList.add('hot');}));
 ['dragleave','drop'].forEach(ev=>$('#drop').addEventListener(ev,e=>{e.preventDefault();$('#drop').classList.remove('hot');}));
 $('#drop').addEventListener('drop',e=>{if(e.dataTransfer.files[0])setFile(e.dataTransfer.files[0]);});
 
 function dlButton(blob,name,safe){const url=URL.createObjectURL(blob);const a=document.createElement('a');
- a.href=url;a.download=name;a.className='dl'+(safe?' safe':'');a.textContent='⬇ '+name;$('#downloads').appendChild(a);}
+ a.href=url;a.download=name;a.className='dl'+(safe?' safe':'');
+ a.innerHTML='<span aria-hidden="true">⬇ </span>'+esc(name);$('#downloads').appendChild(a);}
 
 $('#go').addEventListener('click',async()=>{
  if(!FILE||!MODEL)return;
