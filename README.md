@@ -3,7 +3,7 @@
 A small, **offline** web tool that gives a Brightspace (D2L) course the RDP look —
 without changing any of your wording, links, files, or images. Only the design changes.
 
-### ▶ Use it here: https://ajellebeans.github.io/brightspace-rebrand/
+### ▶ Use it here: https://rdp-ctls.github.io/brightspace-rebrand/
 
 ## What it does
 - Restyles every page to the RDP design (Inter, eggplant/forest palette, clean cards).
