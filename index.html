@@ -101,8 +101,9 @@
       <p class="muted" style="margin:.5rem 0 0;">Tick nothing and both downloads will look the same — that's fine.</p>
     </div>
 
-    <div style="margin-top:1.2rem"><button id="go" class="go" disabled>Give my course the RDP look</button>
-      <span id="fname" class="muted"></span></div>
+    <div style="margin-top:1.2rem"><button id="go" class="go" disabled aria-describedby="gohint">Give my course the RDP look</button>
+      <span id="fname" class="muted"></span>
+      <span id="gohint" class="muted"><span aria-hidden="true">↑ </span>choose your course file above first</span></div>
 
     <details style="margin-top:1rem;">
       <summary class="muted" style="cursor:pointer;">More choices (you can skip these)</summary>
@@ -541,6 +542,7 @@ let FILE=null, MODEL=null;
 async function setFile(f){
  FILE=f; MODEL=null; $('#go').disabled=true;
  $('#fname').textContent=f?`— ${f.name} (${(f.size/1048576).toFixed(0)} MB)`:'';
+ $('#gohint').style.display=f?'none':'inline';
  $('#downloads').innerHTML=''; $('#log').style.display='none'; $('#log').textContent='';
  if(!f){$('#combinebox').classList.add('hide');return;}
  $('#combinebox').classList.remove('hide');
