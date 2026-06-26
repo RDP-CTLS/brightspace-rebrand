@@ -1,4 +1,4 @@
-# RDP Course Rebrand
+# Course Template Converter
 
 A small, **offline** web tool that gives a Brightspace (D2L) course the RDP look —
 without changing any of your wording, links, files, or images. Only the design changes.
@@ -9,7 +9,7 @@ without changing any of your wording, links, files, or images. Only the design c
 - Restyles every page to the RDP design (Inter, eggplant/forest palette, clean cards).
 - Turns old Blackboard marker **buttons** (READ / WATCH / BRING…) into plain text headings
   — nothing looks clickable unless it is.
-- Optionally **combines** thin pages within a module so there's less clicking.
+- Optionally **combines** pages with very little on them within a module so there's less clicking.
 - Keeps your content, links, tables, PDFs and **videos** exactly as they were.
 - Re-sorts numbered items (Lecture 1, 2, 3…) that the export listed out of order.
 
@@ -20,7 +20,7 @@ there is no server. You can even save the page and run it with no internet.
 ## How to use
 1. In Brightspace: **Course Admin → Import / Export / Copy Components → Export as Common Cartridge**.
 2. Download the file it makes — its name ends in **`.imscc`** (it is *not* a `.zip` you make yourself).
-3. Open the link above, drag the `.imscc` onto the box, and download the rebranded file.
+3. Open the link above, drag the `.imscc` onto the box, and download the result (the **Template Applied** file).
 4. Import that file back into a **sandbox** course first to check it, then into the real course.
 
 ## Notes for maintainers
