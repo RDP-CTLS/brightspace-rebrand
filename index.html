@@ -68,9 +68,8 @@
     </ol>
     <p style="margin:.7rem 0 0;">That download is your course file. <b>Its name ends in <span class="ext">.imscc</span></b>
        — that is the one you want.</p>
-    <div class="note">⚠️ <b>It is NOT a .zip file.</b> Don't make a zip yourself, and don't unzip anything.
-       Just use the single file ending in <span class="ext">.imscc</span> exactly as Brightspace downloaded it.
-       <span class="muted">(A <code>.imscc</code> is a special Brightspace file — if you only see <code>.zip</code>, that's the wrong file.)</span></div>
+    <div class="note">⚠️ Use the file just as Brightspace gave it to you. <b>Don't zip or unzip anything</b> —
+       you want the one file ending in <span class="ext">.imscc</span>, not a <code>.zip</code>.</div>
   </div>
 
   <div class="card">
@@ -78,24 +77,26 @@
     <div id="drop"><strong>Drag your <span class="ext">.imscc</span> file onto this box</strong><br>
       <span class="muted">…or click here to find it on your computer</span>
       <input id="file" type="file" accept=".imscc,.zip" class="hide"></div>
-    <div style="margin-top:1rem"><button id="go" class="go" disabled>Make it RDP →</button>
+
+    <div id="combinebox" class="hide" style="margin-top:1.2rem;">
+      <p style="margin:.2rem 0 .3rem;font-weight:700;">Want fewer pages to click through?
+        <span class="muted" style="font-weight:400;">(optional)</span></p>
+      <p class="muted" style="margin:0 0 .5rem;">Here are the sections of your course. <b>Tick the ones you'd like combined</b> —
+        I'll merge the short pages in them (the ones with just a sentence or a single link) into fewer, fuller pages,
+        so students do less clicking. Leave a section unticked to keep all its pages exactly as they are.
+        &nbsp;<a href="#" id="ticktoggle">Tick all</a></p>
+      <div id="modlist"></div>
+    </div>
+
+    <div style="margin-top:1.2rem"><button id="go" class="go" disabled>Make it RDP →</button>
       <span id="fname" class="muted"></span></div>
 
     <details style="margin-top:1rem;">
-      <summary class="muted" style="cursor:pointer;">Choices (you can skip these — the defaults are fine)</summary>
-      <div style="margin-top:.7rem;">
-        <p style="margin:.2rem 0 .4rem;font-weight:700;">What should I make?</p>
-        <div class="opts">
-          <label><input type="radio" name="mode" value="both" checked> Both versions (recommended)</label>
-          <label><input type="radio" name="mode" value="restyle"> New look only</label>
-          <label><input type="radio" name="mode" value="combine"> New look + combine short pages</label>
-        </div>
-
-        <p style="margin:1.1rem 0 .3rem;font-weight:700;">Combine pages that have very little on them?</p>
-        <p class="muted" style="margin:0 0 .4rem;">Some courses have lots of <b>short pages</b> — just a sentence or a single link.
-           Leaving a section <b>ticked</b> merges those near-empty pages together so students do less clicking.
-           <b>Un-tick</b> a section to leave its pages exactly as they are. Your sections appear here after you choose your file:</p>
-        <div id="modlist" class="muted">Choose your <span class="ext">.imscc</span> file above and your course sections will show up here.</div>
+      <summary class="muted" style="cursor:pointer;">More choices (you can skip these)</summary>
+      <div class="opts" style="margin-top:.7rem;">
+        <label><input type="radio" name="mode" value="both" checked> Make both versions (recommended)</label>
+        <label><input type="radio" name="mode" value="restyle"> New look only</label>
+        <label><input type="radio" name="mode" value="combine"> New look + combined only</label>
       </div>
     </details>
     <div id="downloads" style="margin-top:.8rem"></div>
@@ -515,14 +516,14 @@ function normPath(p){const parts=[];for(const s of p.split('/')){if(s==='.'||s==
 
 /* ===================== UI ===================== */
 let FILE=null, MODEL=null;
-// Sections un-ticked by default (rarely worth merging). Matched case-insensitively.
-const DEFAULT_KEEP=['course content'];
 
 async function setFile(f){
  FILE=f; MODEL=null; $('#go').disabled=true;
  $('#fname').textContent=f?`— ${f.name} (${(f.size/1048576).toFixed(0)} MB)`:'';
  $('#downloads').innerHTML=''; $('#log').style.display='none'; $('#log').textContent='';
- if(!f){$('#modlist').textContent='Choose your .imscc file above and your course sections will show up here.';return;}
+ if(!f){$('#combinebox').classList.add('hide');return;}
+ $('#combinebox').classList.remove('hide');
+ $('#ticktoggle').textContent='Tick all';
  $('#modlist').innerHTML='<span class="muted">Reading your course… (a big course can take a moment)</span>';
  try{
    const zip=readZip(await f.arrayBuffer());
@@ -537,12 +538,17 @@ async function setFile(f){
 function renderModules(m){
  const tops=[...m.org.children].filter(c=>c.tagName==='item');
  if(!tops.length){$('#modlist').innerHTML='<span class="muted">No sections found in this course.</span>';return;}
+ // Default: nothing ticked — the user picks which sections to combine (opt-in).
  $('#modlist').innerHTML=tops.map((it,i)=>{
    const t=titleOf(it)||('(untitled section '+(i+1)+')');
-   const checked=DEFAULT_KEEP.includes(t.trim().toLowerCase())?'':'checked';
-   return `<label class="modrow"><input type="checkbox" class="modchk" data-title="${xesc(t)}" ${checked}><span>${esc(t)}</span></label>`;
+   return `<label class="modrow"><input type="checkbox" class="modchk" data-title="${xesc(t)}"><span>${esc(t)}</span></label>`;
  }).join('');
 }
+$('#ticktoggle').addEventListener('click',e=>{e.preventDefault();
+ const boxes=[...document.querySelectorAll('.modchk')];if(!boxes.length)return;
+ const turnOn=boxes.some(b=>!b.checked);          // if any are off, tick all; else untick all
+ boxes.forEach(b=>b.checked=turnOn);
+ $('#ticktoggle').textContent=turnOn?'Untick all':'Tick all';});
 $('#file').addEventListener('change',e=>setFile(e.target.files[0]));
 $('#drop').addEventListener('click',()=>$('#file').click());
 ['dragover','dragenter'].forEach(ev=>$('#drop').addEventListener(ev,e=>{e.preventDefault();$('#drop').classList.add('hot');}));
