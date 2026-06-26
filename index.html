@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>RDP Course Rebrand — offline tool</title>
+<style>
+  :root{--egg:#51284F;--forest:#004238;--green:#00AD50;--ink:#3a4248;--border:#E8E8E8;--bg:#f4f2f5;}
+  *{box-sizing:border-box;}
+  body{font-family:'Inter',Arial,Helvetica,sans-serif;color:var(--ink);background:var(--bg);
+       margin:0;line-height:1.6;}
+  .wrap{max-width:780px;margin:0 auto;padding:1.5rem 1.2rem 4rem;}
+  h1{color:var(--egg);font-size:1.45rem;margin:.2rem 0 .2rem;}
+  .sub{color:#6b6470;margin:0 0 1.4rem;font-size:.95rem;}
+  .card{background:#fff;border:1px solid var(--border);border-radius:1rem;
+        box-shadow:0 3px 10px rgba(16,40,34,.06);padding:1.3rem 1.4rem;margin-bottom:1.2rem;}
+  #drop{border:2px dashed #b9a9b8;border-radius:1rem;background:#fff;padding:2.2rem 1rem;text-align:center;
+        cursor:pointer;transition:.15s;color:#6b6470;}
+  #drop.hot{border-color:var(--green);background:#f0faf2;color:var(--forest);}
+  #drop strong{color:var(--egg);font-size:1.05rem;}
+  .opts{display:flex;flex-wrap:wrap;gap:1.2rem;align-items:center;margin-top:1rem;font-size:.92rem;}
+  .opts label{display:flex;align-items:center;gap:.4rem;}
+  input[type=text]{border:1px solid var(--border);border-radius:.5rem;padding:.4rem .6rem;font:inherit;min-width:240px;}
+  button{font:inherit;font-weight:700;border:0;border-radius:.6rem;padding:.7rem 1.3rem;cursor:pointer;}
+  .go{background:var(--egg);color:#fff;font-size:1.02rem;}
+  .go:disabled{background:#c8bcc7;cursor:not-allowed;}
+  .dl{display:inline-block;background:var(--forest);color:#fff;text-decoration:none;border-radius:.6rem;
+      padding:.6rem 1rem;margin:.35rem .5rem .35rem 0;font-weight:700;font-size:.92rem;}
+  .dl.safe{background:var(--green);}
+  #log{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;background:#0f1b18;color:#cfe9da;
+       border-radius:.7rem;padding:.9rem 1rem;white-space:pre-wrap;max-height:340px;overflow:auto;margin-top:1rem;display:none;}
+  .pass{color:#7ee0a6;font-weight:700;} .warn{color:#ffd27d;font-weight:700;} .err{color:#ff9b9b;font-weight:700;}
+  .pill{display:inline-block;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+        background:#f0e8f0;color:var(--egg);border-radius:1rem;padding:.15rem .6rem;margin-left:.5rem;}
+  .muted{color:#8a8390;font-size:.85rem;}
+  .hide{display:none;}
+  .steps{list-style:none;counter-reset:s;padding:0;margin:.4rem 0 0;}
+  .steps li{counter-increment:s;position:relative;padding:.55rem 0 .55rem 2.6rem;border-top:1px solid var(--border);}
+  .steps li:first-child{border-top:0;}
+  .steps li::before{content:counter(s);position:absolute;left:0;top:.5rem;width:1.75rem;height:1.75rem;
+        background:var(--egg);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;
+        font-weight:700;font-size:.95rem;}
+  .ext{display:inline-block;background:#0f1b18;color:#7ee0a6;font-family:ui-monospace,Menlo,Consolas,monospace;
+        font-weight:700;border-radius:.35rem;padding:.05rem .4rem;}
+  .note{background:#fff7e6;border:1px solid #f0d9a8;border-radius:.7rem;padding:.8rem 1rem;margin:1rem 0 0;font-size:.92rem;}
+  .note b{color:#a8500a;}
+  .path{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.86rem;color:var(--forest);}
+</style></head>
+<body><div class="wrap">
+  <h1>RDP Course Rebrand <span class="pill">runs on your computer</span></h1>
+  <p class="sub">This gives your Brightspace course the RDP look. Your wording, links, files and pictures
+     stay exactly the same — only the design changes. Your course never leaves this computer; everything
+     happens right here in your web browser.</p>
+
+  <div class="card">
+    <h2 style="margin:.1rem 0 .3rem;color:var(--forest);font-size:1.1rem;">Step 1 &nbsp;Get your course file out of Brightspace</h2>
+    <p class="muted" style="margin:.1rem 0 .3rem;">You need the one file Brightspace makes when you <b>export</b> a course.
+       In your course, go to:</p>
+    <ol class="steps">
+      <li><b>Course Admin</b> (or the gear / settings menu)</li>
+      <li><b>Import / Export / Copy Components</b></li>
+      <li>Choose <b>Export as Common Cartridge</b>, then start the export</li>
+      <li>When it finishes, <b>download</b> the file it gives you and remember where it saved
+          (usually your <span class="path">Downloads</span> folder)</li>
+    </ol>
+    <p style="margin:.7rem 0 0;">That download is your course file. <b>Its name ends in <span class="ext">.imscc</span></b>
+       — that is the one you want.</p>
+    <div class="note">⚠️ <b>It is NOT a .zip file.</b> Don't make a zip yourself, and don't unzip anything.
+       Just use the single file ending in <span class="ext">.imscc</span> exactly as Brightspace downloaded it.
+       <span class="muted">(A <code>.imscc</code> is a special Brightspace file — if you only see <code>.zip</code>, that's the wrong file.)</span></div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin:.1rem 0 .6rem;color:var(--forest);font-size:1.1rem;">Step 2 &nbsp;Drop that file here</h2>
+    <div id="drop"><strong>Drag your <span class="ext">.imscc</span> file onto this box</strong><br>
+      <span class="muted">…or click here to find it on your computer</span>
+      <input id="file" type="file" accept=".imscc,.zip" class="hide"></div>
+    <div style="margin-top:1rem"><button id="go" class="go" disabled>Make it RDP →</button>
+      <span id="fname" class="muted"></span></div>
+
+    <details style="margin-top:1rem;">
+      <summary class="muted" style="cursor:pointer;">Advanced options (most people can ignore these)</summary>
+      <div class="opts" style="margin-top:.7rem;">
+        <label><input type="radio" name="mode" value="both" checked> Make both versions (recommended)</label>
+        <label><input type="radio" name="mode" value="restyle"> New look only</label>
+        <label><input type="radio" name="mode" value="combine"> New look + fewer pages</label>
+        <label title="Top-level modules to leave un-merged (comma separated)">Don't combine pages in:
+          <input id="keep" type="text" value="Course Content"></label>
+      </div>
+    </details>
+    <div id="downloads" style="margin-top:.8rem"></div>
+    <pre id="log"></pre>
+  </div>
+
+  <div class="card">
+    <h2 style="margin:.1rem 0 .6rem;color:var(--forest);font-size:1.1rem;">Step 3 &nbsp;Put it back into Brightspace</h2>
+    <p style="margin:.1rem 0;">When it's done, you'll get <b>download button(s)</b> above. You'll usually see two files:</p>
+    <ul style="margin:.4rem 0 .2rem 1.2rem;padding:0;">
+      <li><b>REBRANDED</b> — the new look, same pages as before <span class="muted">(the safe choice)</span></li>
+      <li><b>REBRANDED (combined)</b> — the new look <i>and</i> fewer pages to click through</li>
+    </ul>
+    <p style="margin:.5rem 0 0;">Import one of these back into Brightspace the same way you'd import any course
+       (Course Admin → Import/Export/Copy Components → <b>Import</b>). <b>Try it in a practice/sandbox course
+       first</b> and click around. If anything looks off in the combined one, use the plain <b>REBRANDED</b> file instead.</p>
+    <div class="note" style="background:#f0e8f0;border-color:#d8c4d7;">💡 <b>Tip:</b> importing <i>adds</i> content,
+       so delete the old modules in your course first or you'll end up with two copies.</div>
+  </div>
+</div>
+<script>
+/* =========================================================================
+   RDP Course Rebrand — fully offline. No external libraries / network.
+   Uses native CompressionStream/DecompressionStream + DOMParser.
+   ========================================================================= */
+const $=s=>document.querySelector(s);
+const log=(m,cls)=>{const el=$('#log');el.style.display='block';
+  el.innerHTML+=(cls?`<span class="${cls}">${m}</span>`:m)+"\n";el.scrollTop=el.scrollHeight;};
+
+/* ---------- CRC32 ---------- */
+const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;
+  for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
+function crc32(u8){let c=0xFFFFFFFF;for(let i=0;i<u8.length;i++)c=CRC[(c^u8[i])&0xFF]^(c>>>8);return (c^0xFFFFFFFF)>>>0;}
+
+/* ---------- deflate / inflate (raw) via native streams ---------- */
+async function inflateRaw(u8){const ds=new DecompressionStream('deflate-raw');
+  return new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(ds)).arrayBuffer());}
+async function deflateRaw(u8){const cs=new CompressionStream('deflate-raw');
+  return new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(cs)).arrayBuffer());}
+const TE=new TextEncoder(), TD=new TextDecoder('utf-8');
+
+/* ---------- ZIP reader (central-directory based) ---------- */
+function readZip(buf){
+  const dv=new DataView(buf), u8=new Uint8Array(buf);
+  // find EOCD (0x06054b50), scanning back over optional comment
+  let eo=-1; for(let i=u8.length-22;i>=0 && i>u8.length-22-65536;i--){if(dv.getUint32(i,true)===0x06054b50){eo=i;break;}}
+  if(eo<0) throw new Error('Not a zip (no EOCD)');
+  let count=dv.getUint16(eo+10,true), cdOff=dv.getUint32(eo+16,true);
+  const entries=[]; let p=cdOff;
+  for(let n=0;n<count;n++){
+    if(dv.getUint32(p,true)!==0x02014b50) throw new Error('bad central dir');
+    const method=dv.getUint16(p+10,true), crc=dv.getUint32(p+16,true),
+      compSize=dv.getUint32(p+20,true), uncompSize=dv.getUint32(p+24,true),
+      nameLen=dv.getUint16(p+28,true), extraLen=dv.getUint16(p+30,true),
+      commLen=dv.getUint16(p+32,true), lho=dv.getUint32(p+42,true);
+    const name=TD.decode(u8.subarray(p+46,p+46+nameLen));
+    entries.push({name,method,crc,compSize,uncompSize,lho});
+    p+=46+nameLen+extraLen+commLen;
+  }
+  // resolve compressed-bytes slice for each entry from its local header
+  for(const e of entries){
+    const ln=dv.getUint16(e.lho+26,true), le=dv.getUint16(e.lho+28,true);
+    e.dataOff=e.lho+30+ln+le;
+    e.comp=u8.subarray(e.dataOff,e.dataOff+e.compSize);
+  }
+  const byName=Object.fromEntries(entries.map(e=>[e.name,e]));
+  return {entries,byName,
+    async text(name){const e=byName[name];if(!e)return null;
+      const raw=e.method===0?e.comp:await inflateRaw(e.comp);return TD.decode(raw);}};
+}
+
+/* ---------- ZIP writer ---------- */
+function makeZipWriter(){
+  const parts=[], central=[]; let offset=0;
+  function pushLocal(nameBytes,method,crc,cs,us,data){
+    const h=new Uint8Array(30); const dv=new DataView(h.buffer);
+    dv.setUint32(0,0x04034b50,true);dv.setUint16(4,20,true);dv.setUint16(6,0x0800,true);
+    dv.setUint16(8,method,true);dv.setUint16(10,0,true);dv.setUint16(12,0,true);
+    dv.setUint32(14,crc,true);dv.setUint32(18,cs,true);dv.setUint32(22,us,true);
+    dv.setUint16(26,nameBytes.length,true);dv.setUint16(28,0,true);
+    parts.push(h,nameBytes,data);
+    const c=new Uint8Array(46); const cd=new DataView(c.buffer);
+    cd.setUint32(0,0x02014b50,true);cd.setUint16(4,20,true);cd.setUint16(6,20,true);
+    cd.setUint16(8,0x0800,true);cd.setUint16(10,method,true);
+    cd.setUint32(16,crc,true);cd.setUint32(20,cs,true);cd.setUint32(24,us,true);
+    cd.setUint16(28,nameBytes.length,true);cd.setUint32(42,offset,true);
+    central.push(c,nameBytes);
+    offset+=h.length+nameBytes.length+data.length;
+  }
+  return {
+    // copy a source entry unchanged (reuse its compressed bytes)
+    copy(e){pushLocal(TE.encode(e.name),e.method,e.crc,e.compSize,e.uncompSize,e.comp);},
+    // copy a source entry's bytes under a NEW name (asset relocation)
+    copyAs(e,newName){pushLocal(TE.encode(newName),e.method,e.crc,e.compSize,e.uncompSize,e.comp);},
+    // add new text content (deflated)
+    async addText(name,str){const data=TE.encode(str);const crc=crc32(data);
+      const def=await deflateRaw(data);pushLocal(TE.encode(name),8,crc,def.length,data.length,def);},
+    finish(){
+      const cdStart=offset; let cdLen=0; central.forEach(c=>cdLen+=c.length);
+      const e=new Uint8Array(22); const dv=new DataView(e.buffer);
+      const n=central.length/2;
+      dv.setUint32(0,0x06054b50,true);dv.setUint16(8,n,true);dv.setUint16(10,n,true);
+      dv.setUint32(12,cdLen,true);dv.setUint32(16,cdStart,true);
+      return new Blob([...parts,...central,e],{type:'application/zip'});}
+  };
+}
+
+/* ===================== ENGINE (ported from engine.py) ===================== */
+const COLORS={forest:'#004238',green:'#067a3a',lime:'#5a7a00',orange:'#a8500a',egg:'#51284F',violet:'#685BC7',slate:'#5B6770'};
+const BG={forest:'#e6f7ed',green:'#e6f7ed',lime:'#f2f9d9',orange:'#fff3e6',egg:'#f0e8f0',violet:'#efedf9',slate:'#eef0f1'};
+const SVG={
+ read:'<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>',
+ watch:'<circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon>',
+ activity:'<path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"></path>',
+ assess:'<path d="M9 2h6v3H9z"></path><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="m9 14 2 2 4-4"></path>',
+ topics:'<line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line>',
+ flag:'<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line>',
+ conclude:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>',
+ outcomes:'<circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle>',
+ clock:'<circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>',
+ help:'<circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle><line x1="4.93" y1="4.93" x2="9.17" y2="9.17"></line><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"></line><line x1="14.83" y1="9.17" x2="19.07" y2="4.93"></line><line x1="9.17" y1="14.83" x2="4.93" y2="19.07"></line>',
+ play:'<polygon points="5 3 19 12 5 21 5 3"></polygon>',
+ book:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>',
+ check:'<polyline points="20 6 9 17 4 12"></polyline>',
+ doc:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline>',
+ calendar:'<rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>',
+ pin:'<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle>'};
+const TITLE_RULES=[
+ [/learning path|learning outcome|outcomes/,['egg','outcomes']],
+ [/\bbefore\b|pre[- ]?class|pre[- ]?lab|preparation|prep\b|readings?/,['lime','read']],
+ [/\bduring\b/,['violet','activity']],
+ [/\bafter\b|post[- ]?class|post class|wrap/,['forest','conclude']],
+ [/slides?|powerpoint|ppt|presentation/,['orange','play']],
+ [/asynchronous|async|watch|video/,['orange','watch']],
+ [/instructor info|instructor information|faculty/,['slate','help']],
+ [/skills? checklist|checklist|competenc/,['violet','check']],
+ [/additional resources|supplemental|resources/,['orange','book']],
+ [/assessment|quiz|exam|test|rubric|drop\s*box/,['egg','assess']],
+ [/schedule|calendar|dates/,['violet','calendar']],
+ [/handbook|policy|policies|outline|contract|declaration|guide/,['slate','doc']],
+ [/orientation|welcome|office hours|attendance/,['green','pin']],
+ [/reflection|discussion|journal/,['violet','activity']],
+ [/clinical|lab\b|simulation|sim\b/,['forest','check']]];
+function titleStyle(t){t=(t||'').toLowerCase();for(const[re,v]of TITLE_RULES)if(re.test(t))return v;return['forest','book'];}
+const MARKER_COLOR={introduction:'lime','course learning outcomes':'egg','learning outcomes':'egg',topics:'green',
+ 'learning activity':'violet',read:'forest',watch:'orange','additional resources':'orange',references:'slate',
+ conclusion:'forest','time commitment':'violet','catch up':'green','concepts of the week':'green',bring:'slate',do:'slate',overview:'orange',assessment:'egg'};
+const KEEP_ATTR={a:new Set(['href','target','rel']),img:new Set(['src','alt','width','height']),
+ iframe:new Set(['src','width','height','allow','allowfullscreen','frameborder','title','loading'])};
+const INLINE_STYLE={p:'margin:0 0 .85rem;',li:'margin-bottom:.35rem;line-height:1.65;',
+ ul:'margin:.4rem 0 1rem 1.4rem;padding:0;',ol:'margin:.4rem 0 1rem 1.4rem;padding:0;',
+ a:'color:#004238;text-decoration:underline;text-underline-offset:2px;',
+ img:'max-width:100%;height:auto;border-radius:.5rem;margin:.4rem 0;',
+ strong:'font-weight:700;color:#26303a;',b:'font-weight:700;color:#26303a;',em:'font-style:italic;',i:'font-style:italic;',
+ h1:'font-size:1.3rem;font-weight:800;color:#004238;margin:1.2rem 0 .6rem;line-height:1.25;',
+ h2:'font-size:1.15rem;font-weight:800;color:#004238;margin:1.1rem 0 .55rem;line-height:1.25;',
+ h3:'font-size:1.02rem;font-weight:700;color:#004238;margin:1rem 0 .5rem;line-height:1.3;',
+ h4:'font-size:.95rem;font-weight:700;color:#26303a;margin:.9rem 0 .45rem;',
+ blockquote:'margin:.7rem 0 1rem;padding:.6rem 1rem;border-left:4px solid #685BC7;background:#efedf9;border-radius:.6rem;',
+ hr:'border:0;border-top:1px solid #E8E8E8;margin:1.4rem 0;',
+ iframe:'max-width:100%;border:0;border-radius:.6rem;margin:.6rem 0;',
+ table:'border-collapse:collapse;width:100%;margin:.6rem 0 1.1rem;font-size:.95rem;',
+ td:'border:1px solid #E8E8E8;padding:.5rem .65rem;vertical-align:top;',
+ th:'border:1px solid #E8E8E8;padding:.5rem .65rem;text-align:left;background:#f0e8f0;color:#51284F;font-weight:700;'};
+const LAYOUT_TD='padding:.35rem .6rem;vertical-align:top;';
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function marker(label,tok,svg){const c=COLORS[tok],bg=BG[tok];
+ return `<div style="display:flex;align-items:center;gap:.75rem;margin:-1.35rem -1.4rem 1.2rem;padding:.9rem 1.4rem;background:${bg};border-bottom:1px solid rgba(0,0,0,.07);box-sizing:border-box;"><span style="display:flex;align-items:center;justify-content:center;width:2.85rem;height:2.85rem;flex-shrink:0;background:${c};border-radius:50%;box-shadow:0 3px 8px rgba(16,40,34,.18);box-sizing:border-box;"><svg aria-hidden="true" fill="none" height="1.6rem" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="width:1.6rem;height:1.6rem;display:block;" viewBox="0 0 24 24" width="1.6rem">${SVG[svg]}</svg></span><h2 style="margin:0;font-weight:700;font-size:1.08rem;letter-spacing:.04em;text-transform:uppercase;line-height:1.2;color:${c};">${esc(label)}</h2></div>`;}
+function card(title,inner){const[tok,svg]=titleStyle(title);
+ return `<div style="background:#fff;border:1px solid #E8E8E8;border-radius:1.1rem;box-shadow:0 3px 10px rgba(16,40,34,.06);padding:1.35rem 1.4rem;margin-bottom:1.5rem;overflow:hidden;box-sizing:border-box;">${marker(title,tok,svg)}<div>${inner}</div></div>`;}
+function pageHtml(title,body){
+ // No external Google-Fonts <link>: a render-blocking external stylesheet makes every page
+ // hang on locked-down LMS networks. Inter still shows if installed locally / via the theme.
+ return `<!DOCTYPE html>\n<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>${esc(title)}</title></head><body><div style="font-family:'Inter','Aribau Grotesk',Arial,Helvetica,sans-serif;color:#3a4248;line-height:1.65;font-size:1rem;max-width:840px;margin:0 auto;padding:.5rem;box-sizing:border-box;">${body}</div></body></html>\n`;}
+function fieldLabel(name,tok){const c=COLORS[tok]||COLORS.forest;
+ const t=name.replace(/\b\w/g,m=>m.toUpperCase());
+ return `<h3 style="display:flex;align-items:center;gap:.5rem;font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:${c};margin:1.3rem 0 .55rem;"><span style="width:.5rem;height:.5rem;border-radius:50%;background:${c};flex-shrink:0;display:inline-block;"></span>${esc(t)}</h3>`;}
+function markerName(src,alt){src=src||'';const m=src.match(/([^/]+?)(?:\(\d+\))?\.(png|jpe?g|gif)\s*$/i);
+ const f=m?m[1].trim().toLowerCase():'';
+ if(!(/blackboard icons\//i.test(src)||/\/new icons\//i.test(src)||MARKER_COLOR[f]))return null;
+ let label=f.replace(/\s*_\d+_.*$/,'').replace(/\(\d+\)/,'').trim();return label||((alt||'').trim().toLowerCase())||null;}
+function unwrap(el){const p=el.parentNode;if(!p)return;while(el.firstChild)p.insertBefore(el.firstChild,el);p.removeChild(el);}
+
+function cleanBody(htmlStr){
+ htmlStr=htmlStr||'';
+ htmlStr=htmlStr.replace(/<!--([\s\S]*?)-->/g,(m,inner)=>/<iframe[^>]+src=/i.test(inner)?inner:'');
+ const doc=new DOMParser().parseFromString('<body>'+htmlStr+'</body>','text/html');
+ const body=doc.body;
+ // remove comments
+ const cw=doc.createTreeWalker(body,NodeFilter.SHOW_COMMENT);const cm=[];while(cw.nextNode())cm.push(cw.currentNode);cm.forEach(n=>n.remove());
+ body.querySelectorAll('script,style,meta,link,base').forEach(e=>e.remove());
+ // display:none unless holds media
+ [...body.querySelectorAll('*')].forEach(el=>{if(!el.isConnected)return;
+   const s=(el.getAttribute('style')||'').replace(/\s/g,'').toLowerCase();
+   if(s.includes('display:none')||s.includes('visibility:hidden')){if(!el.querySelector('iframe,img,video,audio,embed,object'))el.remove();}});
+ // fake-button anchors
+ [...body.querySelectorAll('a')].forEach(a=>{if(!a.isConnected)return;
+   const href=(a.getAttribute('href')||'').trim(),txt=(a.textContent||'').trim().toLowerCase();
+   if(txt.startsWith('display.'))a.remove();else if(href===''||href==='#'){a.textContent.trim()?unwrap(a):a.remove();}});
+ // unwrap span/font
+ [...body.querySelectorAll('span,font')].forEach(unwrap);
+ // layout vs data tables
+ const layout=new Set();
+ body.querySelectorAll('table').forEach(tb=>{const b=(tb.getAttribute('border')||'').trim();
+   if(b===''||b==='0')tb.querySelectorAll('td,th').forEach(c=>layout.add(c));});
+ // scrub + style
+ [...body.querySelectorAll('*')].forEach(el=>{if(!el.isConnected)return;
+   const name=el.tagName.toLowerCase(),keep=KEEP_ATTR[name];
+   // rescue lazy-loaded images (real URL in data-src/srcset) BEFORE the attr-scrub drops data-*
+   if(name==='img'&&!(el.getAttribute('src')||'').trim()){
+     const la=['data-src','data-original','data-echo','data-lazy-src','data-hi-res-src'].find(a=>(el.getAttribute(a)||'').trim());
+     if(la)el.setAttribute('src',el.getAttribute(la));
+     else{const ss=(el.getAttribute('srcset')||'').trim();if(ss)el.setAttribute('src',ss.split(',')[0].trim().split(' ')[0]);}}
+   [...el.attributes].forEach(at=>{if(!(keep&&keep.has(at.name)))el.removeAttribute(at.name);});
+   const st=layout.has(el)?LAYOUT_TD:INLINE_STYLE[name];if(st)el.setAttribute('style',st);
+   if(name==='img'){if(!(el.getAttribute('src')||'').trim()){el.remove();return;}el.removeAttribute('width');el.removeAttribute('height');el.setAttribute('loading','lazy');el.setAttribute('decoding','async');}
+   if(name==='iframe'){const s=el.getAttribute('src')||'';if(s.startsWith('http://'))el.setAttribute('src','https://'+s.slice(7));el.setAttribute('loading','lazy');}
+   if(name==='a'){const h=el.getAttribute('href')||'';if(/^https?:/.test(h)&&!el.getAttribute('target')){el.setAttribute('target','_blank');el.setAttribute('rel','noopener');}}});
+ // marker buttons -> subheads (after scrub so their style survives)
+ [...body.querySelectorAll('img')].forEach(img=>{if(!img.isConnected)return;
+   const nm=markerName(img.getAttribute('src'),img.getAttribute('alt'));if(!nm)return;
+   const tok=MARKER_COLOR[nm]||'slate';
+   const tmp=document.createElement('div');tmp.innerHTML=fieldLabel(nm,tok);const fl=tmp.firstChild;
+   let target=img,par=img.parentElement;
+   if(par&&(par.tagName==='P'||par.tagName==='DIV')&&!par.textContent.trim()&&par.querySelectorAll('img').length===1)target=par;
+   target.parentNode.replaceChild(fl,target);});
+ // remove empty p/div
+ [...body.querySelectorAll('p,div')].forEach(el=>{if(!el.isConnected)return;
+   if(!el.textContent.trim()&&!el.querySelector('img,iframe,table,hr,br,a'))el.remove();});
+ return body.innerHTML;
+}
+function renderStandalone(title,body){let inner=cleanBody(body);
+ if(!inner.trim())inner='<p style="margin:0 0 .85rem;color:#5B6770;font-style:italic;">(No page content — see linked file.)</p>';
+ return pageHtml(title,card(title,inner));}
+function renderCombined(groupTitle,members){let cards='';
+ for(const[t,b]of members){let inner=cleanBody(b);
+   if(!inner.trim())inner='<p style="margin:0 0 .85rem;color:#5B6770;font-style:italic;">(No page content — see linked file.)</p>';
+   cards+=card(t,inner);}
+ return pageHtml(groupTitle,cards);}
+
+/* ===================== MANIFEST helpers ===================== */
+function stripNs(x){return x.replace(/xmlns(:[A-Za-z0-9]+)?="[^"]*"/g,'')
+ .replace(/<(\/?)[A-Za-z0-9]+:/g,'<$1').replace(/\s(xsi|lom|lomimscc|lomm|lomr|cpx):[A-Za-z]+="[^"]*"/g,'');}
+function parseManifest(man){const doc=new DOMParser().parseFromString(stripNs(man),'application/xml');return doc;}
+function titleOf(it){const t=[...it.children].find(c=>c.tagName==='title');return t?(t.textContent||'').trim():'';}
+
+/* build resource href map + entry resolver */
+function buildModel(zip,man){
+ const doc=parseManifest(man);
+ const resHref={},resDeps={};
+ doc.querySelectorAll('resource').forEach(r=>{let href=r.getAttribute('href')||'';
+   if(!href){const fe=r.querySelector('file');href=fe?fe.getAttribute('href'):'';}
+   resHref[r.getAttribute('identifier')]=href||'';
+   resDeps[r.getAttribute('identifier')]=[...r.querySelectorAll('dependency')].map(d=>d.getAttribute('identifierref'));});
+ const names=zip.entries.map(e=>e.name);
+ const entryFor=h=>{if(!h)return null;if(zip.byName[h])return h;
+   const suf=h.includes('/')?h.slice(h.indexOf('/')+1):h;
+   return names.find(n=>n.endsWith('/'+suf)||n.endsWith(suf))||null;};
+ const titleByHref={};
+ doc.querySelectorAll('item').forEach(it=>{const ir=it.getAttribute('identifierref');
+   if(ir&&resHref[ir]!==undefined)titleByHref[resHref[ir]]=titleOf(it);});
+ const org=doc.querySelector('organization');
+ return {doc,org,resHref,resDeps,entryFor,titleByHref,
+   htmlEntry:it=>{const ir=it.getAttribute('identifierref');if(!ir)return null;
+     const e=entryFor(resHref[ir]||'');return e&&e.toLowerCase().endsWith('.html')?e:null;},
+   restyleTitle:e=>{for(const[h,t]of Object.entries(titleByHref))if(entryFor(h)===e)return t;
+     return e.split('/').pop().replace(/\.html$/i,'');}};
+}
+
+/* ===================== ORDER repair ===================== */
+/* Conservatively re-sort ONLY clearly-numbered siblings (Lecture/Lab/Week N…) when they're
+   out of numeric order; un-numbered items never move. Mirrors reorder_manifest() in rebrand.py. */
+const NUMWORD=/(?:lecture|lab|week|unit|module|lesson|chapter|topic|day|part|session|class|no\.?|number)\s*#?\s*(\d+)/i;
+const LEADNUM=/^\s*#?\s*(\d+)\s*[.):\-]/;
+function seqnum(t){t=t||'';const m=t.match(NUMWORD)||t.match(LEADNUM);return m?parseInt(m[1],10):null;}
+function newTok(){return /<item\b[^>]*?\/>|<item\b[^>]*?>|<\/item>/g;}
+function blockEnd(s,start){
+ const m=s.slice(start).match(/^<item\b[^>]*?>/);if(!m)return start;
+ if(m[0].endsWith('/>'))return start+m[0].length;
+ let depth=1;const T=newTok();T.lastIndex=start+m[0].length;let mt;
+ while((mt=T.exec(s))){const tok=mt[0];if(tok.endsWith('/>'))continue;
+   if(tok==='</item>'){depth--;if(depth===0)return T.lastIndex;}else depth++;}
+ return s.length;}
+function childBlocks(inner){const out=[];let depth=0,cs=null,mt;const T=newTok();
+ while((mt=T.exec(inner))){const tok=mt[0];
+   if(tok.endsWith('/>')){if(depth===0)out.push([mt.index,T.lastIndex]);}
+   else if(tok==='</item>'){depth--;if(depth===0&&cs!==null){out.push([cs,T.lastIndex]);cs=null;}}
+   else{if(depth===0)cs=mt.index;depth++;}}
+ return out;}
+function planOrder(children){ // children:[[id,title]] -> new id order or null
+ const nums=children.map(c=>seqnum(c[1])),pos=[];nums.forEach((n,k)=>{if(n!==null)pos.push(k);});
+ if(pos.length<2)return null;
+ const cur=pos.map(k=>children[k][0]);
+ const srt=pos.slice().sort((a,b)=>(nums[a]-nums[b])||(a-b)).map(k=>children[k][0]);
+ if(cur.join('\0')===srt.join('\0'))return null;
+ const ids=children.map(c=>c[0]);pos.forEach((slot,i)=>ids[slot]=srt[i]);return ids;}
+function reorderManifest(m,man){const logs=[],plans=[];
+ for(const parent of [...m.doc.querySelectorAll('item')]){
+   const kids=[...parent.children].filter(c=>c.tagName==='item').map(c=>[c.getAttribute('identifier'),titleOf(c)]);
+   if(kids.length<2)continue;const np=planOrder(kids);if(np)plans.push([parent.getAttribute('identifier'),titleOf(parent),np]);}
+ for(const[pid,ptitle,newids]of plans){if(!pid)continue;
+   const om=man.match(new RegExp('<item\\b[^>]*\\bidentifier="'+esc4(pid)+'"'));if(!om)continue;
+   const ps=om.index,pe=blockEnd(man,ps),block=man.slice(ps,pe);
+   const ot=block.match(/^<item\b[^>]*?>/)[0],inner=block.slice(ot.length,block.length-'</item>'.length);
+   const cb=childBlocks(inner);if(cb.length!==newids.length)continue;
+   const texts={};let ok=true;
+   for(const[cs,ce]of cb){const cid=inner.slice(cs,ce).match(/\bidentifier="([^"]+)"/);if(!cid){ok=false;break;}texts[cid[1]]=inner.slice(cs,ce);}
+   if(!ok||Object.keys(texts).length!==cb.length)continue;
+   const gaps=[];for(let k=0;k<cb.length-1;k++)gaps.push(inner.slice(cb[k][1],cb[k+1][0]));
+   const first=cb[0][0],last=cb[cb.length-1][1];let rebuilt='';
+   newids.forEach((cid,i)=>{rebuilt+=texts[cid]||'';if(i<gaps.length)rebuilt+=gaps[i];});
+   man=man.slice(0,ps)+ot+inner.slice(0,first)+rebuilt+inner.slice(last)+'</item>'+man.slice(pe);
+   logs.push(`  reordered "${ptitle}" back into numeric sequence`);}
+ return {man,logs};}
+
+/* ===================== BUILD: restyle ===================== */
+async function buildRestyle(zip,man,m,reorder){
+ const htmlEntries={};
+ for(const[h,t]of Object.entries(m.titleByHref)){const e=m.entryFor(h);
+   if(e&&e.toLowerCase().endsWith('.html'))htmlEntries[e]=t;}
+ let outMan=man;if(reorder){const r=reorderManifest(m,man);outMan=r.man;r.logs.forEach(l=>log(l));}
+ const w=makeZipWriter();let re=0,cp=0;
+ for(const e of zip.entries){
+   if(e.name==='imsmanifest.xml'){await w.addText(e.name,outMan);cp++;continue;}
+   if(htmlEntries[e.name]!==undefined){const raw=await zip.text(e.name);
+     const bm=raw.match(/<body[^>]*>([\s\S]*)<\/body>/i);const body=bm?bm[1]:raw;
+     await w.addText(e.name,renderStandalone(htmlEntries[e.name]||m.restyleTitle(e.name),body));re++;}
+   else{w.copy(e);cp++;}
+ }
+ log(`  restyled ${re} pages, copied ${cp} files`);
+ return w.finish();
+}
+
+/* ===================== BUILD: combine ===================== */
+const INSTR=t=>/instructor info|instructor information/i.test(t);
+function xesc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+async function buildCombine(zip,man,m,keepSep,reorder){
+ const groups=[];
+ const visit=it=>{let run=[];
+   const flush=()=>{if(run.length>=2)groups.push({sub:titleOf(it),members:run.slice()});run=[];};
+   for(const c of [...it.children].filter(x=>x.tagName==='item')){
+     const he=m.htmlEntry(c);
+     if(he&&!INSTR(titleOf(c)))run.push(c);
+     else{flush();if([...c.children].some(x=>x.tagName==='item'))visit(c);}}
+   flush();};
+ [...m.org.children].filter(x=>x.tagName==='item').forEach(top=>{if(!keepSep.has(titleOf(top)))visit(top);});
+
+ const itemRm=new Set(),resRm=new Set(),hostExtra={},hostCombined={},relocate={},skip=new Set();
+ const fold=e=>e.slice(0,e.lastIndexOf('/'));
+ const bodyOf=async e=>{const raw=await zip.text(e);const bm=raw.match(/<body[^>]*>([\s\S]*)<\/body>/i);return bm?bm[1]:raw;};
+ for(const g of groups){const members=g.members,host=members[0];
+   const hostE=m.htmlEntry(host),hostFol=fold(hostE),hostRes=host.getAttribute('identifierref');
+   const rendered=[[titleOf(host),await bodyOf(hostE)]];
+   for(const mem of members.slice(1)){const me=m.htmlEntry(mem),mfol=fold(me),base=mfol.split('/').pop();
+     for(const e of zip.entries){if(e.name.startsWith(mfol+'/')&&!e.name.toLowerCase().endsWith('.html')){
+       const np=`${hostFol}/_m/${base}/${e.name.slice(mfol.length+1)}`;relocate[np]=e;
+       (hostExtra[hostRes]=hostExtra[hostRes]||[]).push(np);}}
+     let b=await bodyOf(me);
+     b=b.replace(/(src|href)="([^"]*)"/g,(mm,a,v)=>{if(!v.trim())return mm;
+       if(/^(https?:|mailto:|#|data:|\/)/.test(v))return mm;const vv=v.startsWith('./')?v.slice(2):v;return `${a}="_m/${base}/${vv}"`;});
+     rendered.push([titleOf(mem),b]);
+     itemRm.add(mem.getAttribute('identifier'));resRm.add(mem.getAttribute('identifierref'));
+     (m.resDeps[mem.getAttribute('identifierref')]||[]).forEach(d=>resRm.add(d));skip.add(mfol);}
+   hostCombined[hostE]=renderCombined(g.sub,rendered);}
+
+ // manifest surgery (string) — reorder FIRST (by identifier), then prune merged items
+ let nm=man;
+ if(reorder){const r=reorderManifest(m,man);nm=r.man;r.logs.forEach(l=>log(l));}
+ for(const iid of itemRm)nm=nm.replace(new RegExp('<item\\b[^>]*identifier="'+esc4(iid)+'"[^>]*>[\\s\\S]*?</item>\\s*'),'');
+ for(const rid of resRm){nm=nm.replace(new RegExp('<resource\\b[^>]*identifier="'+esc4(rid)+'"[^>]*>[\\s\\S]*?</resource>\\s*'),'');
+   nm=nm.replace(new RegExp('<resource\\b[^>]*identifier="'+esc4(rid)+'"[^>]*/>\\s*'),'');}
+ for(const[rid,paths]of Object.entries(hostExtra)){
+   const fx=[...new Set(paths)].sort().map(p=>`\n      <file href="${xesc(p)}" />`).join('');
+   nm=nm.replace(new RegExp('(<resource\\b[^>]*identifier="'+esc4(rid)+'"[^>]*>[\\s\\S]*?)</resource>'),(mm,a)=>a+fx+'\n    </resource>');}
+
+ const w=makeZipWriter();let co=0,re=0,cp=0,rl=0,sk=0;
+ for(const e of zip.entries){
+   if([...skip].some(f=>e.name.startsWith(f+'/'))){sk++;continue;}
+   if(e.name==='imsmanifest.xml'){await w.addText(e.name,nm);continue;}
+   if(hostCombined[e.name]!==undefined){await w.addText(e.name,hostCombined[e.name]);co++;continue;}
+   if(e.name.toLowerCase().endsWith('.html')){await w.addText(e.name,renderStandalone(m.restyleTitle(e.name),await bodyOf(e.name)));re++;continue;}
+   w.copy(e);cp++;}
+ for(const[np,e]of Object.entries(relocate)){w.copyAs(e,np);rl++;}
+ log(`  ${groups.length} merge groups, ${itemRm.size} pages folded in · combined ${co}, restyled ${re}, relocated ${rl} assets`);
+ return w.finish();
+}
+function esc4(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
+
+/* ===================== VERIFY ===================== */
+async function verify(blob){
+ const zip=readZip(await blob.arrayBuffer());
+ const names=new Set(zip.entries.map(e=>e.name));
+ const man=await zip.text('imsmanifest.xml');let ok=true,issues=[];
+ let doc;try{doc=parseManifest(man);if(doc.querySelector('parsererror'))throw 0;}catch(e){log('  manifest parse FAIL','err');return false;}
+ const resIds=new Set([...doc.querySelectorAll('resource')].map(r=>r.getAttribute('identifier')));
+ const dangI=[...doc.querySelectorAll('item')].filter(it=>it.getAttribute('identifierref')&&!resIds.has(it.getAttribute('identifierref'))).length;
+ const dangD=[...doc.querySelectorAll('dependency')].filter(d=>!resIds.has(d.getAttribute('identifierref'))).length;
+ const dec=s=>{try{return decodeURIComponent(s)}catch(e){return s}};
+ const zhas=h=>{h=dec(h);if(names.has(h))return true;for(const n of names)if(n.endsWith('/'+h)||n.endsWith(h))return true;return false;};
+ let miss=0;doc.querySelectorAll('resource file').forEach(f=>{const h=f.getAttribute('href');if(h&&!zhas(h))miss++;});
+ // in-page refs
+ let checked=0,broken=0;
+ for(const e of zip.entries){if(!e.name.toLowerCase().endsWith('.html'))continue;
+   const folder=e.name.slice(0,e.name.lastIndexOf('/'));const raw=await zip.text(e.name);
+   for(const mm of raw.matchAll(/(?:src|href)="([^"]+)"/g)){let v=mm[1].replace(/&amp;/g,'&');
+     if(/^(https?:|mailto:|tel:|#|data:|javascript:|@X@)/i.test(v)||v.startsWith('/'))continue;
+     checked++;const tgt=dec(normPath(folder+'/'+v));if(!names.has(tgt))broken++;}}
+ let vids=0;for(const e of zip.entries){if(e.name.toLowerCase().endsWith('.html')){const r=await zip.text(e.name);vids+=(r.match(/<iframe[^>]+src="https?:\/\//g)||[]).length;}}
+ log(`  manifest parses · dangling item→res:${dangI} dep→res:${dangD} · missing files:${miss}`);
+ log(`  in-page refs ${checked} checked, ${broken} broken · live videos:${vids}`);
+ ok=!dangI&&!dangD&&!miss&&!broken;
+ log('  RESULT: '+(ok?'PASS':'CHECK WARNINGS'),ok?'pass':'warn');
+ return ok;
+}
+function normPath(p){const parts=[];for(const s of p.split('/')){if(s==='.'||s==='')continue;if(s==='..')parts.pop();else parts.push(s);}return parts.join('/');}
+
+/* ===================== UI ===================== */
+let FILE=null;
+function setFile(f){FILE=f;$('#go').disabled=!f;$('#fname').textContent=f?`— ${f.name} (${(f.size/1048576).toFixed(0)} MB)`:'';}
+$('#file').addEventListener('change',e=>setFile(e.target.files[0]));
+$('#drop').addEventListener('click',()=>$('#file').click());
+['dragover','dragenter'].forEach(ev=>$('#drop').addEventListener(ev,e=>{e.preventDefault();$('#drop').classList.add('hot');}));
+['dragleave','drop'].forEach(ev=>$('#drop').addEventListener(ev,e=>{e.preventDefault();$('#drop').classList.remove('hot');}));
+$('#drop').addEventListener('drop',e=>{if(e.dataTransfer.files[0])setFile(e.dataTransfer.files[0]);});
+
+function dlButton(blob,name,safe){const url=URL.createObjectURL(blob);const a=document.createElement('a');
+ a.href=url;a.download=name;a.className='dl'+(safe?' safe':'');a.textContent='⬇ '+name;$('#downloads').appendChild(a);}
+
+$('#go').addEventListener('click',async()=>{
+ if(!FILE)return;
+ if(typeof CompressionStream==='undefined'){log('Your browser lacks CompressionStream — use a recent Chrome/Edge.','err');return;}
+ $('#go').disabled=true;$('#log').textContent='';$('#log').style.display='block';$('#downloads').innerHTML='';
+ const mode=document.querySelector('input[name=mode]:checked').value;
+ const keep=new Set($('#keep').value.split(',').map(s=>s.trim()).filter(Boolean));
+ const base=FILE.name.replace(/\.(imscc|zip)$/i,'');
+ try{
+   log('Reading '+FILE.name+' …');
+   const zip=readZip(await FILE.arrayBuffer());
+   const man=await zip.text('imsmanifest.xml');
+   if(!man){log('No imsmanifest.xml — is this a Brightspace export?','err');$('#go').disabled=false;return;}
+   const m=buildModel(zip,man);
+   const htmlN=Object.keys(m.titleByHref).filter(h=>{const e=m.entryFor(h);return e&&e.toLowerCase().endsWith('.html');}).length;
+   log(`Course has ${zip.entries.length} entries, ${htmlN} HTML pages.\n`);
+   if(mode==='restyle'||mode==='both'){
+     log('Building RESTYLE …');const b=await buildRestyle(zip,man,m,true);
+     log('Verifying restyle:');await verify(b);dlButton(b,`${base} - REBRANDED.imscc`,true);log('');
+   }
+   if(mode==='combine'||mode==='both'){
+     log('Building COMBINED …');const b=await buildCombine(zip,man,m,keep,true);
+     log('Verifying combined:');await verify(b);dlButton(b,`${base} - REBRANDED (combined).imscc`,false);log('');
+   }
+   log('Done. Click the download button(s) above.','pass');
+ }catch(err){log('ERROR: '+err.message,'err');console.error(err);}
+ $('#go').disabled=false;
+});
+</script>
+</body></html>
