@@ -44,6 +44,10 @@
   .note{background:#fff7e6;border:1px solid #f0d9a8;border-radius:.7rem;padding:.8rem 1rem;margin:1rem 0 0;font-size:.92rem;}
   .note b{color:#a8500a;}
   .path{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.86rem;color:var(--forest);}
+  #modlist{margin-top:.3rem;}
+  .modrow{display:flex;align-items:center;gap:.55rem;padding:.4rem .2rem;border-top:1px solid var(--border);font-size:.95rem;cursor:pointer;}
+  .modrow:first-child{border-top:0;}
+  .modrow input{width:1.1rem;height:1.1rem;flex-shrink:0;}
 </style></head>
 <body><div class="wrap">
   <h1>RDP Course Rebrand <span class="pill">runs on your computer</span></h1>
@@ -78,13 +82,20 @@
       <span id="fname" class="muted"></span></div>
 
     <details style="margin-top:1rem;">
-      <summary class="muted" style="cursor:pointer;">Advanced options (most people can ignore these)</summary>
-      <div class="opts" style="margin-top:.7rem;">
-        <label><input type="radio" name="mode" value="both" checked> Make both versions (recommended)</label>
-        <label><input type="radio" name="mode" value="restyle"> New look only</label>
-        <label><input type="radio" name="mode" value="combine"> New look + fewer pages</label>
-        <label title="Top-level modules to leave un-merged (comma separated)">Don't combine pages in:
-          <input id="keep" type="text" value="Course Content"></label>
+      <summary class="muted" style="cursor:pointer;">Choices (you can skip these — the defaults are fine)</summary>
+      <div style="margin-top:.7rem;">
+        <p style="margin:.2rem 0 .4rem;font-weight:700;">What should I make?</p>
+        <div class="opts">
+          <label><input type="radio" name="mode" value="both" checked> Both versions (recommended)</label>
+          <label><input type="radio" name="mode" value="restyle"> New look only</label>
+          <label><input type="radio" name="mode" value="combine"> New look + combine short pages</label>
+        </div>
+
+        <p style="margin:1.1rem 0 .3rem;font-weight:700;">Combine pages that have very little on them?</p>
+        <p class="muted" style="margin:0 0 .4rem;">Some courses have lots of <b>short pages</b> — just a sentence or a single link.
+           Leaving a section <b>ticked</b> merges those near-empty pages together so students do less clicking.
+           <b>Un-tick</b> a section to leave its pages exactly as they are. Your sections appear here after you choose your file:</p>
+        <div id="modlist" class="muted">Choose your <span class="ext">.imscc</span> file above and your course sections will show up here.</div>
       </div>
     </details>
     <div id="downloads" style="margin-top:.8rem"></div>
@@ -96,7 +107,7 @@
     <p style="margin:.1rem 0;">When it's done, you'll get <b>download button(s)</b> above. You'll usually see two files:</p>
     <ul style="margin:.4rem 0 .2rem 1.2rem;padding:0;">
       <li><b>REBRANDED</b> — the new look, same pages as before <span class="muted">(the safe choice)</span></li>
-      <li><b>REBRANDED (combined)</b> — the new look <i>and</i> fewer pages to click through</li>
+      <li><b>REBRANDED (combined)</b> — the new look, with the very short pages merged together so there's less clicking</li>
     </ul>
     <p style="margin:.5rem 0 0;">Import one of these back into Brightspace the same way you'd import any course
        (Course Admin → Import/Export/Copy Components → <b>Import</b>). <b>Try it in a practice/sandbox course
@@ -503,8 +514,35 @@ async function verify(blob){
 function normPath(p){const parts=[];for(const s of p.split('/')){if(s==='.'||s==='')continue;if(s==='..')parts.pop();else parts.push(s);}return parts.join('/');}
 
 /* ===================== UI ===================== */
-let FILE=null;
-function setFile(f){FILE=f;$('#go').disabled=!f;$('#fname').textContent=f?`— ${f.name} (${(f.size/1048576).toFixed(0)} MB)`:'';}
+let FILE=null, MODEL=null;
+// Sections un-ticked by default (rarely worth merging). Matched case-insensitively.
+const DEFAULT_KEEP=['course content'];
+
+async function setFile(f){
+ FILE=f; MODEL=null; $('#go').disabled=true;
+ $('#fname').textContent=f?`— ${f.name} (${(f.size/1048576).toFixed(0)} MB)`:'';
+ $('#downloads').innerHTML=''; $('#log').style.display='none'; $('#log').textContent='';
+ if(!f){$('#modlist').textContent='Choose your .imscc file above and your course sections will show up here.';return;}
+ $('#modlist').innerHTML='<span class="muted">Reading your course… (a big course can take a moment)</span>';
+ try{
+   const zip=readZip(await f.arrayBuffer());
+   const man=await zip.text('imsmanifest.xml');
+   if(!man){$('#modlist').innerHTML='<span class="err">This file has no course manifest inside — it may not be the <b>.imscc</b> that Brightspace exported. (A plain .zip you made yourself won\'t work.)</span>';return;}
+   const m=buildModel(zip,man);
+   MODEL={zip,man,m};
+   renderModules(m);
+   $('#go').disabled=false;
+ }catch(err){$('#modlist').innerHTML='<span class="err">Could not read this file: '+esc(err.message)+'</span>';console.error(err);}
+}
+function renderModules(m){
+ const tops=[...m.org.children].filter(c=>c.tagName==='item');
+ if(!tops.length){$('#modlist').innerHTML='<span class="muted">No sections found in this course.</span>';return;}
+ $('#modlist').innerHTML=tops.map((it,i)=>{
+   const t=titleOf(it)||('(untitled section '+(i+1)+')');
+   const checked=DEFAULT_KEEP.includes(t.trim().toLowerCase())?'':'checked';
+   return `<label class="modrow"><input type="checkbox" class="modchk" data-title="${xesc(t)}" ${checked}><span>${esc(t)}</span></label>`;
+ }).join('');
+}
 $('#file').addEventListener('change',e=>setFile(e.target.files[0]));
 $('#drop').addEventListener('click',()=>$('#file').click());
 ['dragover','dragenter'].forEach(ev=>$('#drop').addEventListener(ev,e=>{e.preventDefault();$('#drop').classList.add('hot');}));
@@ -515,30 +553,27 @@ function dlButton(blob,name,safe){const url=URL.createObjectURL(blob);const a=do
  a.href=url;a.download=name;a.className='dl'+(safe?' safe':'');a.textContent='⬇ '+name;$('#downloads').appendChild(a);}
 
 $('#go').addEventListener('click',async()=>{
- if(!FILE)return;
- if(typeof CompressionStream==='undefined'){log('Your browser lacks CompressionStream — use a recent Chrome/Edge.','err');return;}
+ if(!FILE||!MODEL)return;
+ if(typeof CompressionStream==='undefined'){log('Your browser is too old — please use a recent Chrome or Edge.','err');return;}
  $('#go').disabled=true;$('#log').textContent='';$('#log').style.display='block';$('#downloads').innerHTML='';
  const mode=document.querySelector('input[name=mode]:checked').value;
- const keep=new Set($('#keep').value.split(',').map(s=>s.trim()).filter(Boolean));
+ // Sections left UN-ticked are kept as-is (not combined).
+ const keep=new Set([...document.querySelectorAll('.modchk')].filter(c=>!c.checked).map(c=>c.getAttribute('data-title')));
  const base=FILE.name.replace(/\.(imscc|zip)$/i,'');
+ const {zip,man,m}=MODEL;
  try{
-   log('Reading '+FILE.name+' …');
-   const zip=readZip(await FILE.arrayBuffer());
-   const man=await zip.text('imsmanifest.xml');
-   if(!man){log('No imsmanifest.xml — is this a Brightspace export?','err');$('#go').disabled=false;return;}
-   const m=buildModel(zip,man);
    const htmlN=Object.keys(m.titleByHref).filter(h=>{const e=m.entryFor(h);return e&&e.toLowerCase().endsWith('.html');}).length;
-   log(`Course has ${zip.entries.length} entries, ${htmlN} HTML pages.\n`);
+   log(`Your course: ${zip.entries.length} files, ${htmlN} pages.\n`);
    if(mode==='restyle'||mode==='both'){
-     log('Building RESTYLE …');const b=await buildRestyle(zip,man,m,true);
-     log('Verifying restyle:');await verify(b);dlButton(b,`${base} - REBRANDED.imscc`,true);log('');
+     log('Making the new-look version …');const b=await buildRestyle(zip,man,m,true);
+     log('Double-checking it:');await verify(b);dlButton(b,`${base} - REBRANDED.imscc`,true);log('');
    }
    if(mode==='combine'||mode==='both'){
-     log('Building COMBINED …');const b=await buildCombine(zip,man,m,keep,true);
-     log('Verifying combined:');await verify(b);dlButton(b,`${base} - REBRANDED (combined).imscc`,false);log('');
+     log('Making the new-look + combined version …');const b=await buildCombine(zip,man,m,keep,true);
+     log('Double-checking it:');await verify(b);dlButton(b,`${base} - REBRANDED (combined).imscc`,false);log('');
    }
-   log('Done. Click the download button(s) above.','pass');
- }catch(err){log('ERROR: '+err.message,'err');console.error(err);}
+   log('All done! Click the download button(s) above.','pass');
+ }catch(err){log('Something went wrong: '+err.message,'err');console.error(err);}
  $('#go').disabled=false;
 });
 </script>
