@@ -69,8 +69,14 @@
       <li><b>Import / Export / Copy Components</b></li>
       <li>Choose <b>Export as Common Cartridge</b> — <u>not</u> "Export as Brightspace Package" and
           <u>not</u> "Thin Common Cartridge". Only plain <b>Common Cartridge</b> includes your actual page content.</li>
-      <li>Click <b>Export</b> and wait a moment while Brightspace builds it. When it's done, you'll get a
-          <b>notification on the bell (🔔) at the top of the page</b> — click it, then download the file from there.</li>
+      <li>On the <b>"Select Components to Export"</b> screen, tick the top box — <b>Select All Components</b>.
+          That ticks everything (Content, Assignments, Quizzes, and so on). <span class="muted">When in doubt, take
+          it all — including extra components does no harm, and leaving things out is what usually goes wrong.</span>
+          If it asks whether to include <b>all items</b> or pick them individually, choose <b>all items</b>. Then click
+          <b>Continue</b>.</li>
+      <li>Click <b>Export</b> (and <b>Finish</b> / confirm if it asks) and wait a moment while Brightspace builds it.
+          When it's done, you'll get a <b>notification on the bell (🔔) at the top of the page</b> — click it, then
+          download the file from there.</li>
     </ol>
     <p style="margin:.7rem 0 0;">That download is your course file — it'll be named something like
        <span class="path">YourCourse.imscc</span>.
@@ -224,8 +230,8 @@ function makeZipWriter(){
 }
 
 /* ===================== ENGINE (ported from engine.py) ===================== */
-const COLORS={forest:'#004238',green:'#067a3a',lime:'#5a7a00',orange:'#a8500a',egg:'#51284F',violet:'#685BC7',slate:'#5B6770'};
-const BG={forest:'#e6f7ed',green:'#e6f7ed',lime:'#f2f9d9',orange:'#fff3e6',egg:'#f0e8f0',violet:'#efedf9',slate:'#eef0f1'};
+const COLORS={forest:'#003129',green:'#015E2B',lime:'#435A00',orange:'#813B03',egg:'#3D1C3C',violet:'#4032A4',slate:'#434C54'};
+const BG={forest:'#B8CFC6',green:'#B8D8C6',lime:'#CFD9AE',orange:'#E6CEB9',egg:'#CCBFCC',violet:'#CCC8E8',slate:'#CCCFD2'};
 const SVG={
  read:'<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>',
  watch:'<circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon>',
@@ -267,19 +273,19 @@ const KEEP_ATTR={a:new Set(['href','target','rel']),img:new Set(['src','alt','wi
  iframe:new Set(['src','width','height','allow','allowfullscreen','frameborder','title','loading'])};
 const INLINE_STYLE={p:'margin:0 0 .85rem;',li:'margin-bottom:.35rem;line-height:1.65;',
  ul:'margin:.4rem 0 1rem 1.4rem;padding:0;',ol:'margin:.4rem 0 1rem 1.4rem;padding:0;',
- a:'color:#004238;text-decoration:underline;text-underline-offset:2px;',
+ a:'color:#003129;text-decoration:underline;text-underline-offset:2px;',
  img:'max-width:100%;height:auto;border-radius:.5rem;margin:.4rem 0;',
  strong:'font-weight:700;color:#26303a;',b:'font-weight:700;color:#26303a;',em:'font-style:italic;',i:'font-style:italic;',
- h1:'font-size:1.3rem;font-weight:800;color:#004238;margin:1.2rem 0 .6rem;line-height:1.25;',
- h2:'font-size:1.15rem;font-weight:800;color:#004238;margin:1.1rem 0 .55rem;line-height:1.25;',
- h3:'font-size:1.02rem;font-weight:700;color:#004238;margin:1rem 0 .5rem;line-height:1.3;',
+ h1:'font-size:1.3rem;font-weight:800;color:#003129;margin:1.2rem 0 .6rem;line-height:1.25;',
+ h2:'font-size:1.15rem;font-weight:800;color:#003129;margin:1.1rem 0 .55rem;line-height:1.25;',
+ h3:'font-size:1.02rem;font-weight:700;color:#003129;margin:1rem 0 .5rem;line-height:1.3;',
  h4:'font-size:.95rem;font-weight:700;color:#26303a;margin:.9rem 0 .45rem;',
- blockquote:'margin:.7rem 0 1rem;padding:.6rem 1rem;border-left:4px solid #685BC7;background:#efedf9;border-radius:.6rem;',
+ blockquote:'margin:.7rem 0 1rem;padding:.6rem 1rem;border-left:4px solid #4032A4;background:#CCC8E8;border-radius:.6rem;',
  hr:'border:0;border-top:1px solid #E8E8E8;margin:1.4rem 0;',
  iframe:'max-width:100%;border:0;border-radius:.6rem;margin:.6rem 0;',
  table:'border-collapse:collapse;width:100%;margin:.6rem 0 1.1rem;font-size:.95rem;',
  td:'border:1px solid #E8E8E8;padding:.5rem .65rem;vertical-align:top;',
- th:'border:1px solid #E8E8E8;padding:.5rem .65rem;text-align:left;background:#f0e8f0;color:#51284F;font-weight:700;'};
+ th:'border:1px solid #E8E8E8;padding:.5rem .65rem;text-align:left;background:#CCBFCC;color:#3D1C3C;font-weight:700;'};
 const LAYOUT_TD='padding:.35rem .6rem;vertical-align:top;';
 const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
