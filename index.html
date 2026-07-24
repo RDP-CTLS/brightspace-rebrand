@@ -817,7 +817,7 @@ async function verify(blob){
  const zhas=h=>{h=dec(h);if(names.has(h))return true;for(const n of names){const d=dec(n);if(d===h||d.endsWith('/'+h))return true;}return false;};
  let miss=0;doc.querySelectorAll('resource file').forEach(f=>{const h=f.getAttribute('href');if(h&&!zhas(h))miss++;});
  // in-page refs
- let checked=0,broken=0,unbal=0;const unbalNotes=[];
+ let checked=0,broken=0,unbal=0,styledN=0;const unbalNotes=[];
  const decNames=new Set([...names].map(dec));   // zip may store encoded names; compare decoded too
  for(const e of zip.entries){if(!e.name.toLowerCase().endsWith('.html'))continue;
    // root-level pages have NO folder — slice(0,-1) used to chop the filename's last char
@@ -826,12 +826,16 @@ async function verify(blob){
    for(const mm of raw.matchAll(/(?:src|href)="([^"]+)"/g)){let v=mm[1].replace(/&amp;/g,'&');
      if(/^(https?:|mailto:|tel:|#|data:|javascript:|@X@)/i.test(v)||v.startsWith('/'))continue;
      checked++;const tgt=dec(normPath(folder+'/'+v));if(!names.has(tgt)&&!decNames.has(tgt))broken++;}
-   const errs=tagBalance(raw);
-   if(errs.length){unbal++;if(unbalNotes.length<4)unbalNotes.push(`${e.name.split('/').pop()}: ${errs[0]}`);}}
+   // Balance-lint only pages THIS TOOL generated (they carry the wrapper's font stack).
+   // Old hand-written pages riding along in course files are passed through byte-identical,
+   // and their legacy tag soup is not ours to warn about.
+   if(raw.includes("font-family:'Inter','Aribau Grotesk'")){styledN++;
+     const errs=tagBalance(raw);
+     if(errs.length){unbal++;if(unbalNotes.length<4)unbalNotes.push(`${e.name.split('/').pop()}: ${errs[0]}`);}}}
  let vids=0;for(const e of zip.entries){if(e.name.toLowerCase().endsWith('.html')){const r=await zip.text(e.name);vids+=(r.match(/<iframe[^>]+src="https?:\/\//g)||[]).length;}}
  log(`  manifest parses · dangling item→res:${dangI} dep→res:${dangD} · missing files:${miss}`);
  log(`  in-page refs ${checked} checked, ${broken} broken · live videos:${vids}`);
- log(`  tag balance: ${unbal?unbal+' page(s) with mismatched tags':'every page closes what it opens'}`,unbal?'err':undefined);
+ log(`  tag balance (${styledN} styled page${styledN===1?'':'s'}): ${unbal?unbal+' with mismatched tags':'every page closes what it opens'}`,unbal?'err':undefined);
  unbalNotes.forEach(n=>log('    '+n,'err'));
  ok=!dangI&&!dangD&&!miss&&!broken&&!unbal;
  log('  RESULT: '+(ok?'PASS':'CHECK WARNINGS'),ok?'pass':'warn');
@@ -953,6 +957,9 @@ $('#go').addEventListener('click',async()=>{
      // Brightspace Package: restyle pages only. No reorder, no combine — the manifest
      // (unit descriptions!) and every D2L data file pass through byte-identical.
      log('Brightspace Package — styling your pages; everything else rides along unchanged …');
+     {const allHtml=zip.entries.filter(e=>e.name.toLowerCase().endsWith('.html')).length;
+      const topicHtml=new Set(Object.keys(m.titleByHref).map(h=>m.entryFor(h)).filter(e=>e&&e.toLowerCase().endsWith('.html'))).size;
+      if(allHtml>topicHtml)log(`  note: ${allHtml-topicHtml} other page(s) in your course files aren't part of Content (old/loose files) — passed through untouched`);}
      let b=await buildRestyle(zip,man,m,false);
      b=await repairRefs(b);
      log('Double-checking it:');await verify(b);dlButton(b,`${base} - Template Applied.zip`,true);log('');
