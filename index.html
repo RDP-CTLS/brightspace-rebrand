@@ -785,6 +785,25 @@ async function buildCombine(zip,man,m,keepSep,reorder){
 function esc4(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
 
 /* ===================== VERIFY ===================== */
+// Tag-balance lint: every page we write must close what it opens. One stray or
+// unclosed </div> inside Brightspace bleeds the rest of the page out of its card,
+// so the OUTPUT is checked before the download button is offered.
+const VOIDTAGS=new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);
+function tagBalance(html){
+ html=html.replace(/<!--[\s\S]*?-->/g,'').replace(/<!DOCTYPE[^>]*>/gi,'');
+ const stack=[],errs=[];
+ const re=/<(\/?)([a-zA-Z][a-zA-Z0-9-]*)((?:"[^"]*"|'[^']*'|[^>"'])*)>/g;let m;
+ while((m=re.exec(html))){
+   const close=!!m[1],name=m[2].toLowerCase();
+   if(VOIDTAGS.has(name))continue;
+   if(!close){if(!m[3].trimEnd().endsWith('/'))stack.push(name);continue;}
+   if(stack.length&&stack[stack.length-1]===name){stack.pop();continue;}
+   const i=stack.lastIndexOf(name);
+   if(i<0)errs.push(`stray </${name}>`);
+   else{errs.push(`unclosed <${stack.slice(i+1).join('>, <')}>`);stack.length=i;}
+ }
+ if(stack.length)errs.push(`unclosed <${stack.join('>, <')}>`);
+ return errs;}
 async function verify(blob){
  const zip=readZip(await blob.arrayBuffer());
  const names=new Set(zip.entries.map(e=>e.name));
@@ -798,7 +817,7 @@ async function verify(blob){
  const zhas=h=>{h=dec(h);if(names.has(h))return true;for(const n of names){const d=dec(n);if(d===h||d.endsWith('/'+h))return true;}return false;};
  let miss=0;doc.querySelectorAll('resource file').forEach(f=>{const h=f.getAttribute('href');if(h&&!zhas(h))miss++;});
  // in-page refs
- let checked=0,broken=0;
+ let checked=0,broken=0,unbal=0;const unbalNotes=[];
  const decNames=new Set([...names].map(dec));   // zip may store encoded names; compare decoded too
  for(const e of zip.entries){if(!e.name.toLowerCase().endsWith('.html'))continue;
    // root-level pages have NO folder — slice(0,-1) used to chop the filename's last char
@@ -806,11 +825,15 @@ async function verify(blob){
    const folder=e.name.includes('/')?e.name.slice(0,e.name.lastIndexOf('/')):'';const raw=await zip.text(e.name);
    for(const mm of raw.matchAll(/(?:src|href)="([^"]+)"/g)){let v=mm[1].replace(/&amp;/g,'&');
      if(/^(https?:|mailto:|tel:|#|data:|javascript:|@X@)/i.test(v)||v.startsWith('/'))continue;
-     checked++;const tgt=dec(normPath(folder+'/'+v));if(!names.has(tgt)&&!decNames.has(tgt))broken++;}}
+     checked++;const tgt=dec(normPath(folder+'/'+v));if(!names.has(tgt)&&!decNames.has(tgt))broken++;}
+   const errs=tagBalance(raw);
+   if(errs.length){unbal++;if(unbalNotes.length<4)unbalNotes.push(`${e.name.split('/').pop()}: ${errs[0]}`);}}
  let vids=0;for(const e of zip.entries){if(e.name.toLowerCase().endsWith('.html')){const r=await zip.text(e.name);vids+=(r.match(/<iframe[^>]+src="https?:\/\//g)||[]).length;}}
  log(`  manifest parses · dangling item→res:${dangI} dep→res:${dangD} · missing files:${miss}`);
  log(`  in-page refs ${checked} checked, ${broken} broken · live videos:${vids}`);
- ok=!dangI&&!dangD&&!miss&&!broken;
+ log(`  tag balance: ${unbal?unbal+' page(s) with mismatched tags':'every page closes what it opens'}`,unbal?'err':undefined);
+ unbalNotes.forEach(n=>log('    '+n,'err'));
+ ok=!dangI&&!dangD&&!miss&&!broken&&!unbal;
  log('  RESULT: '+(ok?'PASS':'CHECK WARNINGS'),ok?'pass':'warn');
  return ok;
 }
