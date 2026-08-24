@@ -796,7 +796,8 @@ async function buildCombine(zip,man,m,keepSep,reorder){
    const flush=()=>{if(run.length>=2)groups.push({sub:titleOf(it),members:run.slice()});run=[];};
    for(const c of [...it.children].filter(x=>x.tagName==='item')){
      // honor keepSep at EVERY level — real modules often sit under an untitled wrapper item.
-     if(keepSep.has(titleOf(c))){flush();continue;}
+     // keepSep holds item identifiers (not titles), so duplicate/untitled modules are distinct.
+     if(keepSep.has(c.getAttribute('identifier'))){flush();continue;}
      // An item with child items is STRUCTURE (a unit heading), even when it also carries its
      // own content page (D2L exports a module description as identifierref on the module item).
      // Merging one used to delete the whole unit from the manifest — never fold these.
@@ -805,7 +806,7 @@ async function buildCombine(zip,man,m,keepSep,reorder){
      if(he&&!hasKids&&!INSTR(titleOf(c)))run.push(c);
      else{flush();if(hasKids)visit(c);}}
    flush();};
- [...m.org.children].filter(x=>x.tagName==='item').forEach(top=>{if(!keepSep.has(titleOf(top)))visit(top);});
+ [...m.org.children].filter(x=>x.tagName==='item').forEach(top=>{if(!keepSep.has(top.getAttribute('identifier')))visit(top);});
 
  const itemRm=new Set(),resRm=new Set(),hostExtra={},hostCombined={},relocate={},skip=new Set();
  const fold=e=>e.includes('/')?e.slice(0,e.lastIndexOf('/')):'';
@@ -935,7 +936,10 @@ async function verify(blob){
    const folder=e.name.includes('/')?e.name.slice(0,e.name.lastIndexOf('/')):'';const raw=await zip.text(e.name);
    for(const mm of raw.matchAll(/(?:src|href)="([^"]+)"/g)){let v=mm[1].replace(/&amp;/g,'&');
      if(/^(https?:|mailto:|tel:|#|data:|javascript:|@X@)/i.test(v)||v.startsWith('/'))continue;
-     checked++;const tgt=dec(normPath(folder+'/'+v));if(!names.has(tgt)&&!decNames.has(tgt))broken++;}
+     // resolve against the bare path — a ?query or #fragment is not part of the filename,
+     // so "lesson2.html#intro" / "img.png?v=2" must not be miscounted as broken
+     const path=v.split(/[?#]/)[0];if(!path)continue;
+     checked++;const tgt=dec(normPath(folder+'/'+path));if(!names.has(tgt)&&!decNames.has(tgt))broken++;}
    // Balance-lint only pages THIS TOOL generated (they carry the wrapper's font stack).
    // Old hand-written pages riding along in course files are passed through byte-identical,
    // and their legacy tag soup is not ours to warn about.
@@ -962,8 +966,8 @@ async function repairRefs(blob){
  const byBase={};
  for(const n of names){if(n.endsWith('/'))continue;const b=dec(n.split('/').pop()).toLowerCase();(byBase[b]=byBase[b]||[]).push(n);}
  const resolves=(folder,v)=>unq.has(dec(normPath(folder+'/'+v)));
- // undo Ally/export mangling: drop '#...' + trailing '_data-ally...', turn '_20' back into '%20'
- const demangle=v=>v.split('#')[0].replace(/_data-ally[^/]*$/,'').replace(/_20/g,'%20');
+ // undo Ally/export mangling on the bare path: strip trailing '_data-ally...', turn '_20' back into '%20'
+ const demangle=v=>v.replace(/_data-ally[^/]*$/,'').replace(/_20/g,'%20');
  const relPath=(target,folder)=>{const t=target.split('/'),f=folder?folder.split('/'):[];
    let i=0;while(i<t.length&&i<f.length&&t[i]===f[i])i++;
    return f.slice(i).map(()=>'..').concat(t.slice(i)).join('/').replace(/ /g,'%20');};
@@ -973,12 +977,21 @@ async function repairRefs(blob){
    const folder=e.name.includes('/')?e.name.slice(0,e.name.lastIndexOf('/')):'';
    const html=(await zip.text(e.name)).replace(/(src|href)="([^"]*)"/g,(mm,attr,val)=>{
      const uv=val.replace(/&amp;/g,'&');
-     if(/^(https?:|mailto:|tel:|#|data:|javascript:|@X@|\/)/i.test(uv)||!uv.trim()||resolves(folder,uv))return mm;
-     const dm=demangle(uv);
-     if(dm!==uv&&resolves(folder,dm)){fixed++;return `${attr}="${dm}"`;}
-     const cands=byBase[dec(dm.split('/').pop()).toLowerCase()]||[];
-     if(cands.length===1&&cands[0]!==e.name){fixed++;return `${attr}="${relPath(cands[0],folder)}"`;}
-     return mm;});
+     if(/^(https?:|mailto:|tel:|#|data:|javascript:|@X@|\/)/i.test(uv)||!uv.trim())return mm;
+     // Split the ?query / #fragment off the path: they ride along unchanged and must not defeat
+     // resolution. Ally stamps its OWN #...data-ally... metadata fragment — drop that (as before),
+     // but keep a genuine #anchor so "lesson2.html#intro" isn't flattened to "lesson2.html".
+     const frag=(uv.match(/#[^?]*$/)||[''])[0], query=(uv.match(/\?[^#]*/)||[''])[0];
+     const path=uv.replace(/[?#].*$/,''), tail=query+(/data-ally/i.test(frag)?'':frag);
+     let out=path;
+     if(path&&!resolves(folder,path)){
+       const dm=demangle(path);
+       if(dm!==path&&resolves(folder,dm))out=dm;
+       else{const cands=byBase[dec(dm.split('/').pop()).toLowerCase()]||[];
+         if(cands.length===1&&cands[0]!==e.name)out=relPath(cands[0],folder);}}
+     const rebuilt=out+tail;
+     if(rebuilt===uv)return mm;
+     fixed++;return `${attr}="${rebuilt}"`;});
    await w.addText(e.name,html);
  }
  if(fixed)log(`  repaired ${fixed} broken link(s)`);
@@ -1024,7 +1037,8 @@ function renderModules(m){
  // Default: nothing ticked — the user picks which sections to combine (opt-in).
  $('#modlist').innerHTML=tops.map((it,i)=>{
    const t=titleOf(it)||('(untitled section '+(i+1)+')');
-   return `<label class="modrow"><input type="checkbox" class="modchk" data-title="${xesc(t)}"><span>${esc(t)}</span></label>`;
+   const id=it.getAttribute('identifier')||'';
+   return `<label class="modrow"><input type="checkbox" class="modchk" data-id="${xesc(id)}" data-title="${xesc(t)}"><span>${esc(t)}</span></label>`;
  }).join('');
 }
 $('#ticktoggle').addEventListener('click',e=>{e.preventDefault();
@@ -1048,8 +1062,10 @@ $('#go').addEventListener('click',async()=>{
  if(typeof CompressionStream==='undefined'){log('Your browser is too old — please use a recent Chrome or Edge.','err');return;}
  $('#go').disabled=true;$('#log').textContent='';$('#log').style.display='block';$('#downloads').innerHTML='';
  const mode=document.querySelector('input[name=mode]:checked').value;
- // Sections left UN-ticked are kept as-is (not combined).
- const keep=new Set([...document.querySelectorAll('.modchk')].filter(c=>!c.checked).map(c=>c.getAttribute('data-title')));
+ // Sections left UN-ticked are kept as-is (not combined). Key by manifest identifier, not title:
+ // two modules can share a title (or be untitled), and a title-keyed set toggles them together
+ // or silently misses the untitled ones.
+ const keep=new Set([...document.querySelectorAll('.modchk')].filter(c=>!c.checked).map(c=>c.getAttribute('data-id')));
  const base=FILE.name.replace(/\.(imscc|zip)$/i,'');
  const {zip,man,m}=MODEL;
  try{
