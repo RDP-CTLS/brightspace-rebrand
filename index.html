@@ -374,12 +374,21 @@ async function deflateRaw(u8){const cs=new CompressionStream('deflate-raw');
 const TE=new TextEncoder(), TD=new TextDecoder('utf-8');
 
 /* ---------- ZIP reader (central-directory based) ---------- */
+// This reader/writer is classic (32-bit) zip. A ZIP64 archive — over 4 GB, or more than 65,535
+// files — replaces the real counts/sizes/offsets with 0xFFFF/0xFFFFFFFF sentinels and stores the
+// true values in a separate ZIP64 record this code doesn't parse. Reading one as 32-bit would
+// slice garbage and silently corrupt the course, so detect it and stop with a clear message.
+const ZIP64MSG='This course export is too large for the in-browser converter: it uses the ZIP64 format (over 4 GB, or more than 65,535 files). Try exporting the course in smaller pieces — fewer components, or splitting very large media out — or reach out to CTLS for help with a course this size.';
 function readZip(buf){
   const dv=new DataView(buf), u8=new Uint8Array(buf);
   // find EOCD (0x06054b50), scanning back over optional comment
   let eo=-1; for(let i=u8.length-22;i>=0 && i>u8.length-22-65536;i--){if(dv.getUint32(i,true)===0x06054b50){eo=i;break;}}
   if(eo<0) throw new Error('Not a zip (no EOCD)');
   let count=dv.getUint16(eo+10,true), cdOff=dv.getUint32(eo+16,true);
+  // ZIP64: maxed sentinels in the EOCD (count / cd-size / cd-offset), or a ZIP64-EOCD locator
+  // (0x07064b50) sitting in the 20 bytes just before the EOCD.
+  if(count===0xFFFF||cdOff===0xFFFFFFFF||dv.getUint32(eo+12,true)===0xFFFFFFFF
+     ||(eo>=20&&dv.getUint32(eo-20,true)===0x07064b50)) throw new Error(ZIP64MSG);
   const entries=[]; let p=cdOff;
   for(let n=0;n<count;n++){
     if(dv.getUint32(p,true)!==0x02014b50) throw new Error('bad central dir');
@@ -387,6 +396,8 @@ function readZip(buf){
       compSize=dv.getUint32(p+20,true), uncompSize=dv.getUint32(p+24,true),
       nameLen=dv.getUint16(p+28,true), extraLen=dv.getUint16(p+30,true),
       commLen=dv.getUint16(p+32,true), lho=dv.getUint32(p+42,true);
+    // a maxed 32-bit field means the real value lives in a ZIP64 extra field we don't read
+    if(compSize===0xFFFFFFFF||uncompSize===0xFFFFFFFF||lho===0xFFFFFFFF) throw new Error(ZIP64MSG);
     const name=TD.decode(u8.subarray(p+46,p+46+nameLen));
     entries.push({name,method,crc,compSize,uncompSize,lho});
     p+=46+nameLen+extraLen+commLen;
@@ -407,6 +418,10 @@ function readZip(buf){
 function makeZipWriter(){
   const parts=[], central=[]; let offset=0;
   function pushLocal(nameBytes,method,crc,cs,us,data){
+    // classic-zip limits: a local-header offset past 4 GB, or the 65,536th entry, can't be written
+    // without ZIP64. Refuse rather than emit a corrupt package. (Inputs are already ZIP64-checked,
+    // so this only trips if restyling pushed the OUTPUT itself past the limit.)
+    if(offset>0xFFFFFFFF||central.length/2>=0xFFFF) throw new Error(ZIP64MSG);
     const h=new Uint8Array(30); const dv=new DataView(h.buffer);
     dv.setUint32(0,0x04034b50,true);dv.setUint16(4,20,true);dv.setUint16(6,0x0800,true);
     dv.setUint16(8,method,true);dv.setUint16(10,0,true);dv.setUint16(12,0,true);
@@ -431,6 +446,7 @@ function makeZipWriter(){
       const def=await deflateRaw(data);pushLocal(TE.encode(name),8,crc,def.length,data.length,def);},
     finish(){
       const cdStart=offset; let cdLen=0; central.forEach(c=>cdLen+=c.length);
+      if(cdStart>0xFFFFFFFF||central.length/2>0xFFFF) throw new Error(ZIP64MSG);
       const e=new Uint8Array(22); const dv=new DataView(e.buffer);
       const n=central.length/2;
       dv.setUint32(0,0x06054b50,true);dv.setUint16(8,n,true);dv.setUint16(10,n,true);
