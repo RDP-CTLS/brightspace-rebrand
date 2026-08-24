@@ -81,6 +81,16 @@
   details.howto>summary{font-size:1rem;padding:.75rem .9rem;}
   details.howto>.body{padding:0 .9rem .9rem;font-size:1rem;}
 
+  /* ---- Top-level mode switch: restyle a course  vs  build a block ---- */
+  .modenav{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin:.2rem 0 1.7rem;}
+  @media (max-width:560px){.modenav{grid-template-columns:1fr;}}
+  .modebtn{text-align:left;background:#fff;border:1.5px solid var(--border);border-radius:.9rem;
+        padding:.85rem 1rem;cursor:pointer;transition:border-color .12s,box-shadow .12s,background .12s;}
+  .modebtn:hover{border-color:#b9a7b8;}
+  .modebtn[aria-current="true"]{border-color:var(--egg);background:#f7f2f6;box-shadow:0 2px 10px rgba(81,40,79,.10);}
+  .modebtn .mt{display:block;font-weight:700;color:var(--egg);font-size:1rem;}
+  .modebtn .md{display:block;color:#6b6470;font-size:.83rem;font-weight:400;margin-top:.15rem;line-height:1.35;}
+
   /* ---- Content Block Builder ----
      A second tool on the same page: build small RDP-styled snippets from scratch
      and copy them into a course. Reuses the engine (COLORS / SVG / card / esc). */
@@ -123,8 +133,21 @@
 </style></head>
 <body><div class="wrap">
   <h1>Course Template Converter</h1>
-  <p class="sub">Applies the RDP style to your Brightspace course. Your wording, links, files and pictures
-     stay exactly as they are &mdash; it only styles what's already there. Three steps, about five minutes.</p>
+  <p class="sub">Two tools in one page. <b>Restyle a whole course</b> to the RDP look, or <b>build a small block
+     of content</b> — contact cards, a callout, a section — to drop into any page. Pick one:</p>
+
+  <div class="modenav" role="tablist" aria-label="What do you want to do?">
+    <button type="button" class="modebtn" data-mode="convert" role="tab" aria-current="true">
+      <span class="mt">Restyle a whole course</span>
+      <span class="md">Apply the RDP look to a Brightspace course export (.imscc or package).</span>
+    </button>
+    <button type="button" class="modebtn" data-mode="build" role="tab" aria-current="false">
+      <span class="mt">Build a content block</span>
+      <span class="md">Make contact cards, callouts or sections to paste into a page.</span>
+    </button>
+  </div>
+
+  <div id="mode-convert">
   <details class="help">
     <summary>Is this safe? Will it change my real course?</summary>
     <div class="body">
@@ -281,7 +304,9 @@
        Your exported <span class="path">.imscc</span> also makes a handy backup.</div>
   </div>
 
-  <div class="bdiv">or — build a piece of content from scratch</div>
+  </div><!-- /#mode-convert -->
+
+  <div id="mode-build" class="hide">
   <div class="card" id="builder">
     <h2 style="margin:.1rem 0 .3rem;color:var(--egg);font-size:1.2rem;">Build a content block</h2>
     <p class="sub" style="margin:0 0 1rem;">Make a small RDP-styled item — a set of contact cards, a callout, a titled
@@ -316,6 +341,7 @@
     <div class="bcode"><textarea id="cb-code" readonly spellcheck="false" aria-label="Generated HTML"></textarea></div>
     <button class="copybtn" type="button" id="cb-copy">Copy HTML</button>
   </div>
+  </div><!-- /#mode-build -->
 </div>
 <script>
 /* =========================================================================
@@ -1183,6 +1209,18 @@ $('#go').addEventListener('click',async()=>{
    setTimeout(()=>{btn.textContent='Copy HTML';btn.classList.remove('ok');},1600);});
 
  renderSwatches();renderIcons();renderControls();update();
+})();
+
+/* ---- Top-level mode switch: Restyle a course  <>  Build a content block ---- */
+(function(){
+ const nav=document.querySelector('.modenav');if(!nav)return;
+ const conv=document.getElementById('mode-convert'),build=document.getElementById('mode-build');
+ function set(m){conv.classList.toggle('hide',m!=='convert');build.classList.toggle('hide',m!=='build');
+   nav.querySelectorAll('.modebtn').forEach(b=>b.setAttribute('aria-current',b.dataset.mode===m));
+   try{localStorage.setItem('rdp-tool-mode',m);}catch(e){}}
+ nav.querySelectorAll('.modebtn').forEach(b=>b.addEventListener('click',()=>set(b.dataset.mode)));
+ let start='convert';try{const s=localStorage.getItem('rdp-tool-mode');if(s==='build'||s==='convert')start=s;}catch(e){}
+ set(start);
 })();
 </script>
 </body></html>
