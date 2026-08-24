@@ -808,7 +808,7 @@ async function buildCombine(zip,man,m,keepSep,reorder){
    flush();};
  [...m.org.children].filter(x=>x.tagName==='item').forEach(top=>{if(!keepSep.has(top.getAttribute('identifier')))visit(top);});
 
- const itemRm=new Set(),resRm=new Set(),hostExtra={},hostCombined={},relocate={},skip=new Set();
+ const itemRm=new Set(),resRm=new Set(),hostExtra={},hostCombined={},relocate={},skip=new Set(),foldHtml=new Map();
  const fold=e=>e.includes('/')?e.slice(0,e.lastIndexOf('/')):'';
  const isHtml=n=>n.toLowerCase().endsWith('.html');
  // A member's folder may only be relocated/skipped when it belongs to that page ALONE.
@@ -848,6 +848,9 @@ async function buildCombine(zip,man,m,keepSep,reorder){
        for(const e of zip.entries){const inFol=mfol?e.name.startsWith(mfol+'/'):!e.name.includes('/');
          if(inFol&&!isHtml(e.name)&&e.name!=='imsmanifest.xml')(hostExtra[hostRes]=hostExtra[hostRes]||[]).push(e.name);}}
      rendered.push([titleOf(mem),b]);
+     // the member's own .html is now inside the combined host — mark it to drop as an orphan
+     // (guard me!==hostE so a manifest pointing two items at one file can't drop the host page)
+     if(me&&me!==hostE)foldHtml.set(me,mem.getAttribute('identifierref'));
      itemRm.add(mem.getAttribute('identifier'));resRm.add(mem.getAttribute('identifierref'));
      (m.resDeps[mem.getAttribute('identifierref')]||[]).forEach(d=>resRm.add(d));}
    if(rendered.length<2)continue;           // nothing could be folded — leave the host page as-is
@@ -887,6 +890,10 @@ async function buildCombine(zip,man,m,keepSep,reorder){
    if([...skip].some(f=>e.name.startsWith(f+'/'))){sk++;continue;}
    if(e.name==='imsmanifest.xml'){await w.addText(e.name,nm);continue;}
    if(hostCombined[e.name]!==undefined){await w.addText(e.name,hostCombined[e.name]);co++;continue;}
+   // folded member page: its content now lives in the combined host and its resource was pruned
+   // from the manifest, so drop the now-orphaned .html rather than ship a duplicate. Skip the drop
+   // if the resource was resurrected — then the manifest still points at the file and it must stay.
+   if(foldHtml.has(e.name)&&resRm.has(foldHtml.get(e.name))){sk++;continue;}
    if(e.name.toLowerCase().endsWith('.html')){await w.addText(e.name,renderStandalone(m.restyleTitle(e.name),await bodyOf(e.name)));re++;continue;}
    w.copy(e);cp++;}
  for(const[np,e]of Object.entries(relocate)){w.copyAs(e,np);rl++;}
