@@ -80,6 +80,46 @@
      closed on later visits, so regulars get a short page and newcomers still get the steps. */
   details.howto>summary{font-size:1rem;padding:.75rem .9rem;}
   details.howto>.body{padding:0 .9rem .9rem;font-size:1rem;}
+
+  /* ---- Content Block Builder ----
+     A second tool on the same page: build small RDP-styled snippets from scratch
+     and copy them into a course. Reuses the engine (COLORS / SVG / card / esc). */
+  .bdiv{display:flex;align-items:center;gap:1rem;margin:2.6rem 0 1.4rem;color:#9a90a0;
+        font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;}
+  .bdiv::before,.bdiv::after{content:"";flex:1;border-top:1px solid var(--border);}
+  .btabs{display:flex;flex-wrap:wrap;gap:.5rem;margin:.2rem 0 1.1rem;}
+  .btab{background:#f0e8f0;color:var(--egg);border:1px solid transparent;border-radius:.6rem;
+        padding:.5rem .9rem;font-weight:700;font-size:.9rem;cursor:pointer;}
+  .btab[aria-selected="true"]{background:var(--egg);color:#fff;}
+  .bform label{display:block;font-weight:600;font-size:.85rem;color:var(--forest);margin:.75rem 0 .25rem;}
+  .bform input[type=text],.bform textarea{width:100%;border:1px solid var(--border);border-radius:.5rem;
+        padding:.5rem .6rem;font:inherit;min-width:0;}
+  .bform textarea{min-height:5rem;resize:vertical;line-height:1.5;}
+  .brow{display:grid;grid-template-columns:1fr 1fr;gap:.15rem 1rem;}
+  @media (max-width:520px){.brow{grid-template-columns:1fr;}}
+  .entry{border:1px solid var(--border);border-radius:.7rem;padding:.7rem .9rem 1rem;margin:.8rem 0;
+        position:relative;background:#fbfafc;}
+  .entry .rm{position:absolute;top:.55rem;right:.55rem;background:none;border:0;color:#b0466a;
+        font-weight:700;cursor:pointer;font-size:.8rem;padding:.1rem .35rem;}
+  .entry .rm:hover{text-decoration:underline;}
+  .addbtn{background:#eef0f1;color:var(--forest);border:1px dashed #b9b1bf;border-radius:.6rem;
+        padding:.5rem .9rem;font-weight:700;font-size:.88rem;cursor:pointer;margin-top:.3rem;}
+  .swatches{display:flex;flex-wrap:wrap;gap:.45rem;margin:.3rem 0 .2rem;}
+  .sw{width:1.9rem;height:1.9rem;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--border);
+        cursor:pointer;padding:0;}
+  .sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--egg);}
+  .iconpick{display:flex;flex-wrap:wrap;gap:.35rem;margin:.3rem 0;}
+  .ic{width:2.1rem;height:2.1rem;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);
+        border-radius:.5rem;background:#fff;cursor:pointer;color:var(--ink);padding:0;}
+  .ic[aria-pressed="true"]{border-color:var(--egg);background:#f0e8f0;color:var(--egg);}
+  .ic svg{width:1.15rem;height:1.15rem;}
+  .blbl{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9a90a0;margin:1.3rem 0 .35rem;}
+  .bpreview{border:1px solid var(--border);border-radius:.7rem;background:#faf9fb;padding:1rem;overflow-x:auto;}
+  .bcode textarea{width:100%;min-height:8rem;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.76rem;
+        line-height:1.5;background:#0f1b18;color:#cfe9da;border:0;border-radius:.7rem;padding:.9rem 1rem;resize:vertical;}
+  .copybtn{background:var(--forest);color:#fff;border-radius:.6rem;padding:.55rem 1.1rem;font-weight:700;
+        font-size:.92rem;margin-top:.55rem;}
+  .copybtn.ok{background:#067a3a;}
 </style></head>
 <body><div class="wrap">
   <h1>Course Template Converter</h1>
@@ -240,6 +280,42 @@
        pages as new modules (it never overwrites), so delete the old modules first to avoid two copies.
        Your exported <span class="path">.imscc</span> also makes a handy backup.</div>
   </div>
+
+  <div class="bdiv">or — build a piece of content from scratch</div>
+  <div class="card" id="builder">
+    <h2 style="margin:.1rem 0 .3rem;color:var(--egg);font-size:1.2rem;">Build a content block</h2>
+    <p class="sub" style="margin:0 0 1rem;">Make a small RDP-styled item — a set of contact cards, a callout, a titled
+      section — then copy it into any page. Fill in the fields, watch the preview, then <b>Copy&nbsp;HTML</b> and paste it
+      into the Brightspace HTML editor's <b>Source&nbsp;Code (&lt;/&gt;)</b> view. Every block is styled with
+      <i>inline</i> styles, so Brightspace won't strip the look the way it strips a pasted <span class="ext">&lt;style&gt;</span> block.</p>
+
+    <div class="btabs" id="cb-tabs" role="tablist" aria-label="Block type">
+      <button class="btab" type="button" role="tab" data-type="contacts" aria-selected="true">People / contact cards</button>
+      <button class="btab" type="button" role="tab" data-type="callout"  aria-selected="false">Callout / note box</button>
+      <button class="btab" type="button" role="tab" data-type="section"  aria-selected="false">Titled section card</button>
+    </div>
+
+    <div class="bform">
+      <div id="cb-controls"></div>
+
+      <div id="cb-themewrap">
+        <label>Colour theme</label>
+        <div class="swatches" id="cb-swatch"></div>
+      </div>
+
+      <div id="cb-iconwrap" class="hide">
+        <label>Icon</label>
+        <div class="iconpick" id="cb-icons"></div>
+      </div>
+    </div>
+
+    <div class="blbl">Preview</div>
+    <div class="bpreview" id="cb-preview"></div>
+
+    <div class="blbl">Code — paste into the HTML editor's Source Code (&lt;/&gt;) view</div>
+    <div class="bcode"><textarea id="cb-code" readonly spellcheck="false" aria-label="Generated HTML"></textarea></div>
+    <button class="copybtn" type="button" id="cb-copy">Copy HTML</button>
+  </div>
 </div>
 <script>
 /* =========================================================================
@@ -359,7 +435,10 @@ const SVG={
  arrow:'<line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline>',
  alert:'<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>',
  star:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>',
- compass:'<circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>'};
+ compass:'<circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>',
+ mail:'<rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>',
+ phone:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>',
+ link:'<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>'};
 const TITLE_RULES=[
  [/learning path|learning outcome|outcomes/,['egg','outcomes']],
  [/\bbefore\b|pre[- ]?class|pre[- ]?lab|preparation|prep\b/,['teal','read']],
@@ -979,5 +1058,131 @@ $('#go').addEventListener('click',async()=>{
  }catch(err){log('Something went wrong: '+err.message,'err');console.error(err);}
  $('#go').disabled=false;
 });
+
+/* =========================================================================
+   CONTENT BLOCK BUILDER
+   A second, self-contained tool sharing the engine above (COLORS / BG / BADGE /
+   SVG / card / esc). It emits inline-styled, Brightspace-safe HTML you paste
+   into the editor's Source Code view. The Copy button works because THIS page
+   runs its own JS — Brightspace strips <script>, so the button can't ride along
+   into the pasted result (and doesn't need to: the output is plain styled HTML).
+   ========================================================================= */
+(function(){
+ const B=id=>document.getElementById(id);
+ const TOKENS=['forest','green','teal','egg','violet','slate','orange','gold'];
+ const CALLOUT_ICONS=['alert','flag','check','star','clock','pin','book','help','compass','resources'];
+ let TYPE='contacts', THEME='forest', CIC='alert';
+ let CONTACTS=[{name:'Dr. Jane Doe',role:'Lead Instructor',office:'Room 1234, Main Campus',hours:'Mon / Wed 1:00–3:00 PM',email:'jane.doe@rdpolytech.ca',phone:''}];
+
+ /* ---------- generators (return inline-styled, paste-ready HTML) ---------- */
+ function iconSvg(key,color,size){return SVG[key]
+   ?`<svg aria-hidden="true" fill="none" stroke="${color}" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" style="width:${size};height:${size};flex-shrink:0;display:block;">${SVG[key]}</svg>`:'';}
+ function paras(txt){return (txt||'').split(/\n{2,}/).map(s=>s.trim()).filter(Boolean)
+   .map(s=>`<p style="margin:0 0 .7rem;line-height:1.65;">${esc(s).replace(/\n/g,'<br>')}</p>`).join('');}
+
+ function contactRow(key,label,val,color,isEmail){
+   if(!(val&&val.trim()))return'';
+   const inner=isEmail
+     ?`<a href="mailto:${esc(val.trim())}" style="color:${color};text-decoration:underline;text-underline-offset:2px;">${esc(val.trim())}</a>`
+     :esc(val.trim());
+   return `<div style="display:flex;flex-direction:column;gap:.15rem;"><span style="display:flex;align-items:center;gap:.4rem;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:${color};">${iconSvg(key,color,'.95rem')}${label}</span><span style="font-size:.92rem;color:#3a4248;line-height:1.4;padding-left:1.35rem;">${inner}</span></div>`;
+ }
+ function contactCard(p,tok){
+   const c=BADGE[tok]||COLORS[tok],bg=BG[tok],badge=BADGE[tok]||COLORS[tok],ink=BADGE_INK[tok]||'#fff';
+   const raw=(p.name||'').split(/\s+/).filter(Boolean).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+   const initials=raw?esc(raw):'&bull;';
+   const rows=[contactRow('pin','Office',p.office,c),contactRow('clock','Office hours',p.hours,c),
+     contactRow('mail','Email',p.email,c,true),contactRow('phone','Phone',p.phone,c)].join('');
+   return `<div style="background:#fff;border:1px solid #E8E8E8;border-top:4px solid ${c};border-radius:1.1rem;box-shadow:0 3px 10px rgba(16,40,34,.06);overflow:hidden;box-sizing:border-box;"><div style="display:flex;align-items:center;gap:.85rem;padding:1.05rem 1.15rem;background:${bg};border-bottom:1px solid rgba(0,0,0,.06);box-sizing:border-box;"><div style="width:2.75rem;height:2.75rem;border-radius:50%;background:${badge};color:${ink};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;flex-shrink:0;box-sizing:border-box;">${initials}</div><div style="min-width:0;"><div style="font-weight:700;font-size:1.05rem;color:${c};line-height:1.25;">${esc(p.name||'Name')}</div>${p.role&&p.role.trim()?`<div style="font-size:.85rem;color:#5B6770;margin-top:1px;">${esc(p.role)}</div>`:''}</div></div><div style="padding:1.05rem 1.15rem;display:flex;flex-direction:column;gap:.8rem;box-sizing:border-box;">${rows||'<span style="color:#9a90a0;font-size:.85rem;">Add office, hours, email or phone.</span>'}</div></div>`;
+ }
+ function genContacts(){
+   const heading=B('cb-heading').value.trim(),tok=THEME,c=BADGE[tok]||COLORS[tok],bg=BG[tok];
+   const head=heading?`<h2 style="font-size:1.15rem;font-weight:800;color:${c};margin:0 0 .8rem;padding-bottom:.4rem;border-bottom:2px solid ${bg};">${esc(heading)}</h2>`:'';
+   const cards=CONTACTS.map(p=>contactCard(p,tok)).join('');
+   return `<div style="margin:1.2rem 0;box-sizing:border-box;">${head}<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.1rem;">${cards}</div></div>`;
+ }
+ function genCallout(){
+   const tok=THEME,c=COLORS[tok],bg=BG[tok];
+   const heading=B('cb-heading').value.trim(),body=B('cb-body').value;
+   const icon=(CIC&&SVG[CIC])?`<div style="flex-shrink:0;margin-top:.1rem;">${iconSvg(CIC,c,'1.3rem')}</div>`:'';
+   const h=heading?`<div style="font-weight:700;color:${c};margin-bottom:.25rem;font-size:1rem;">${esc(heading)}</div>`:'';
+   const inner=paras(body)||'<span style="color:#9a90a0;">Your text here.</span>';
+   return `<div style="display:flex;gap:.8rem;background:${bg};border-left:4px solid ${c};border-radius:.7rem;padding:.95rem 1.1rem;margin:1.1rem 0;box-sizing:border-box;">${icon}<div style="min-width:0;">${h}<div style="color:#3a4248;">${inner}</div></div></div>`;
+ }
+ function genSection(){
+   const title=B('cb-title').value.trim()||'Section title';
+   const inner=paras(B('cb-body').value)||'<p style="margin:0;color:#9a90a0;">Your text here.</p>';
+   return card(title,inner);   // engine picks colour + icon from the title keywords
+ }
+ function genHtml(){return TYPE==='contacts'?genContacts():TYPE==='callout'?genCallout():genSection();}
+
+ /* ---------- controls per block type ---------- */
+ const field=(id,label,val,ph)=>`<label for="${id}">${label}</label><input type="text" id="${id}" value="${xesc(val||'')}" placeholder="${ph||''}">`;
+ function contactEntryHtml(p,i){
+   return `<div class="entry" data-i="${i}">${CONTACTS.length>1?`<button type="button" class="rm" data-rm="${i}">remove</button>`:''}
+     <div class="brow">
+       <div>${field('c-name-'+i,'Name',p.name,'Dr. Jane Doe')}</div>
+       <div>${field('c-role-'+i,'Role / title',p.role,'Lead Instructor')}</div>
+       <div>${field('c-office-'+i,'Office',p.office,'Room 1234')}</div>
+       <div>${field('c-hours-'+i,'Office hours',p.hours,'Mon / Wed 1–3 PM')}</div>
+       <div>${field('c-email-'+i,'Email',p.email,'name@rdpolytech.ca')}</div>
+       <div>${field('c-phone-'+i,'Phone',p.phone,'403-555-0100')}</div>
+     </div></div>`;
+ }
+ function renderControls(){
+   const wrap=B('cb-controls');
+   if(TYPE==='contacts'){
+     wrap.innerHTML=`${field('cb-heading','Section heading (optional)','','Primary Faculty Contacts')}
+       <div id="cb-entries">${CONTACTS.map(contactEntryHtml).join('')}</div>
+       <button type="button" class="addbtn" id="cb-add">+ Add another person</button>`;
+     // per-field wiring: write straight back into the CONTACTS model, then re-render output only
+     wrap.querySelectorAll('#cb-entries input').forEach(inp=>inp.addEventListener('input',e=>{
+       const [,f,i]=e.target.id.split('-');const idx=+i;const map={name:'name',role:'role',office:'office',hours:'hours',email:'email',phone:'phone'};
+       if(CONTACTS[idx])CONTACTS[idx][map[f]]=e.target.value;update();}));
+     B('cb-add').addEventListener('click',()=>{CONTACTS.push({name:'',role:'',office:'',hours:'',email:'',phone:''});
+       renderControls();update();});
+     wrap.querySelectorAll('[data-rm]').forEach(btn=>btn.addEventListener('click',e=>{
+       CONTACTS.splice(+e.target.getAttribute('data-rm'),1);renderControls();update();}));
+   }else if(TYPE==='callout'){
+     wrap.innerHTML=`${field('cb-heading','Heading (optional)','','Good to know')}
+       <label for="cb-body">Text</label><textarea id="cb-body" placeholder="Write your note. Leave a blank line between paragraphs."></textarea>`;
+     wrap.querySelectorAll('input,textarea').forEach(el=>el.addEventListener('input',update));
+   }else{
+     wrap.innerHTML=`${field('cb-title','Title','Introduction','Introduction')}
+       <label for="cb-body">Text</label><textarea id="cb-body" placeholder="Write your content. Leave a blank line between paragraphs."></textarea>
+       <p class="muted" style="margin:.5rem 0 0;">The colour and icon are chosen automatically from the words in your title — the same way the converter styles a course.</p>`;
+     wrap.querySelectorAll('input,textarea').forEach(el=>el.addEventListener('input',update));
+   }
+   // theme picker is relevant for contacts + callout; the section card themes itself
+   B('cb-themewrap').classList.toggle('hide',TYPE==='section');
+   B('cb-iconwrap').classList.toggle('hide',TYPE!=='callout');
+ }
+
+ function renderSwatches(){
+   B('cb-swatch').innerHTML=TOKENS.map(t=>`<button type="button" class="sw" data-tok="${t}" title="${t}" aria-pressed="${t===THEME}" style="background:${BADGE[t]||COLORS[t]};"></button>`).join('');
+   B('cb-swatch').querySelectorAll('.sw').forEach(b=>b.addEventListener('click',()=>{THEME=b.getAttribute('data-tok');
+     B('cb-swatch').querySelectorAll('.sw').forEach(x=>x.setAttribute('aria-pressed',x===b));update();}));
+ }
+ function renderIcons(){
+   B('cb-icons').innerHTML=CALLOUT_ICONS.map(k=>`<button type="button" class="ic" data-ic="${k}" title="${k}" aria-pressed="${k===CIC}">${iconSvg(k,'currentColor','1.15rem')}</button>`).join('');
+   B('cb-icons').querySelectorAll('.ic').forEach(b=>b.addEventListener('click',()=>{CIC=b.getAttribute('data-ic');
+     B('cb-icons').querySelectorAll('.ic').forEach(x=>x.setAttribute('aria-pressed',x===b));update();}));
+ }
+
+ function update(){const html=genHtml();B('cb-preview').innerHTML=html;B('cb-code').value=html;}
+
+ /* ---------- init ---------- */
+ B('cb-tabs').querySelectorAll('.btab').forEach(tab=>tab.addEventListener('click',()=>{
+   TYPE=tab.getAttribute('data-type');
+   B('cb-tabs').querySelectorAll('.btab').forEach(t=>t.setAttribute('aria-selected',t===tab));
+   renderControls();update();}));
+ B('cb-copy').addEventListener('click',async()=>{
+   const t=B('cb-code');t.select();
+   try{await navigator.clipboard.writeText(t.value);}catch(e){try{document.execCommand('copy');}catch(_){}}
+   const btn=B('cb-copy');btn.textContent='Copied ✓';btn.classList.add('ok');
+   setTimeout(()=>{btn.textContent='Copy HTML';btn.classList.remove('ok');},1600);});
+
+ renderSwatches();renderIcons();renderControls();update();
+})();
 </script>
 </body></html>
