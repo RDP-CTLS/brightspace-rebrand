@@ -310,8 +310,9 @@
   <div class="card" id="builder">
     <h2 style="margin:.1rem 0 .3rem;color:var(--egg);font-size:1.2rem;">Build a content block</h2>
     <p class="sub" style="margin:0 0 1rem;">Make a small RDP-styled item — a set of contact cards, a callout, a titled
-      section — then copy it into any page. Fill in the fields, watch the preview, then <b>Copy&nbsp;HTML</b> and paste it
-      into the Brightspace HTML editor's <b>Source&nbsp;Code (&lt;/&gt;)</b> view. Every block is styled with
+      section — then copy it into any page. Fill in the fields, watch the preview, then <b>Copy&nbsp;HTML</b>, open the
+      Brightspace HTML editor's <b>Source&nbsp;Code (&lt;/&gt;)</b> view, <b>select all and paste</b> — it drops straight
+      over Brightspace's starter code, so there's nowhere to get lost. Every block is styled with
       <i>inline</i> styles, so Brightspace won't strip the look the way it strips a pasted <span class="ext">&lt;style&gt;</span> block.</p>
 
     <div class="btabs" id="cb-tabs" role="tablist" aria-label="Block type">
@@ -337,7 +338,11 @@
     <div class="blbl">Preview</div>
     <div class="bpreview" id="cb-preview"></div>
 
-    <div class="blbl">Code — paste into the HTML editor's Source Code (&lt;/&gt;) view</div>
+    <div class="blbl">Code — copy it, open Source Code (&lt;/&gt;), select all, and paste</div>
+    <label style="display:flex;align-items:flex-start;gap:.45rem;font-weight:600;font-size:.85rem;color:var(--forest);margin:.1rem 0 .55rem;line-height:1.4;">
+      <input type="checkbox" id="cb-wrap" checked style="width:1.05rem;height:1.05rem;flex-shrink:0;margin-top:.1rem;">
+      <span>Include the full Brightspace page wrapper — so you can <b>select all and paste over the starter code</b>. Uncheck to get just the block, to drop into a page that already has content.</span>
+    </label>
     <div class="bcode"><textarea id="cb-code" readonly spellcheck="false" aria-label="Generated HTML"></textarea></div>
     <button class="copybtn" type="button" id="cb-copy">Copy HTML</button>
   </div>
@@ -1195,13 +1200,22 @@ $('#go').addEventListener('click',async()=>{
      B('cb-icons').querySelectorAll('.ic').forEach(x=>x.setAttribute('aria-pressed',x===b));update();}));
  }
 
- function update(){const html=genHtml();B('cb-preview').innerHTML=html;B('cb-code').value=html;}
+ // Brightspace's Source-Code editor opens on a fixed starter shell (two D2L stylesheet
+ // links + a Lato/12px body). Wrapping the block in that SAME shell lets a teacher just
+ // select-all and paste over everything, instead of hunting for where the <body> is.
+ function wrapDoc(inner){return `<!DOCTYPE html>
+<html><head><link rel="stylesheet" href="https://s.brightspace.com/lib/fonts/0.6.1/fonts.css"><link rel="stylesheet" href="https://templates.lcs.brightspace.com/lib/assets/css/styles.min.css"></head><body style="color: rgb(32, 33, 34); font-family: Lato, sans-serif; font-size: 12px;">
+${inner}
+</body></html>`;}
+ function update(){const inner=genHtml();B('cb-preview').innerHTML=inner;
+   B('cb-code').value=B('cb-wrap').checked?wrapDoc(inner):inner;}
 
  /* ---------- init ---------- */
  B('cb-tabs').querySelectorAll('.btab').forEach(tab=>tab.addEventListener('click',()=>{
    TYPE=tab.getAttribute('data-type');
    B('cb-tabs').querySelectorAll('.btab').forEach(t=>t.setAttribute('aria-selected',t===tab));
    renderControls();update();}));
+ B('cb-wrap').addEventListener('change',update);
  B('cb-copy').addEventListener('click',async()=>{
    const t=B('cb-code');t.select();
    try{await navigator.clipboard.writeText(t.value);}catch(e){try{document.execCommand('copy');}catch(_){}}
