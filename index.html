@@ -255,8 +255,8 @@
 
     <div id="pkgnote" class="note hide" style="margin-top:1.2rem;">📦 <b>Brightspace Package detected.</b>
       Your pages will get the RDP style; your unit descriptions (including their pictures), quizzes,
-      assignments, discussions and links all travel through <b>untouched</b>. Page-combining is only
-      available for <span class="ext">.imscc</span> exports, so you'll get the one styled download.</div>
+      assignments, discussions and links all travel through <b>untouched</b> — including in the
+      combined version, which only ever merges plain content pages.</div>
     <div id="combinebox" class="hide" style="margin-top:1.2rem;">
       <p style="margin:.2rem 0 .3rem;font-weight:700;">Want fewer pages to click through?
         <span class="muted" style="font-weight:400;">(optional)</span></p>
@@ -290,10 +290,9 @@
     <ul style="margin:.4rem 0 .2rem 1.2rem;padding:0;">
       <li><b>Template Applied</b> — your course restyled: same pages, same unit intros and pictures,
           same quizzes and assignments — only the look changes</li>
+      <li><b>Template Applied (Condensed Content)</b> — the same, plus the short pages in the modules
+          you ticked are merged together for less clicking (quizzes, links and unit intros stay put)</li>
     </ul>
-    <p class="muted" style="margin:.35rem 0 0;">(Converting an <span class="ext">.imscc</span> file instead?
-       You may also get a <b>Template Applied (Condensed Content)</b> button — that one merges very short
-       pages together for less clicking.)</p>
     <p style="margin:.6rem 0 0;">Import one back into Brightspace:
        <b>Course Admin → Import / Export / Copy Components → Import Components → Start → Upload your file → Import All Components</b>.</p>
     <p class="muted" style="margin:.5rem 0 0;">If the combined version looks off, just use the plain
@@ -411,7 +410,11 @@ function readZip(buf){
   const byName=Object.fromEntries(entries.map(e=>[e.name,e]));
   return {entries,byName,
     async text(name){const e=byName[name];if(!e)return null;
-      const raw=e.method===0?e.comp:await inflateRaw(e.comp);return TD.decode(raw);}};
+      const raw=e.method===0?e.comp:await inflateRaw(e.comp);return TD.decode(raw);},
+    // TextDecoder silently eats a UTF-8 BOM, so text() can't tell us whether one was there.
+    // D2L manifests carry one, and a rewritten manifest has to put it back.
+    async hasBom(name){const e=byName[name];if(!e)return false;
+      const raw=e.method===0?e.comp:await inflateRaw(e.comp);return raw.length>2&&raw[0]===0xEF&&raw[1]===0xBB&&raw[2]===0xBF;}};
 }
 
 /* ---------- ZIP writer ---------- */
@@ -521,11 +524,14 @@ function titleMatch(t){t=(t||'').toLowerCase();for(const[re,v]of TITLE_RULES)if(
 function titleStyle(t){return titleMatch(t)||['forest','book'];}
 const MARKER_COLOR={introduction:'teal','course learning outcomes':'egg','learning outcomes':'egg',topics:'green',
  'learning activity':'violet',read:'forest',watch:'orange','additional resources':'orange',references:'slate',
- conclusion:'forest','time commitment':'violet','catch up':'green','concepts of the week':'green',bring:'slate',do:'slate',overview:'orange',assessment:'egg'};
+ conclusion:'forest','time commitment':'violet','catch up':'green','concepts of the week':'green',bring:'slate',do:'slate',overview:'orange',assessment:'egg',
+ // Blackboard-era button set (HET trades courses): outcome family stays on egg like 'learning outcomes'
+ outcome:'egg',objectives:'egg','practice quiz':'green','supervised test':'orange',feedback:'violet'};
 // marker name -> icon (same iconography as the RDP course template)
 const MARKER_SVG={introduction:'flag','course learning outcomes':'outcomes','learning outcomes':'outcomes',topics:'topics',
  'learning activity':'activity',read:'read',watch:'watch','additional resources':'resources',references:'book',
- conclusion:'conclude','time commitment':'clock','catch up':'refresh','concepts of the week':'book',bring:'check',do:'check',overview:'book',assessment:'assess'};
+ conclusion:'conclude','time commitment':'clock','catch up':'refresh','concepts of the week':'book',bring:'check',do:'check',overview:'book',assessment:'assess',
+ outcome:'outcomes',objectives:'outcomes','practice quiz':'assess','supervised test':'assess',feedback:'check'};
 const KEEP_ATTR={a:new Set(['href','target','rel']),img:new Set(['src','alt','width','height']),
  iframe:new Set(['src','width','height','allow','allowfullscreen','frameborder','title','loading']),
  video:new Set(['src','controls','poster','width','height','preload','loop','muted','playsinline']),
@@ -599,9 +605,12 @@ function markerName(src,alt){src=src||'';
  let s=src.replace(/%2F/ig,'/').replace(/_2F/g,'/').replace(/%20/ig,' ').replace(/_20/g,' ').split('#')[0].split('?')[0].replace(/_data-ally[^/]*$/,'');
  const m=s.match(/([^/]+?)(?:\(\d+\))?\.(png|jpe?g|gif)\s*$/i);
  const f=m?m[1].trim().toLowerCase():'';
- const inIconFolder=/blackboard[ +]icons\//i.test(s)||/\/new[ +]icons\//i.test(s);
+ // Folder may carry a copy-suffix ("Blackboard Icons(1)/") — a Blackboard-era export quirk
+ const inIconFolder=/blackboard[ +]icons(?:\(\d+\))?\//i.test(s)||/\/new[ +]icons(?:\(\d+\))?\//i.test(s);
  if(!(inIconFolder||MARKER_COLOR[f]))return null;
- let label=f.replace(/\s*_\d+_.*$/,'').replace(/\(\d+\)/,'').trim();label=label||normAlt(alt)||null;
+ // strip the D2L id suffix first, THEN turn filename underscores into the map's spaces
+ // ("Time_Commitment.png" -> "time commitment")
+ let label=f.replace(/\s*_\d+_.*$/,'').replace(/\(\d+\)/,'').replace(/_/g,' ').replace(/\s+/g,' ').trim();label=label||normAlt(alt)||null;
  if(!inIconFolder){
    // Bare filename match ("Overview.png" anywhere) is only trusted when the alt text agrees:
    // real marker buttons ship with empty alt or the marker's own name (possibly dressed up
@@ -730,7 +739,12 @@ function buildModel(zip,man){
  doc.querySelectorAll('item').forEach(it=>{const ir=it.getAttribute('identifierref');
    if(ir&&resHref[ir]!==undefined)titleByHref[resHref[ir]]=titleOf(it);});
  const org=doc.querySelector('organization');
- return {doc,org,resHref,resDeps,entryFor,titleByHref,
+ // D2L's real resource type (content / contentmodule / contentlink / d2lquiz / ...) — read off the
+ // raw text because every resource is type="webcontent" and the truth sits in a prefixed attribute
+ const resType={};
+ for(const mm of man.matchAll(/<resource\b([^>]*)>/g)){const id=(mm[1].match(/\sidentifier="([^"]+)"/)||[])[1];
+   if(id)resType[id]=(mm[1].match(/material_type="([^"]*)"/)||[])[1]||'';}
+ return {doc,org,resHref,resDeps,resType,entryFor,titleByHref,
    htmlEntry:it=>{const ir=it.getAttribute('identifierref');if(!ir)return null;
      const e=entryFor(resHref[ir]||'');return e&&e.toLowerCase().endsWith('.html')?e:null;},
    restyleTitle:e=>{for(const[h,t]of Object.entries(titleByHref))if(entryFor(h)===e)return t;
@@ -918,6 +932,89 @@ async function buildCombine(zip,man,m,keepSep,reorder){
 }
 function esc4(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
 
+/* ===================== BUILD: combine — Brightspace Package (d2lcp) ===================== */
+/* A Brightspace Package is not a Common Cartridge, so buildCombine's assumptions don't hold:
+   there are NO <file>/<dependency> elements (one href per resource), every resource says
+   type="webcontent" and the real type is d2l_2p0:material_type, each unit's intro text and
+   pictures ride as a description="…" attribute ON THE MODULE <item>, and quizzes, grades, links
+   etc. are resources of their own. So: the manifest is edited in place (never re-serialised —
+   that would also drop its BOM), only LEAF content topics are ever folded, nothing is
+   relocated or re-declared, and a topic that any d2l sidecar mentions is left alone. */
+async function buildCombineD2L(zip,man,m,keepSep){
+ const rt=m.resType;
+ // every d2l sidecar (quiz, grades, dropbox, …) as one haystack: a topic something else points
+ // at — by resource id, resource code or file name — must not disappear from under it
+ let side='';for(const e of zip.entries)if(e.name!=='imsmanifest.xml'&&/\.xml$/i.test(e.name))side+=(await zip.text(e.name))+'\n';
+ const rawTag=iid=>{const om=man.match(new RegExp('<item\\b[^>]*\\bidentifier="'+esc4(iid)+'"[^>]*>'));return om?om[0]:'';};
+ const referenced=it=>{const ir=it.getAttribute('identifierref')||'',base=(m.htmlEntry(it)||'').split('/').pop();
+   const code=(rawTag(it.getAttribute('identifier')).match(/resource_code="([^"]+)"/)||[])[1];
+   return (ir&&side.includes(ir))||(code&&side.includes(code))||(base&&side.includes(base));};
+ const hasKids=c=>[...c.children].some(x=>x.tagName==='item');
+ // foldable = a leaf whose resource really is a content topic with an .html page (not a module
+ // heading, quiz link, web link, …) — anything else breaks the run and stays exactly where it is
+ const leaf=c=>!hasKids(c)&&rt[c.getAttribute('identifierref')]==='content'&&!!m.htmlEntry(c)&&!INSTR(titleOf(c));
+ const groups=[];let guarded=0;
+ const visit=it=>{let run=[];
+   const flush=()=>{if(run.length>=2)groups.push({sub:titleOf(it),members:run.slice()});run=[];};
+   for(const c of [...it.children].filter(x=>x.tagName==='item')){
+     if(keepSep.has(c.getAttribute('identifier'))){flush();continue;}   // keepSep = item identifiers
+     if(leaf(c)){if(referenced(c)){guarded++;flush();}else run.push(c);}
+     else{flush();if(hasKids(c))visit(c);}}
+   flush();};
+ [...m.org.children].filter(x=>x.tagName==='item').forEach(top=>{if(!keepSep.has(top.getAttribute('identifier')))visit(top);});
+ if(guarded)log(`  ${guarded} page(s) are referenced by a quiz/grade/link file — kept standalone`);
+
+ const fold=e=>e.includes('/')?e.slice(0,e.lastIndexOf('/')):'';
+ const bodyOf=async e=>{const raw=await zip.text(e);const bm=raw.match(/<body[^>]*>([\s\S]*)<\/body>/i);return bm?bm[1]:raw;};
+ const relFrom=(target,folder)=>{const t=target.split('/'),f=folder?folder.split('/'):[];let k=0;
+   while(k<t.length&&k<f.length&&t[k]===f[k])k++;return f.slice(k).map(()=>'..').concat(t.slice(k)).join('/');};
+ const itemRm=new Set(),resRm=new Set(),fileRm=new Set(),hostCombined={};
+ for(const g of groups){const host=g.members[0],hostE=m.htmlEntry(host),hostFol=fold(hostE);
+   const rendered=[[titleOf(host),await bodyOf(hostE)]];
+   for(const mem of g.members.slice(1)){const me=m.htmlEntry(mem),mfol=fold(me);
+     let b=await bodyOf(me);
+     if(mfol!==hostFol){ // nothing moves — re-point the member's relative refs from ITS folder to the host's
+       b=b.replace(/(src|href)="([^"]*)"/g,(mm,a,v)=>{if(!v.trim()||/^(https?:|mailto:|tel:|#|data:|javascript:|@X@|\/)/i.test(v))return mm;
+         const pm=v.match(/^([^?#]*)([?#][\s\S]*)?$/);
+         return `${a}="${relFrom(normPath(mfol+'/'+pm[1]),hostFol)}${pm[2]||''}"`;});}
+     rendered.push([titleOf(mem),b]);
+     itemRm.add(mem.getAttribute('identifier'));resRm.add(mem.getAttribute('identifierref'));fileRm.add(me);}
+   hostCombined[hostE]=renderCombined(g.sub,rendered);}
+
+ // A folded page's file is dropped only when nothing still points at it — another topic sharing
+ // the file, or a plain link from a surviving page. Otherwise it would land in Manage Files as
+ // a loose orphan (or, worse, a link would break).
+ const liveHref=new Set();for(const[rid,h]of Object.entries(m.resHref))if(h&&!resRm.has(rid))liveHref.add(m.entryFor(h)||h);
+ const linked=new Set();
+ const scan=(name,html)=>{const folder=fold(name);for(const mm of html.matchAll(/(?:src|href)="([^"]+)"/g)){const v=mm[1].replace(/&amp;/g,'&');
+   if(/^(https?:|mailto:|tel:|#|data:|javascript:|@X@)/i.test(v)||v.startsWith('/'))continue;linked.add(normPath(folder+'/'+v.split(/[?#]/)[0]));}};
+ for(const e of zip.entries){if(!e.name.toLowerCase().endsWith('.html')||fileRm.has(e.name))continue;
+   scan(e.name,hostCombined[e.name]!==undefined?hostCombined[e.name]:await zip.text(e.name));}
+ const drop=new Set([...fileRm].filter(f=>!liveHref.has(f)&&!linked.has(f)));
+
+ // manifest surgery, in place: leaf <item> blocks (balanced, via blockEnd) and their one-line
+ // <resource …/>. Module items are never touched, so their description="…" intros survive.
+ let nm=man;
+ for(const iid of itemRm){const om=nm.match(new RegExp('<item\\b[^>]*\\bidentifier="'+esc4(iid)+'"[^>]*>'));if(!om)continue;
+   let end=blockEnd(nm,om.index);const ws=nm.slice(end).match(/^\s*/);if(ws)end+=ws[0].length;
+   nm=nm.slice(0,om.index)+nm.slice(end);}
+ for(const rid of resRm){nm=nm.replace(new RegExp('<resource\\b[^>]*\\sidentifier="'+esc4(rid)+'"[^>]*/>\\s*'),'');
+   nm=nm.replace(new RegExp('<resource\\b[^>]*\\sidentifier="'+esc4(rid)+'"[^>]*>[\\s\\S]*?</resource>\\s*'),'');}
+ const bom=(await zip.hasBom('imsmanifest.xml'))?'\uFEFF':'';
+
+ // mirror buildRestyle: only Content topics get the style; old/loose pages pass through as-is
+ const topics={};for(const[h,t]of Object.entries(m.titleByHref)){const e=m.entryFor(h);if(e&&e.toLowerCase().endsWith('.html'))topics[e]=t;}
+ const w=makeZipWriter();let co=0,re=0,cp=0,dr=0;
+ for(const e of zip.entries){
+   if(drop.has(e.name)){dr++;continue;}
+   if(e.name==='imsmanifest.xml'){await w.addText(e.name,bom+nm);continue;}
+   if(hostCombined[e.name]!==undefined){await w.addText(e.name,hostCombined[e.name]);co++;continue;}
+   if(topics[e.name]!==undefined){await w.addText(e.name,renderStandalone(topics[e.name]||m.restyleTitle(e.name),await bodyOf(e.name)));re++;continue;}
+   w.copy(e);cp++;}
+ log(`  ${groups.length} merge groups, ${itemRm.size} pages folded in · combined ${co}, restyled ${re}, copied ${cp}, dropped ${dr} folded page file(s)`);
+ return w.finish();
+}
+
 /* ===================== VERIFY ===================== */
 // Tag-balance lint: every page we write must close what it opens. One stray or
 // unclosed </div> inside Brightspace bleeds the rest of the page out of its card,
@@ -1038,12 +1135,12 @@ async function setFile(f){
    const man=await zip.text('imsmanifest.xml');
    if(!man){$('#modlist').innerHTML='<span class="err">This file has no course manifest inside — it may not be the export that Brightspace produced. (A .zip you zipped yourself won\'t work — use the untouched <b>D2LExport_…zip</b> download.)</span>';return;}
    const m=buildModel(zip,man);
-   // A D2L "Brightspace Package" export (not Common Cartridge): restyle-only — its manifest
-   // carries unit descriptions, quiz/assignment payloads etc. that must pass through untouched.
+   // A D2L "Brightspace Package" export (not Common Cartridge): its manifest carries unit
+   // descriptions, quiz/assignment payloads etc., so it takes the d2l-aware combine path.
    const isD2L=/desire2learn\.com\/xsd\/d2lcp/i.test(man);
    MODEL={zip,man,m,isD2L};
-   if(isD2L){$('#combinebox').classList.add('hide');$('#pkgnote').classList.remove('hide');}
-   else{$('#pkgnote').classList.add('hide');renderModules(m);}
+   $('#pkgnote').classList.toggle('hide',!isD2L);
+   renderModules(m);
    $('#go').disabled=false;
  }catch(err){$('#modlist').innerHTML='<span class="err">Could not read this file: '+esc(err.message)+'</span>';console.error(err);}
 }
@@ -1108,15 +1205,22 @@ $('#go').addEventListener('click',async()=>{
       const cnt={};empt.forEach(it=>{const t=titleOf(it);cnt[t]=(cnt[t]||0)+1;});
       Object.entries(cnt).forEach(([t,n])=>log(`  · ${t}${n>1?` (×${n})`:''}`,'warn'));log('');}}
    if(MODEL.isD2L){
-     // Brightspace Package: restyle pages only. No reorder, no combine — the manifest
-     // (unit descriptions!) and every D2L data file pass through byte-identical.
+     // Brightspace Package: no reorder — the manifest (unit descriptions!) and every D2L data
+     // file pass through byte-identical on the styled build, and combine edits it in place.
      log('Brightspace Package — styling your pages; everything else rides along unchanged …');
      {const allHtml=zip.entries.filter(e=>e.name.toLowerCase().endsWith('.html')).length;
       const topicHtml=new Set(Object.keys(m.titleByHref).map(h=>m.entryFor(h)).filter(e=>e&&e.toLowerCase().endsWith('.html'))).size;
       if(allHtml>topicHtml)log(`  note: ${allHtml-topicHtml} other page(s) in your course files aren't part of Content (old/loose files) — passed through untouched`);}
-     let b=await buildRestyle(zip,man,m,false);
-     b=await repairRefs(b);
-     log('Double-checking it:');await verify(b);dlButton(b,`${base} - Template Applied.zip`,true);log('');
+     if(mode==='restyle'||mode==='both'){
+       let b=await buildRestyle(zip,man,m,false);
+       b=await repairRefs(b);
+       log('Double-checking it:');await verify(b);dlButton(b,`${base} - Template Applied.zip`,true);log('');
+     }
+     if(mode==='combine'||mode==='both'){
+       log('Applying the style, and combining short pages …');let b=await buildCombineD2L(zip,man,m,keep);
+       b=await repairRefs(b);
+       log('Double-checking it:');await verify(b);dlButton(b,`${base} - Template Applied (Condensed Content).zip`,false);log('');
+     }
    }else{
    if(mode==='restyle'||mode==='both'){
      log('Applying the style …');let b=await buildRestyle(zip,man,m,true);
