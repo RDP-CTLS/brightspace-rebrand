@@ -4,14 +4,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Course Template Converter</title>
 <style>
-  :root{--egg:#51284F;--forest:#004238;--green:#00AD50;--ink:#3a4248;--border:#E8E8E8;--bg:#f4f2f5;--muted:#6b6470;--done:#067a3a;}
+  :root{--egg:#51284F;--forest:#004238;--green:#00AD50;
+    /* Slate neutral scale (from DESIGN.md) — the calm ground the RDP accents sit on */
+    --s-canvas:#F8FAFC;--s-surface:#FFFFFF;--s-subdued:#F1F5F9;--s-active:#E2E8F0;--s-border:#CBD5E1;--s-muted:#64748B;--s-text:#0F172A;
+    --egg-tint:#F1EAF1;--danger:#B91C1C;
+    /* Elevation 0–2 */
+    --el1:0 1px 3px rgba(15,23,42,.05);--el2:0 4px 12px rgba(15,23,42,.08);
+    /* legacy aliases now mapped onto the slate scale so the chrome shifts together */
+    --ink:#0F172A;--border:#CBD5E1;--bg:#F8FAFC;--muted:#64748B;--done:#067a3a;}
   *{box-sizing:border-box;}
-  body{font-family:'Inter',Arial,Helvetica,sans-serif;color:var(--ink);background:var(--bg);margin:0;line-height:1.6;}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Inter,sans-serif;color:var(--ink);background:var(--bg);margin:0;line-height:1.6;}
+  .sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;}
   .wrap{max-width:780px;margin:0 auto;padding:1.2rem 1.2rem 5rem;}
-  .top{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin:0 0 .6rem;}
-  h1{color:var(--egg);font-size:1.35rem;margin:0;}
-  #savestate{font-size:.82rem;color:var(--muted);}
-  #savestate:not(:empty)::before{content:"✓ ";color:var(--done);}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin:0 0 .6rem;}
+  .brand{display:flex;align-items:center;gap:.55rem;min-width:0;}
+  .brand .mark{width:1.85rem;height:1.85rem;flex-shrink:0;display:block;}
+  h1{color:var(--egg);font-size:1.3rem;margin:0;letter-spacing:-.01em;line-height:1.2;}
+  #savestate{font-size:.76rem;color:var(--s-muted);font-weight:600;display:inline-flex;align-items:center;gap:.4rem;
+        background:var(--s-subdued);border:1px solid var(--s-border);border-radius:999px;padding:.22rem .65rem;font-variant-numeric:tabular-nums;}
+  #savestate:empty{display:none;}
+  #savestate::before{content:"";width:.5rem;height:.5rem;border-radius:50%;background:var(--green);flex-shrink:0;}
   .muted{color:var(--muted);font-size:.85rem;}
   .hide{display:none;}
   [hidden]{display:none!important;}
@@ -31,7 +43,7 @@
   .rs{display:flex;align-items:center;gap:.5rem;min-width:0;background:#fff;border:1.5px solid var(--border);border-radius:.7rem;
         padding:.5rem .7rem;font-size:.88rem;font-weight:700;color:var(--muted);text-align:left;cursor:pointer;}
   .rs .n{display:inline-flex;align-items:center;justify-content:center;width:1.5rem;height:1.5rem;border-radius:50%;
-        background:#e9e4ea;color:var(--muted);font-size:.8rem;flex-shrink:0;}
+        background:var(--s-active);color:var(--muted);font-size:.8rem;flex-shrink:0;}
   .rs.cur{border-color:var(--egg);color:var(--egg);box-shadow:0 2px 10px rgba(81,40,79,.12);}
   .rs.cur .n{background:var(--egg);color:#fff;}
   .rs.ok{color:var(--forest);}
@@ -46,12 +58,12 @@
   .sh{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;min-height:2rem;}
   .sh .sn{display:inline-flex;align-items:center;justify-content:center;width:1.7rem;height:1.7rem;border-radius:50%;
         background:var(--egg);color:#fff;font-weight:700;font-size:.9rem;flex-shrink:0;}
-  .stage.later .sh .sn{background:#e9e4ea;color:var(--muted);}
+  .stage.later .sh .sn{background:var(--s-active);color:var(--muted);}
   .stage.done .sh .sn{background:var(--done);}
   .sh h2{margin:0;font-size:1.15rem;color:var(--egg);}
   .sh h2:focus{outline:none;}
   .stage.later .sh h2,.stage.done .sh h2{font-size:1rem;color:var(--muted);}
-  .receipt{flex:1;font-size:.9rem;color:var(--forest);font-weight:600;min-width:0;}
+  .receipt{flex:1;font-size:.9rem;color:var(--forest);font-weight:600;min-width:0;font-variant-numeric:tabular-nums;}
   .receipt:empty{display:none;}
   .stage.later .receipt{color:var(--muted);font-weight:400;}
   .sb{margin-top:.9rem;}
@@ -59,7 +71,7 @@
   .stage.cur .chg{display:none;}
   .chg{font-size:.85rem;margin-left:auto;}
   .stage.later .chg{display:none;}
-  .stage.later{box-shadow:none;background:#fbfafc;}
+  .stage.later{box-shadow:none;background:var(--s-subdued);}
   .act{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-top:1.1rem;}
   .act .links{display:flex;gap:1rem;font-size:.9rem;}
 
@@ -140,47 +152,81 @@
   #pg-note{font-size:.9rem;color:var(--forest);min-height:1.4em;margin:0 0 .5rem;}
   #pg-note.on{background:#eef8f1;border-radius:.5rem;padding:.4rem .7rem;display:inline-block;}
   #pg-note.on::before{content:"✓ ";color:var(--done);}
-  .pgempty{border:2px dashed #c9c2d0;border-radius:.9rem;padding:1.4rem 1rem;text-align:center;color:var(--muted);background:#fff;}
-  .pgempty .pgtools{justify-content:center;margin:.7rem 0 .2rem;}
-  .pgtools{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;}
-  .pgtools .lbl{font-weight:700;color:var(--forest);font-size:.85rem;margin-right:.2rem;}
-  .pgb{border:1px solid var(--border);border-radius:.9rem;background:#fff;margin:.6rem 0;position:relative;transition:opacity .15s;}
-  .pgb.sel{border-color:var(--egg);box-shadow:0 0 0 1px var(--egg);}
+  /* ---- Stage 2, page: toolbar (Undo / Redo icon buttons) ---- */
+  .pgbar{display:flex;align-items:center;gap:.4rem;margin:0 0 .7rem;}
+  .iconbtn{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;
+        background:var(--s-surface);border:1px solid var(--s-border);border-radius:4px;color:var(--forest);cursor:pointer;transition:background .12s;}
+  .iconbtn:hover:not(:disabled){background:var(--s-subdued);}
+  .iconbtn:disabled{color:#b7bec8;cursor:default;opacity:.6;}
+  .iconbtn svg{display:block;}
+
+  /* ---- Stage 2, page: the canvas ---- */
+  .pgempty{border:1px dashed var(--s-border);border-radius:8px;padding:1.6rem 1rem;text-align:center;color:var(--s-muted);background:var(--s-surface);box-shadow:var(--el1);}
+  .pgempty-plus{width:2.4rem;height:2.4rem;margin:0 auto .3rem;border-radius:50%;background:var(--s-subdued);color:var(--egg);display:flex;align-items:center;justify-content:center;}
+  .pgempty-plus svg{width:1.3rem;height:1.3rem;}
+  .pgempty-t{margin:.1rem 0 .8rem;font-weight:600;color:var(--s-text);}
+
+  /* ---- chip palette (shared: end dropzone, insert lines, empty state) ---- */
+  .chips{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;justify-content:center;}
+  .chip{display:inline-flex;align-items:center;gap:.32rem;background:var(--s-subdued);border:1px solid var(--s-border);
+        border-radius:4px;padding:.34rem .6rem;font:inherit;font-size:.8rem;font-weight:600;color:var(--egg);cursor:pointer;transition:background .12s;}
+  .chip:hover{background:var(--s-surface);border-color:#b9a7b8;}
+  .chip svg{width:1rem;height:1rem;flex-shrink:0;}
+
+  .pgb{border:1px solid var(--s-border);border-radius:8px;background:var(--s-surface);margin:.5rem 0;position:relative;
+        box-shadow:var(--el1);transition:box-shadow .12s,opacity .15s;}
+  .pgb:hover{box-shadow:var(--el2);}
+  .pgb.sel{border-color:var(--egg);box-shadow:var(--el1),inset 3px 0 0 0 var(--egg);}
   .pgb.dragging{opacity:.4;}
   .pgb.drop-before{box-shadow:0 -4px 0 0 var(--green);}
   .pgb.drop-after{box-shadow:0 4px 0 0 var(--green);}
   #pg-canvas.editing .pgb:not(.sel){opacity:.45;}
-  @keyframes pgflash{0%{background:#eef8f1;}100%{background:#fff;}}
+  @keyframes pgflash{0%{background:#eaf7ef;}100%{background:var(--s-surface);}}
   .pgb.flash{animation:pgflash .7s ease-out;}
-  @media (prefers-reduced-motion:reduce){.pgb.flash{animation:none;} .pgb{transition:none;}}
-  .pgb-bar{display:flex;align-items:center;gap:.3rem;padding:.35rem .5rem;border-bottom:1px solid var(--border);
-        background:#fbfafc;border-radius:.9rem .9rem 0 0;font-size:.8rem;min-height:2.3rem;}
-  .pgb-grip{cursor:grab;color:#9a90a0;padding:.1rem .3rem;font-size:1.05rem;user-select:none;letter-spacing:-.15em;}
+  @media (prefers-reduced-motion:reduce){.pgb.flash{animation:none;} .pgb,.pgb-ins-line,.pgb-ins::before,.iconbtn,.ib,.chip{transition:none;}}
+
+  .pgb-bar{display:flex;align-items:center;gap:.4rem;padding:.28rem .4rem .28rem .3rem;border-bottom:1px solid var(--s-border);
+        background:var(--s-subdued);border-radius:8px 8px 0 0;font-size:.8rem;min-height:2.2rem;}
+  .pgb.sel .pgb-bar{background:var(--egg-tint);border-bottom-color:#e0cfe0;}
+  .pgb-grip{cursor:grab;color:#aab2bd;padding:.1rem .25rem;font-size:1rem;line-height:1;user-select:none;letter-spacing:-.15em;}
   .pgb-grip:active{cursor:grabbing;}
-  .pgb-kind{font-weight:700;color:var(--forest);text-transform:uppercase;letter-spacing:.05em;font-size:.72rem;white-space:nowrap;}
-  .pgb-sn{flex:1;color:var(--muted);font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
-  .pgb-bar button{background:#fff;border:1px solid var(--border);border-radius:.45rem;padding:.2rem .55rem;
-        font-size:.8rem;font-weight:600;color:var(--forest);}
-  /* every card carries its own Up / Down / Delete, quiet until you hover or select it */
-  .pgb:not(.sel) .pgb-bar button{background:transparent;border-color:transparent;color:#9a90a0;}
-  .pgb:not(.sel) .pgb-bar button.del{color:#c9a0ad;}
-  .pgb:not(.sel):hover .pgb-bar button{background:#fff;border-color:var(--border);color:var(--forest);}
-  .pgb:not(.sel):hover .pgb-bar button.del{color:#b0466a;}
-  .pgb-bar button:hover{border-color:#b9a7b8;}
-  .pgb-bar button:disabled{opacity:.35;cursor:default;border-color:var(--border);}
-  .pgb-bar button.del{color:#b0466a;}
-  .pgb-bar button[aria-expanded="true"]{background:var(--egg);color:#fff;border-color:var(--egg);}
+  .pgb-kind{font-weight:700;color:var(--forest);text-transform:uppercase;letter-spacing:.04em;font-size:.68rem;white-space:nowrap;}
+  .pgb.sel .pgb-kind{color:var(--egg);}
+  .pgb-sn{flex:1;color:var(--s-muted);font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+  .pgb-acts{display:flex;align-items:center;gap:.1rem;margin-left:auto;flex-shrink:0;}
+  /* icon buttons: a 16px glyph in a 28px hit area — quiet grey at rest, full strength on hover / when the card is selected */
+  .ib{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;padding:0;background:transparent;
+        border:1px solid transparent;border-radius:4px;color:#9aa3ae;cursor:pointer;}
+  .ib svg{display:block;}
+  .ib:hover{background:var(--s-surface);border-color:var(--s-border);color:var(--forest);}
+  .pgb.sel .ib{color:#8a6d88;}
+  .pgb.sel .ib:hover{color:var(--egg);border-color:#d8c4d7;background:var(--s-surface);}
+  .ib.del:hover{color:var(--danger);border-color:#e6bcbc;background:#fdf3f3;}
+  .ib:disabled{opacity:.35;cursor:default;background:transparent;border-color:transparent;color:#9aa3ae;}
+  .ib[aria-expanded="true"]{background:var(--egg);color:#fff;border-color:var(--egg);}
+
   .pgb-body{padding:.9rem 1rem;overflow-x:auto;cursor:text;}
-  .pgb-body:focus{background:#fffdf7;outline:2px solid var(--egg);outline-offset:-2px;}
+  .pgb-body:focus{background:#fbf8fc;outline:2px solid var(--egg);outline-offset:-2px;}
   .pgb-body h1,.pgb-body h2,.pgb-body h3,.pgb-body h4{color:revert;font-size:revert;margin:revert;}
-  .pgb-form{padding:.2rem 1rem 1rem;border-top:1px dashed var(--border);background:#fbfafc;}
-  .pgb-done{margin-top:.9rem;background:var(--egg);color:#fff;border-radius:.5rem;padding:.45rem 1rem;font-size:.88rem;}
-  .pgb-add{display:none;align-items:center;gap:.4rem;flex-wrap:wrap;padding:.45rem .7rem;border-top:1px solid var(--border);
-        background:#fbfafc;border-radius:0 0 .9rem .9rem;font-size:.8rem;color:var(--muted);}
-  .pgb.sel .pgb-add{display:flex;}
-  .pgb-add button{background:#fff;border:1px solid var(--border);border-radius:.45rem;padding:.2rem .6rem;font-size:.8rem;font-weight:600;color:var(--egg);}
-  .pgb-add button:hover{border-color:#b9a7b8;}
-  .pgb-add .plus{font-weight:700;color:var(--egg);}
+  .pgb-form{padding:.2rem 1rem 1rem;border-top:1px dashed var(--s-border);background:var(--s-subdued);border-radius:0 0 8px 8px;}
+  .pgb-done{margin-top:.9rem;background:var(--egg);color:#fff;border-radius:4px;padding:.45rem 1rem;font-size:.88rem;}
+
+  /* ---- insert line: a thin bar between every pair of cards; hover / keyboard focus reveals "+ Insert block" ---- */
+  .pgb-ins{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:1.3rem;}
+  .pgb-ins::before{content:"";position:absolute;left:0;right:0;top:.65rem;height:1px;background:var(--s-border);opacity:0;transition:opacity .12s;}
+  .pgb-ins:hover::before,.pgb-ins:focus-within::before{opacity:1;}
+  .pgb-ins-line{position:relative;display:inline-flex;align-items:center;gap:.25rem;background:var(--s-surface);
+        border:1px solid var(--s-border);border-radius:4px;padding:.14rem .5rem;font:inherit;font-size:.72rem;font-weight:600;
+        color:var(--s-muted);cursor:pointer;opacity:0;transition:opacity .12s;}
+  .pgb-ins:hover .pgb-ins-line,.pgb-ins:focus-within .pgb-ins-line,.pgb-ins-line[aria-expanded="true"]{opacity:1;}
+  .pgb-ins-line svg{width:.85rem;height:.85rem;}
+  .pgb-ins-menu{width:100%;padding:.5rem 0 .2rem;}
+  .pgb-ins-menu[hidden]{display:none;}
+
+  /* ---- the one "Add a block" dropzone at the end of the stack ---- */
+  .pgb-end{border:1px dashed var(--s-border);border-radius:8px;background:var(--s-subdued);padding:.9rem 1rem;margin:.6rem 0 0;text-align:center;}
+  .pgb-end-head{display:inline-flex;align-items:center;gap:.35rem;font-weight:700;color:var(--egg);font-size:.9rem;margin-bottom:.55rem;}
+  .pgb-end-head svg{width:1.05rem;height:1.05rem;}
   /* settings form */
   .bform label{display:block;font-weight:600;font-size:.85rem;color:var(--forest);margin:.75rem 0 .25rem;}
   .bform label span{display:block;margin-bottom:.25rem;}
@@ -209,7 +255,7 @@
   .then .arrow{color:var(--muted);}
 </style></head>
 <body><div class="wrap">
-  <div class="top"><h1>Course Template Converter</h1><span id="savestate" role="status"></span></div>
+  <div class="top"><div class="brand"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#51284F"></rect><path d="M9 11h14M9 16h14M9 21h9" stroke="#fff" stroke-width="2.4" stroke-linecap="round"></path></svg><h1>Course Template Converter</h1></div><span id="savestate" role="status"></span></div>
 
   <nav class="rail" aria-label="Progress">
     <button type="button" class="rs cur" data-stage="1" aria-current="step"><span class="n">1</span><span class="t">Get it in</span></button>
@@ -316,12 +362,15 @@
       </div>
 
       <div id="s2-page" hidden>
+        <div class="pgbar" role="group" aria-label="Page history">
+          <button type="button" class="iconbtn" id="pg-undo" disabled title="Undo" aria-label="Undo"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg></button>
+          <button type="button" class="iconbtn" id="pg-redo" disabled title="Redo" aria-label="Redo"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 7v6h-6"></path><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"></path></svg></button>
+        </div>
         <div id="pg-note" role="status" aria-live="polite"></div>
         <p class="muted" id="pg-frame" hidden style="margin:0 0 .5rem;">Everything below sits inside the page's card frame, which comes along when you copy.
           <button type="button" class="linkbtn" id="pg-frame-rm">Remove the frame</button></p>
         <div id="pg-canvas"></div>
         <div class="act"><span class="links">
-            <button type="button" class="linkbtn" id="pg-undo" disabled>Undo</button>
             <button type="button" class="linkbtn" id="pg-clear" disabled>Start over</button></span>
           <button type="button" class="pri" id="pg-next">Continue to Put it back</button></div>
       </div>
@@ -1331,7 +1380,7 @@ const FLOW=(()=>{
  const TOKENS=['forest','green','teal','egg','violet','slate','orange','gold'];
  const CALLOUT_ICONS=['alert','flag','check','star','clock','pin','book','help','compass','resources'];
  const STORE='rdp-page-editor';
- let BLOCKS=[], WRAP=null, SEL=null, HIST=[], DRAG=null, LAST=null, EDIT_SNAP=null;
+ let BLOCKS=[], WRAP=null, SEL=null, HIST=[], REDO=[], DRAG=null, LAST=null, EDIT_SNAP=null;
  const uid=()=>'b'+Math.random().toString(36).slice(2,9);
  const find=id=>BLOCKS.find(b=>b.id===id);
  const idx=id=>BLOCKS.findIndex(b=>b.id===id);
@@ -1476,7 +1525,7 @@ const FLOW=(()=>{
    // screen readers otherwise hear nine bare "Delete"s in a row
    const what=k+(sn?': '+sn:'');
    const set=(act,verb)=>{const x=el.querySelector(`[data-act="${act}"]`);if(x)x.setAttribute('aria-label',verb+' '+what);};
-   set('del','Delete');set('up','Move up');set('down','Move down');set('edit','Settings for');}
+   set('del','Delete');set('up','Move up');set('down','Move down');set('edit','Settings for');set('dup','Duplicate');}
 
  /* ---------- output ---------- */
  // Brightspace's Source-Code editor opens on a fixed starter shell (two D2L stylesheet
@@ -1509,39 +1558,70 @@ ${inner}
  function restore(){try{const s=JSON.parse(localStorage.getItem(STORE)||'null');
    if(s&&s.v===1){BLOCKS=validBlocks(s.blocks);WRAP=typeof s.wrap==='string'?s.wrap:null;
      HIST=(Array.isArray(s.hist)?s.hist:[]).filter(x=>typeof x==='string');}}catch(e){}}
- function snap(){HIST.push(JSON.stringify({blocks:BLOCKS,wrap:WRAP}));if(HIST.length>30)HIST.shift();B('pg-undo').disabled=false;}
- function undo(){const s=HIST.pop();if(!s)return;let o;try{o=JSON.parse(s);}catch(e){return;}
+ function snap(){HIST.push(JSON.stringify({blocks:BLOCKS,wrap:WRAP}));if(HIST.length>30)HIST.shift();REDO=[];
+   B('pg-undo').disabled=false;B('pg-redo').disabled=true;}
+ function undo(){const s=HIST.pop();if(!s)return;REDO.push(JSON.stringify({blocks:BLOCKS,wrap:WRAP}));if(REDO.length>30)REDO.shift();
+   let o;try{o=JSON.parse(s);}catch(e){return;}
    BLOCKS=validBlocks(o.blocks);WRAP=typeof o.wrap==='string'?o.wrap:null;SEL=null;EDIT_SNAP=null;
-   B('pg-undo').disabled=!HIST.length;renderCanvas();note('Undone.');}
+   B('pg-undo').disabled=!HIST.length;B('pg-redo').disabled=!REDO.length;renderCanvas();note('Undone.');}
+ // Redo: cheap mirror of undo — the state undo just left is held on REDO until the next fresh edit.
+ function redo(){const s=REDO.pop();if(!s)return;HIST.push(JSON.stringify({blocks:BLOCKS,wrap:WRAP}));if(HIST.length>30)HIST.shift();
+   let o;try{o=JSON.parse(s);}catch(e){return;}
+   BLOCKS=validBlocks(o.blocks);WRAP=typeof o.wrap==='string'?o.wrap:null;SEL=null;EDIT_SNAP=null;
+   B('pg-undo').disabled=!HIST.length;B('pg-redo').disabled=!REDO.length;renderCanvas();note('Redone.');}
  function note(msg,undoable){const n=B('pg-note');n.textContent=msg||'';n.classList.toggle('on',!!msg);
    if(msg&&undoable&&HIST.length){n.appendChild(document.createTextNode(' '));const u=document.createElement('button');u.type='button';u.className='linkbtn';u.textContent='Undo';u.addEventListener('click',undo);n.appendChild(u);}}
  function syncOut(){B('pg-code').value=pageOut();B('pg-copy').disabled=!BLOCKS.length;B('pg-copyhint').hidden=!!BLOCKS.length;
-   B('pg-clear').disabled=!BLOCKS.length;B('pg-undo').disabled=!HIST.length;save();
+   B('pg-clear').disabled=!BLOCKS.length;B('pg-undo').disabled=!HIST.length;B('pg-redo').disabled=!REDO.length;save();
    B('savestate').textContent=BLOCKS.length?'Saved on this computer':'';updateFrame();FLOW.pageChanged(BLOCKS.length);}
 
  /* ---------- the canvas ---------- */
  const canvas=B('pg-canvas');
- const ADDBTNS=cls=>`<span class="${cls}"><button type="button" data-add="contacts">People / contacts</button><button type="button" data-add="callout">Callout</button><button type="button" data-add="section">Section</button></span>`;
+ // Chrome glyphs for the block bar / toolbar — inline SVG (no icon font), a 16px glyph in a 28px hit area.
+ const svgIcon=p=>`<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+ const IC={
+   up:svgIcon('<line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline>'),
+   down:svgIcon('<line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline>'),
+   dup:svgIcon('<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>'),
+   settings:svgIcon('<line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line>'),
+   del:svgIcon('<polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line>'),
+   plus:svgIcon('<line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>')
+ };
+ // The insert palette: one chip per block kind (icon + short name), reusing the engine's own icons.
+ // `at` is the array index the new block lands at; omit it to fall back to "after the block in hand".
+ const CHIP_LABEL={contacts:'People / contacts',callout:'Callout',section:'Section'};
+ const CHIP_ICON={contacts:'users',callout:'alert',section:'book'};
+ const chips=at=>`<div class="chips">${['contacts','callout','section'].map(k=>
+   `<button type="button" class="chip" data-add="${k}"${at===undefined?'':` data-at="${at}"`}>${iconSvg(CHIP_ICON[k],'currentColor','1rem')}${CHIP_LABEL[k]}</button>`).join('')}</div>`;
  // One block is "selected": its controls show, the others' stay tucked away (still keyboard-reachable).
  function select(id){LAST=id;canvas.querySelectorAll('.pgb').forEach(x=>x.classList.toggle('sel',x.dataset.id===id));}
  function flash(id){const el=canvas.querySelector(`.pgb[data-id="${id}"]`);if(!el)return;el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');}
  function renderCanvas(){
    canvas.innerHTML='';
    canvas.classList.toggle('editing',!!SEL);
-   if(!BLOCKS.length){canvas.innerHTML='<div class="pgempty">Nothing on the page yet. Add your first block:'+ADDBTNS('pgtools')+'<p class="muted" style="margin:.4rem 0 0;">or go back to step 1 and paste a page in.</p></div>';syncOut();return;}
+   if(!BLOCKS.length){canvas.innerHTML=`<div class="pgempty"><div class="pgempty-plus">${IC.plus}</div><p class="pgempty-t">Nothing on the page yet — add your first block</p>${chips()}<p class="muted" style="margin:.7rem 0 0;">or go back to step 1 and paste a page in.</p></div>`;syncOut();return;}
    BLOCKS.forEach((b,i)=>{
      const el=document.createElement('div');el.className='pgb'+(b.id===LAST?' sel':'');el.dataset.id=b.id;
-     el.innerHTML=`<div class="pgb-bar"><span class="pgb-grip" title="Drag to move" aria-hidden="true">&#8942;&#8942;</span><span class="pgb-kind"></span><span class="pgb-sn"></span>`
-       +(b.model?`<button type="button" data-act="edit" aria-expanded="${b.id===SEL}">Settings</button>`:'')
-       +`<button type="button" data-act="up" aria-label="Move up" title="Move up"${i?'':' disabled'}>&uarr;</button>`
-       +`<button type="button" data-act="down" aria-label="Move down" title="Move down"${i<BLOCKS.length-1?'':' disabled'}>&darr;</button>`
-       +`<button type="button" class="del" data-act="del">Delete</button></div>`
+     el.innerHTML=`<div class="pgb-bar"><span class="pgb-grip" title="Drag to move" aria-hidden="true">&#8942;&#8942;</span><span class="pgb-kind"></span><span class="pgb-sn"></span><span class="pgb-acts">`
+       +(b.model?`<button type="button" class="ib" data-act="edit" title="Settings" aria-expanded="${b.id===SEL}">${IC.settings}<span class="sr">Settings</span></button>`:'')
+       +`<button type="button" class="ib" data-act="up" title="Move up"${i?'':' disabled'}>${IC.up}<span class="sr">Move up</span></button>`
+       +`<button type="button" class="ib" data-act="down" title="Move down"${i<BLOCKS.length-1?'':' disabled'}>${IC.down}<span class="sr">Move down</span></button>`
+       +`<button type="button" class="ib" data-act="dup" title="Duplicate">${IC.dup}<span class="sr">Duplicate</span></button>`
+       +`<button type="button" class="ib del" data-act="del" title="Delete">${IC.del}<span class="sr">Delete</span></button></span></div>`
        +`<div class="pgb-body" contenteditable="true" aria-label="Block content: click to edit the text"></div>`;
      setLabel(el,b);
      el.querySelector('.pgb-body').innerHTML=clean(b.html);
      if(b.id===SEL&&b.model){const f=document.createElement('div');f.className='pgb-form bform';el.appendChild(f);renderForm(f,b);}
-     el.insertAdjacentHTML('beforeend','<div class="pgb-add"><span class="plus">+</span> Add below:'+ADDBTNS('')+'</div>');
-     canvas.appendChild(el);});
+     canvas.appendChild(el);
+     // a thin, tabbable insert line between every pair of cards
+     if(i<BLOCKS.length-1){const ins=document.createElement('div');ins.className='pgb-ins';
+       ins.innerHTML=`<button type="button" class="pgb-ins-line" data-ins aria-expanded="false" aria-label="Insert a block here">${IC.plus}<span>Insert block</span></button><div class="pgb-ins-menu" hidden>${chips(i+1)}</div>`;
+       canvas.appendChild(ins);}
+   });
+   // the one "Add a block" dropzone at the end of the stack
+   const end=document.createElement('div');end.className='pgb-end';
+   end.innerHTML=`<div class="pgb-end-head">${IC.plus}<span>Add a block</span></div>${chips(BLOCKS.length)}`;
+   canvas.appendChild(end);
    syncOut();}
  function refresh(b){const el=canvas.querySelector(`.pgb[data-id="${b.id}"]`);if(!el)return;
    el.querySelector('.pgb-body').innerHTML=clean(b.html);setLabel(el,b);syncOut();}
@@ -1553,7 +1633,15 @@ ${inner}
    if(e.target.closest('.pgb-body'))EDIT_SNAP=null;});
 
  canvas.addEventListener('click',e=>{
-   const ab=e.target.closest('[data-add]');if(ab){addBlock(ab.dataset.add);return;}
+   const ab=e.target.closest('[data-add]');if(ab){addBlock(ab.dataset.add,ab.hasAttribute('data-at')?+ab.dataset.at:undefined);return;}
+   const ins=e.target.closest('[data-ins]');if(ins){
+     const open=ins.getAttribute('aria-expanded')==='true';
+     // one insert menu open at a time
+     canvas.querySelectorAll('.pgb-ins-line[aria-expanded="true"]').forEach(x=>{x.setAttribute('aria-expanded','false');
+       const mn=x.parentElement.querySelector('.pgb-ins-menu');if(mn)mn.hidden=true;});
+     if(!open){ins.setAttribute('aria-expanded','true');const mn=ins.parentElement.querySelector('.pgb-ins-menu');
+       if(mn){mn.hidden=false;const c=mn.querySelector('.chip');if(c)c.focus({preventScroll:true});}}
+     return;}
    const btn=e.target.closest('[data-act]');if(!btn)return;
    const el=btn.closest('.pgb'),id=el.dataset.id,i=idx(id),act=btn.dataset.act;if(i<0)return;
    if(act==='del'){snap();BLOCKS.splice(i,1);if(SEL===id)SEL=null;if(LAST===id)LAST=null;renderCanvas();
@@ -1564,6 +1652,10 @@ ${inner}
      note(`Moved up — now ${i} of ${BLOCKS.length}.`);}
    else if(act==='down'&&i<BLOCKS.length-1){snap();[BLOCKS[i+1],BLOCKS[i]]=[BLOCKS[i],BLOCKS[i+1]];renderCanvas();focusBlock(id,'down');flash(id);
      note(`Moved down — now ${i+2} of ${BLOCKS.length}.`);}
+   else if(act==='dup'){snap();const src=BLOCKS[i];
+     const copy={id:uid(),kind:src.kind,model:src.model?JSON.parse(JSON.stringify(src.model)):null,html:src.html};
+     BLOCKS.splice(i+1,0,copy);SEL=null;LAST=copy.id;renderCanvas();focusBlock(copy.id,'dup');flash(copy.id);
+     note('Duplicated.',true);}
    else if(act==='edit'){SEL=SEL===id?null:id;renderCanvas();
      if(SEL){const f=canvas.querySelector(`.pgb[data-id="${id}"] .pgb-form input,.pgb[data-id="${id}"] .pgb-form textarea`);if(f)f.focus({preventScroll:true});}}
  });
@@ -1648,11 +1740,12 @@ ${inner}
  }
 
  /* ---------- top controls ---------- */
- function addBlock(kind){
-   const b={id:uid(),kind,model:newModel(kind),html:''};regen(b);
-   // goes in after the block the teacher was last working in, else at the end
-   const at=idx(LAST);snap();
-   if(at>=0){BLOCKS.splice(at+1,0,b);note('Added below the block you were on.');}else{BLOCKS.push(b);note('');}
+ function addBlock(kind,at){
+   const b={id:uid(),kind,model:newModel(kind),html:''};regen(b);snap();
+   if(at!==undefined&&at>=0&&at<=BLOCKS.length){BLOCKS.splice(at,0,b);note('Block inserted.');}
+   else{ // no explicit slot: after the block last worked in, else at the end
+     const p=idx(LAST);
+     if(p>=0){BLOCKS.splice(p+1,0,b);note('Added below the block you were on.');}else{BLOCKS.push(b);note('');}}
    SEL=b.id;LAST=b.id;renderCanvas();
    if(FLOW.kind()!=='page')FLOW.page('blank',BLOCKS.length);else FLOW.pageChanged(BLOCKS.length);
    const el=canvas.querySelector(`.pgb[data-id="${b.id}"]`);
@@ -1682,6 +1775,7 @@ ${inner}
  B('pg-frame-rm').addEventListener('click',()=>{snap();WRAP=frameTags().filter(t=>!styledTag(t)).join('')||null;renderCanvas();
    note('Frame removed — the blocks now sit straight on the page.',true);});
  B('pg-undo').addEventListener('click',undo);
+ B('pg-redo').addEventListener('click',redo);
  // Start over asks once, in place (no browser dialog), then clears. Undo still brings it back.
  let clearArmed=null;
  B('pg-clear').addEventListener('click',()=>{if(!BLOCKS.length)return;const btn=B('pg-clear');
