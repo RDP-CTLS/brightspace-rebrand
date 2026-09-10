@@ -91,24 +91,26 @@
   .modebtn .mt{display:block;font-weight:700;color:var(--egg);font-size:1rem;}
   .modebtn .md{display:block;color:#6b6470;font-size:.83rem;font-weight:400;margin-top:.15rem;line-height:1.35;}
 
-  /* ---- Content Block Builder ----
-     A second tool on the same page: build small RDP-styled snippets from scratch
-     and copy them into a course. Reuses the engine (COLORS / SVG / card / esc). */
-  .bdiv{display:flex;align-items:center;gap:1rem;margin:2.6rem 0 1.4rem;color:#9a90a0;
-        font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;}
-  .bdiv::before,.bdiv::after{content:"";flex:1;border-top:1px solid var(--border);}
-  .btabs{display:flex;flex-wrap:wrap;gap:.5rem;margin:.2rem 0 1.1rem;}
+  /* ---- Page editor: build or fix a page ----
+     A second tool on the same page. The page is a list of BLOCKS on a canvas: add
+     generated ones (contact cards / callout / section) or paste a page's Source Code
+     out of Brightspace and it splits into blocks you can delete, move and edit.
+     Reuses the engine (COLORS / SVG / card / esc). */
   .btab{background:#f0e8f0;color:var(--egg);border:1px solid transparent;border-radius:.6rem;
         padding:.5rem .9rem;font-weight:700;font-size:.9rem;cursor:pointer;}
-  .btab[aria-selected="true"]{background:var(--egg);color:#fff;}
+  .btab:hover{background:#e4d6e3;}
+  .pgtools{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin:1.1rem 0 .6rem;}
+  .pgtools .lbl{font-weight:700;color:var(--forest);font-size:.9rem;margin-right:.2rem;}
   .bform label{display:block;font-weight:600;font-size:.85rem;color:var(--forest);margin:.75rem 0 .25rem;}
+  .bform label span{display:block;margin-bottom:.25rem;}
+  .bform .fl{font-weight:600;font-size:.85rem;color:var(--forest);margin:.9rem 0 .25rem;}
   .bform input[type=text],.bform textarea{width:100%;border:1px solid var(--border);border-radius:.5rem;
-        padding:.5rem .6rem;font:inherit;min-width:0;}
+        padding:.5rem .6rem;font:inherit;font-weight:400;min-width:0;background:#fff;}
   .bform textarea{min-height:5rem;resize:vertical;line-height:1.5;}
   .brow{display:grid;grid-template-columns:1fr 1fr;gap:.15rem 1rem;}
-  @media (max-width:520px){.brow{grid-template-columns:1fr;}}
+  @media (max-width:640px){.brow{grid-template-columns:1fr;}}
   .entry{border:1px solid var(--border);border-radius:.7rem;padding:.7rem .9rem 1rem;margin:.8rem 0;
-        position:relative;background:#fbfafc;}
+        position:relative;background:#fff;}
   .entry .rm{position:absolute;top:.55rem;right:.55rem;background:none;border:0;color:#b0466a;
         font-weight:700;cursor:pointer;font-size:.8rem;padding:.1rem .35rem;}
   .entry .rm:hover{text-decoration:underline;}
@@ -123,18 +125,51 @@
         border-radius:.5rem;background:#fff;cursor:pointer;color:var(--ink);padding:0;}
   .ic[aria-pressed="true"]{border-color:var(--egg);background:#f0e8f0;color:var(--egg);}
   .ic svg{width:1.15rem;height:1.15rem;}
-  .blbl{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9a90a0;margin:1.3rem 0 .35rem;}
-  .bpreview{border:1px solid var(--border);border-radius:.7rem;background:#faf9fb;padding:1rem;overflow-x:auto;}
+  .blbl{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#6b6470;margin:1.3rem 0 .35rem;
+        display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;}
+  .blbl .sp{flex:1;}
+  .blbl .linkbtn{text-transform:none;letter-spacing:0;font-size:.85rem;}
+  .blbl .linkbtn:disabled{color:#b9b1bf;text-decoration:none;cursor:default;}
+  #pg-note{font-size:.88rem;color:var(--forest);min-height:1.3em;margin:.2rem 0 .4rem;}
+  .pastebox textarea{width:100%;min-height:7rem;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.76rem;
+        line-height:1.5;border:1px solid var(--border);border-radius:.6rem;padding:.6rem .7rem;resize:vertical;margin:.4rem 0 .5rem;}
+  /* the canvas */
+  .pgempty{border:2px dashed #c9c2d0;border-radius:.9rem;padding:1.6rem 1rem;text-align:center;color:#6b6470;background:#fff;}
+  .pgb{border:1px solid var(--border);border-radius:.9rem;background:#fff;margin:.6rem 0;position:relative;}
+  .pgb:focus-within{border-color:#b9a7b8;}
+  .pgb.dragging{opacity:.4;}
+  .pgb.drop-before{box-shadow:0 -4px 0 0 var(--green);}
+  .pgb.drop-after{box-shadow:0 4px 0 0 var(--green);}
+  .pgb-bar{display:flex;align-items:center;gap:.3rem;padding:.35rem .5rem;border-bottom:1px solid var(--border);
+        background:#fbfafc;border-radius:.9rem .9rem 0 0;font-size:.8rem;}
+  .pgb-grip{cursor:grab;color:#9a90a0;padding:.1rem .3rem;font-size:1.05rem;user-select:none;letter-spacing:-.15em;}
+  .pgb-grip:active{cursor:grabbing;}
+  .pgb-kind{font-weight:700;color:var(--forest);text-transform:uppercase;letter-spacing:.05em;font-size:.72rem;white-space:nowrap;}
+  .pgb-sn{flex:1;color:#6b6470;font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+  .pgb-bar button{background:#fff;border:1px solid var(--border);border-radius:.45rem;padding:.2rem .55rem;
+        font-size:.8rem;font-weight:600;color:var(--forest);}
+  .pgb-bar button:hover{border-color:#b9a7b8;}
+  .pgb-bar button:disabled{opacity:.35;cursor:default;border-color:var(--border);}
+  .pgb-bar button.del{color:#b0466a;}
+  .pgb-bar button[aria-expanded="true"]{background:var(--egg);color:#fff;border-color:var(--egg);}
+  .pgb-body{padding:.9rem 1rem;overflow-x:auto;cursor:text;border-radius:0 0 .9rem .9rem;}
+  .pgb-body:focus{background:#fffdf7;outline:2px solid var(--egg);outline-offset:-2px;}
+  /* pasted pages carry their own look; keep the tool's h1/h2 styling off them */
+  .pgb-body h1,.pgb-body h2,.pgb-body h3,.pgb-body h4{color:revert;font-size:revert;margin:revert;}
+  .pgb-form{padding:.2rem 1rem 1rem;border-top:1px dashed var(--border);background:#fbfafc;border-radius:0 0 .9rem .9rem;}
+  .pgb-done{margin-top:.9rem;background:var(--egg);color:#fff;border-radius:.5rem;padding:.45rem 1rem;font-size:.88rem;}
   .bcode textarea{width:100%;min-height:8rem;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.76rem;
         line-height:1.5;background:#0f1b18;color:#cfe9da;border:0;border-radius:.7rem;padding:.9rem 1rem;resize:vertical;}
-  .copybtn{background:var(--forest);color:#fff;border-radius:.6rem;padding:.55rem 1.1rem;font-weight:700;
-        font-size:.92rem;margin-top:.55rem;}
+  .copybtn{background:var(--forest);color:#fff;border-radius:.6rem;padding:.6rem 1.2rem;font-weight:700;
+        font-size:.95rem;margin-top:.3rem;}
   .copybtn.ok{background:#067a3a;}
+  .copybtn:disabled{background:#c8bcc7;cursor:not-allowed;}
 </style></head>
 <body><div class="wrap">
   <h1>Course Template Converter</h1>
-  <p class="sub">Two tools in one page. <b>Restyle a whole course</b> to the RDP look, or <b>build a small block
-     of content</b> — contact cards, a callout, a section — to drop into any page. Pick one:</p>
+  <p class="sub">Two tools in one page. <b>Restyle a whole course</b> to the RDP look, or <b>build or fix a
+     single page</b> — add contact cards, callouts and sections, or bring in a page from Brightspace to remove
+     or rearrange what's on it. Pick one:</p>
 
   <div class="modenav" role="tablist" aria-label="What do you want to do?">
     <button type="button" class="modebtn" data-mode="convert" role="tab" id="tab-convert" aria-selected="true" aria-controls="mode-convert">
@@ -142,8 +177,8 @@
       <span class="md">Apply the RDP look to a Brightspace course export (.imscc or package).</span>
     </button>
     <button type="button" class="modebtn" data-mode="build" role="tab" id="tab-build" aria-selected="false" aria-controls="mode-build">
-      <span class="mt">Build a content block</span>
-      <span class="md">Make contact cards, callouts or sections to paste into a page.</span>
+      <span class="mt">Build or fix a page</span>
+      <span class="md">Make contact cards, callouts or sections &mdash; or paste in a page to remove or rearrange what&rsquo;s on it.</span>
     </button>
   </div>
 
@@ -307,43 +342,61 @@
 
   <div id="mode-build" class="hide" role="tabpanel" aria-labelledby="tab-build">
   <div class="card" id="builder">
-    <h2 style="margin:.1rem 0 .3rem;color:var(--egg);font-size:1.2rem;">Build a content block</h2>
-    <p class="sub" style="margin:0 0 1rem;">Make a small RDP-styled item — a set of contact cards, a callout, a titled
-      section — then copy it into any page. Fill in the fields, watch the preview, then <b>Copy&nbsp;HTML</b>, open the
-      Brightspace HTML editor's <b>Source&nbsp;Code (&lt;/&gt;)</b> view, <b>select all and paste</b> — it drops straight
-      over Brightspace's starter code, so there's nowhere to get lost. Every block is styled with
-      <i>inline</i> styles, so Brightspace won't strip the look the way it strips a pasted <span class="ext">&lt;style&gt;</span> block.</p>
+    <h2 style="margin:.1rem 0 .3rem;color:var(--egg);font-size:1.2rem;">Build or fix a page</h2>
+    <p class="sub" style="margin:0 0 1rem;"><b>Bring in a page you already have in Brightspace</b> to remove or
+      rearrange what's on it, or put a new page together block by block &mdash; contact cards, a callout, a titled
+      section. Click any text to edit it. When it looks right, <b>Copy page</b> and paste it over the page's
+      Source Code in Brightspace.</p>
 
-    <div class="btabs" id="cb-tabs" role="tablist" aria-label="Block type">
-      <button class="btab" type="button" role="tab" data-type="contacts" aria-selected="true">People / contact cards</button>
-      <button class="btab" type="button" role="tab" data-type="callout"  aria-selected="false">Callout / note box</button>
-      <button class="btab" type="button" role="tab" data-type="section"  aria-selected="false">Titled section card</button>
+    <details class="help" id="pg-pastewrap">
+      <summary>Fix a page that's already in Brightspace</summary>
+      <div class="body">
+        <p>Something stuck on a page that you can't remove? Brightspace's editor can't select or delete a styled
+           box once it's on the page &mdash; the box stays behind even after you empty it, and the cursor gets
+           trapped inside. Bring the page here instead:</p>
+        <ol class="steps">
+          <li>In Brightspace, open the page for editing. In the editor toolbar click <b>Source Code</b>
+              <span class="ext">&lt;/&gt;</span>.</li>
+          <li><b>Select all</b> <span class="muted">(Ctrl+A, or &#8984;A on a Mac)</span> and <b>copy</b>.</li>
+          <li>Paste it in the box below and click <b>Load page</b>. Every part of the page shows up as a block
+              you can <b>delete</b>, <b>move</b>, or click into and <b>edit</b>.</li>
+          <li>When it's right, <b>Copy page</b> at the bottom, go back to Source Code in Brightspace, select all,
+              paste, then <b>Save</b>.</li>
+        </ol>
+        <div class="pastebox">
+          <textarea id="pg-paste" spellcheck="false" aria-label="Paste the page's Source Code here" placeholder="Paste the page's Source Code here…"></textarea>
+        </div>
+        <button type="button" class="copybtn" id="pg-load" style="margin-top:0;">Load page</button>
+        <span class="muted" style="margin-left:.5rem;">This replaces the page below &mdash; Undo brings it back.</span>
+      </div>
+    </details>
+
+    <div class="pgtools" id="pg-add"><span class="lbl">Add a block:</span>
+      <button class="btab" type="button" data-add="contacts">People / contact cards</button>
+      <button class="btab" type="button" data-add="callout">Callout / note box</button>
+      <button class="btab" type="button" data-add="section">Titled section card</button>
     </div>
 
-    <div class="bform">
-      <div id="cb-controls"></div>
+    <div class="blbl">Your page <span class="sp"></span>
+      <button type="button" class="linkbtn" id="pg-undo" disabled>Undo</button>
+      <button type="button" class="linkbtn" id="pg-clear" disabled>Start over</button></div>
+    <div id="pg-note" role="status" aria-live="polite"></div>
+    <div id="pg-canvas"></div>
+  </div>
 
-      <div id="cb-themewrap">
-        <label>Colour theme</label>
-        <div class="swatches" id="cb-swatch"></div>
-      </div>
-
-      <div id="cb-iconwrap" class="hide">
-        <label>Icon</label>
-        <div class="iconpick" id="cb-icons"></div>
-      </div>
-    </div>
-
-    <div class="blbl">Preview</div>
-    <div class="bpreview" id="cb-preview"></div>
-
-    <div class="blbl">Code — copy it, open Source Code (&lt;/&gt;), select all, and paste</div>
-    <label style="display:flex;align-items:flex-start;gap:.45rem;font-weight:600;font-size:.85rem;color:var(--forest);margin:.1rem 0 .55rem;line-height:1.4;">
-      <input type="checkbox" id="cb-wrap" checked style="width:1.05rem;height:1.05rem;flex-shrink:0;margin-top:.1rem;">
-      <span>Include the full Brightspace page wrapper — so you can <b>select all and paste over the starter code</b>. Uncheck to get just the block, to drop into a page that already has content.</span>
-    </label>
-    <div class="bcode"><textarea id="cb-code" readonly spellcheck="false" aria-label="Generated HTML"></textarea></div>
-    <button class="copybtn" type="button" id="cb-copy">Copy HTML</button>
+  <div class="card">
+    <h2 style="margin:.1rem 0 .5rem;color:var(--forest);font-size:1.1rem;">Put it into Brightspace</h2>
+    <p style="margin:.1rem 0 .6rem;">Click <b>Copy page</b>. In Brightspace, open the page's editor, click
+       <b>Source Code</b> <span class="ext">&lt;/&gt;</span>, <b>select all</b>, <b>paste</b>, then <b>Save</b>.
+       It pastes straight over everything that was there, so there's nowhere to get lost.</p>
+    <button class="copybtn" type="button" id="pg-copy" aria-describedby="pg-copyhint">Copy page</button>
+    <span id="pg-copyhint" class="muted"><span aria-hidden="true">&uarr; </span>add a block or load a page first</span>
+    <p class="muted" style="margin:.6rem 0 0;">Everything is styled inline, so Brightspace keeps the look (it strips a pasted
+       <span class="ext">&lt;style&gt;</span> block, but not inline styles).</p>
+    <details style="margin-top:.7rem;">
+      <summary class="muted" style="cursor:pointer;">Show the code</summary>
+      <div class="bcode" style="margin-top:.5rem;"><textarea id="pg-code" readonly spellcheck="false" aria-label="Generated page HTML"></textarea></div>
+    </details>
   </div>
   </div><!-- /#mode-build -->
 </div>
@@ -1239,21 +1292,34 @@ $('#go').addEventListener('click',async()=>{
 });
 
 /* =========================================================================
-   CONTENT BLOCK BUILDER
+   PAGE EDITOR  (Build or fix a page)
    A second, self-contained tool sharing the engine above (COLORS / BG / BADGE /
-   SVG / card / esc). It emits inline-styled, Brightspace-safe HTML you paste
-   into the editor's Source Code view. The Copy button works because THIS page
-   runs its own JS — Brightspace strips <script>, so the button can't ride along
-   into the pasted result (and doesn't need to: the output is plain styled HTML).
+   SVG / card / esc). The page is a list of BLOCKS. Each block is either
+   generated from a small model (contact cards, callout, section) or "raw" HTML
+   that arrived by pasting a page out of Brightspace's Source Code view. The
+   output is always one whole page of inline-styled HTML that gets pasted back
+   over Source Code.
+   Why blocks at all: Brightspace's editor (TinyMCE) cannot select or delete a
+   styled <div> once it is on the page -- emptying it leaves the shell behind and
+   the cursor gets trapped inside a grid or flex container. So deleting, moving
+   and editing happen here, where each block has its own buttons.
+   Landing pads: on the way OUT every div-type block is followed by <p>&nbsp;</p>
+   so the Brightspace cursor has somewhere to land after it; on the way IN those
+   empty paragraphs are dropped again, so a page can round-trip without growing.
+   The Copy button works because THIS page runs its own JS -- Brightspace strips
+   <script>, so nothing here rides along into the pasted result.
    ========================================================================= */
 (function(){
  const B=id=>document.getElementById(id);
  const TOKENS=['forest','green','teal','egg','violet','slate','orange','gold'];
  const CALLOUT_ICONS=['alert','flag','check','star','clock','pin','book','help','compass','resources'];
- let TYPE='contacts', THEME='forest', CIC='alert';
- let CONTACTS=[{name:'Dr. Jane Doe',role:'Lead Instructor',office:'Room 1234, Main Campus',hours:'Mon / Wed 1:00–3:00 PM',email:'jane.doe@rdpolytech.ca',phone:''}];
+ const STORE='rdp-page-editor';
+ let BLOCKS=[], WRAP=null, SEL=null, HIST=[], DRAG=null, LAST=null, EDIT_SNAP=null;
+ const uid=()=>'b'+Math.random().toString(36).slice(2,9);
+ const find=id=>BLOCKS.find(b=>b.id===id);
+ const idx=id=>BLOCKS.findIndex(b=>b.id===id);
 
- /* ---------- generators (return inline-styled, paste-ready HTML) ---------- */
+ /* ---------- generators (model -> inline-styled, paste-ready HTML) ---------- */
  function iconSvg(key,color,size){return SVG[key]
    ?`<svg aria-hidden="true" fill="none" stroke="${color}" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" style="width:${size};height:${size};flex-shrink:0;display:block;">${SVG[key]}</svg>`:'';}
  function paras(txt){return (txt||'').split(/\n{2,}/).map(s=>s.trim()).filter(Boolean)
@@ -1262,118 +1328,311 @@ $('#go').addEventListener('click',async()=>{
  function contactRow(key,label,val,color,isEmail){
    if(!(val&&val.trim()))return'';
    const inner=isEmail
-     ?`<a href="mailto:${esc(val.trim())}" style="color:${color};text-decoration:underline;text-underline-offset:2px;">${esc(val.trim())}</a>`
+     ?`<a href="mailto:${xesc(val.trim())}" style="color:${color};text-decoration:underline;text-underline-offset:2px;">${esc(val.trim())}</a>`
      :esc(val.trim());
    return `<div style="display:flex;flex-direction:column;gap:.15rem;"><span style="display:flex;align-items:center;gap:.4rem;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:${color};">${iconSvg(key,color,'.95rem')}${label}</span><span style="font-size:.92rem;color:#3a4248;line-height:1.4;padding-left:1.35rem;">${inner}</span></div>`;
  }
  function contactCard(p,tok){
    const c=BADGE[tok]||COLORS[tok],bg=BG[tok],badge=BADGE[tok]||COLORS[tok],ink=BADGE_INK[tok]||'#fff';
    const raw=(p.name||'').split(/\s+/).filter(Boolean).map(w=>w[0]).slice(0,2).join('').toUpperCase();
-   const initials=raw?esc(raw):'&bull;';
+   const initials=raw?esc(raw):'\u2022';
    const rows=[contactRow('pin','Office',p.office,c),contactRow('clock','Office hours',p.hours,c),
      contactRow('mail','Email',p.email,c,true),contactRow('phone','Phone',p.phone,c)].join('');
    return `<div style="background:#fff;border:1px solid #E8E8E8;border-top:4px solid ${c};border-radius:1.1rem;box-shadow:0 3px 10px rgba(16,40,34,.06);overflow:hidden;box-sizing:border-box;"><div style="display:flex;align-items:center;gap:.85rem;padding:1.05rem 1.15rem;background:${bg};border-bottom:1px solid rgba(0,0,0,.06);box-sizing:border-box;"><div style="width:2.75rem;height:2.75rem;border-radius:50%;background:${badge};color:${ink};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;flex-shrink:0;box-sizing:border-box;">${initials}</div><div style="min-width:0;"><div style="font-weight:700;font-size:1.05rem;color:${c};line-height:1.25;">${esc(p.name||'Name')}</div>${p.role&&p.role.trim()?`<div style="font-size:.85rem;color:#5B6770;margin-top:1px;">${esc(p.role)}</div>`:''}</div></div><div style="padding:1.05rem 1.15rem;display:flex;flex-direction:column;gap:.8rem;box-sizing:border-box;">${rows||'<span style="color:#9a90a0;font-size:.85rem;">Add office, hours, email or phone.</span>'}</div></div>`;
  }
- function genContacts(){
-   const heading=B('cb-heading').value.trim(),tok=THEME,c=BADGE[tok]||COLORS[tok],bg=BG[tok];
+ function genContacts(m){
+   const tok=m.theme,c=BADGE[tok]||COLORS[tok],bg=BG[tok],heading=(m.heading||'').trim();
    const head=heading?`<h2 style="font-size:1.15rem;font-weight:800;color:${c};margin:0 0 .8rem;padding-bottom:.4rem;border-bottom:2px solid ${bg};">${esc(heading)}</h2>`:'';
-   const cards=CONTACTS.map(p=>contactCard(p,tok)).join('');
+   const cards=m.people.map(p=>contactCard(p,tok)).join('');
    return `<div style="margin:1.2rem 0;box-sizing:border-box;">${head}<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.1rem;">${cards}</div></div>`;
  }
- function genCallout(){
-   const tok=THEME,c=COLORS[tok],bg=BG[tok];
-   const heading=B('cb-heading').value.trim(),body=B('cb-body').value;
-   const icon=(CIC&&SVG[CIC])?`<div style="flex-shrink:0;margin-top:.1rem;">${iconSvg(CIC,c,'1.3rem')}</div>`:'';
+ function genCallout(m){
+   const tok=m.theme,c=COLORS[tok],bg=BG[tok],heading=(m.heading||'').trim();
+   const icon=(m.icon&&SVG[m.icon])?`<div style="flex-shrink:0;margin-top:.1rem;">${iconSvg(m.icon,c,'1.3rem')}</div>`:'';
    const h=heading?`<div style="font-weight:700;color:${c};margin-bottom:.25rem;font-size:1rem;">${esc(heading)}</div>`:'';
-   const inner=paras(body)||'<span style="color:#9a90a0;">Your text here.</span>';
+   const inner=paras(m.body)||'<span style="color:#9a90a0;">Your text here.</span>';
    return `<div style="display:flex;gap:.8rem;background:${bg};border-left:4px solid ${c};border-radius:.7rem;padding:.95rem 1.1rem;margin:1.1rem 0;box-sizing:border-box;">${icon}<div style="min-width:0;">${h}<div style="color:#3a4248;">${inner}</div></div></div>`;
  }
- function genSection(){
-   const title=B('cb-title').value.trim()||'Section title';
-   const inner=paras(B('cb-body').value)||'<p style="margin:0;color:#9a90a0;">Your text here.</p>';
+ function genSection(m){
+   const title=(m.title||'').trim()||'Section title';
+   const inner=paras(m.body)||'<p style="margin:0;color:#9a90a0;">Your text here.</p>';
    return card(title,inner);   // engine picks colour + icon from the title keywords
  }
- function genHtml(){return TYPE==='contacts'?genContacts():TYPE==='callout'?genCallout():genSection();}
+ const GEN={contacts:genContacts,callout:genCallout,section:genSection};
+ const blankPerson=()=>({name:'',role:'',office:'',hours:'',email:'',phone:''});
+ function newModel(kind){return kind==='contacts'?{heading:'',theme:'forest',people:[blankPerson()]}
+   :kind==='callout'?{heading:'',body:'',theme:'forest',icon:'alert'}:{title:'Introduction',body:''};}
+ function regen(b){if(b.model)b.html=GEN[b.kind](b.model);}
 
- /* ---------- controls per block type ---------- */
- const field=(id,label,val,ph)=>`<label for="${id}">${label}</label><input type="text" id="${id}" value="${xesc(val||'')}" placeholder="${ph||''}">`;
- function contactEntryHtml(p,i){
-   return `<div class="entry" data-i="${i}">${CONTACTS.length>1?`<button type="button" class="rm" data-rm="${i}">remove</button>`:''}
-     <div class="brow">
-       <div>${field('c-name-'+i,'Name',p.name,'Dr. Jane Doe')}</div>
-       <div>${field('c-role-'+i,'Role / title',p.role,'Lead Instructor')}</div>
-       <div>${field('c-office-'+i,'Office',p.office,'Room 1234')}</div>
-       <div>${field('c-hours-'+i,'Office hours',p.hours,'Mon / Wed 1–3 PM')}</div>
-       <div>${field('c-email-'+i,'Email',p.email,'name@rdpolytech.ca')}</div>
-       <div>${field('c-phone-'+i,'Phone',p.phone,'403-555-0100')}</div>
-     </div></div>`;
+ /* ---------- importing a page pasted out of Brightspace ---------- */
+ const INLINE=new Set(['a','abbr','b','br','code','em','i','img','mark','s','small','span','strong','sub','sup','svg','u']);
+ // Blocks the cursor can already land in/after: no landing pad needed after these.
+ const NOPAD=new Set(['p','h1','h2','h3','h4','h5','h6','ul','ol','blockquote','pre']);
+ const rootTag=h=>{const m=/^\s*<([a-z][a-z0-9]*)/i.exec(h||'');return m?m[1].toLowerCase():'';};
+ function isPad(el){return el.tagName==='P'&&!el.querySelector('img,iframe,video,audio,svg,table,a,embed,object')
+   &&el.textContent.replace(/\u00a0/g,' ').trim()==='';}
+ // Strip what must never run inside THIS page: scripts, styles, inline handlers, srcdoc,
+ // javascript: URLs. Brightspace strips all of it anyway, so nothing a teacher needs is lost.
+ // It runs on EVERY path HTML enters a block -- import, restore from localStorage, hand
+ // edits -- and once more at the innerHTML sinks. (The tool shares its github.io origin with
+ // sibling projects, and localStorage makes anything that slipped through persistent.)
+ function cleanDoc(root){
+   root.querySelectorAll('script,style,link,meta,title,noscript,base,object,embed').forEach(n=>n.remove());
+   root.querySelectorAll('*').forEach(el=>{
+     for(const a of [...el.attributes]){
+       const nm=a.name.toLowerCase();
+       if(/^on/.test(nm)||nm==='srcdoc'||nm==='action'||nm==='formaction'){el.removeAttribute(a.name);continue;}
+       if(nm==='href'||nm==='src'||nm==='data'||nm==='xlink:href'||nm==='poster'){
+         const v=a.value.replace(/[\s\u0000-\u001f]/g,'').toLowerCase();
+         if(/^(javascript|vbscript|data:text\/html)/.test(v))el.removeAttribute(a.name);}}});}
+ function clean(html){const d=new DOMParser().parseFromString('<body>'+(html||'')+'</body>','text/html');cleanDoc(d);return d.body.innerHTML;}
+ const hasText=el=>[...el.childNodes].some(n=>n.nodeType===3&&n.textContent.trim());
+ // A page wrapper is a single outer <div> that (a) the converter or this tool made -- inline
+ // max-width, no border/background -- or (b) a bare container with no style at all holding
+ // two or more things. A CARD is never unwrapped: cards carry border/background styling.
+ function isWrapper(el){if(el.tagName!=='DIV'||hasText(el))return false;
+   const st=el.getAttribute('style')||'';
+   if(st)return /max-width/i.test(st)&&!/border|background/i.test(st);
+   return [...el.children].filter(x=>!isPad(x)).length>=2;}
+ const BLOCKISH='div,p,table,ul,ol,h1,h2,h3,h4,h5,h6,blockquote,pre,figure,section,article';
+ function importPage(html){
+   const d=new DOMParser().parseFromString(html,'text/html');cleanDoc(d);
+   let root=d.body, wrap=null;
+   // Unwrap the page wrapper one level so the cards show up as separate blocks; keep the
+   // wrapper (it carries the font / width styling) and put it back on the way out.
+   const kids=[...root.children].filter(el=>!isPad(el));
+   if(kids.length===1&&isWrapper(kids[0])&&!hasText(root)){
+     const oh=kids[0].cloneNode(false).outerHTML;wrap=oh.slice(0,oh.length-'</div>'.length);root=kids[0];}
+   const out=[];let run=[];
+   const flush=()=>{while(run.length&&run[run.length-1].nodeType===3&&!run[run.length-1].textContent.trim())run.pop();
+     if(!run.length)return;const p=d.createElement('p');run.forEach(n=>p.appendChild(n));
+     if(!isPad(p))out.push(p.outerHTML);run=[];};
+   for(const n of [...root.childNodes]){
+     if(n.nodeType===3){if(n.textContent.trim()||run.length)run.push(n);continue;}   // keep the spaces BETWEEN inline bits
+     if(n.nodeType!==1)continue;
+     if(INLINE.has(n.tagName.toLowerCase())&&!n.querySelector(BLOCKISH)){run.push(n);continue;}   // loose inline bits -> one paragraph
+     flush();if(!isPad(n))out.push(n.outerHTML);}
+   flush();
+   return {blocks:out,wrap};
  }
- function renderControls(){
-   const wrap=B('cb-controls');
-   if(TYPE==='contacts'){
-     wrap.innerHTML=`${field('cb-heading','Section heading (optional)','','Primary Faculty Contacts')}
-       <div id="cb-entries">${CONTACTS.map(contactEntryHtml).join('')}</div>
-       <button type="button" class="addbtn" id="cb-add">+ Add another person</button>`;
-     // per-field wiring: write straight back into the CONTACTS model, then re-render output only
-     wrap.querySelectorAll('#cb-entries input').forEach(inp=>inp.addEventListener('input',e=>{
-       const [,f,i]=e.target.id.split('-');const idx=+i;const map={name:'name',role:'role',office:'office',hours:'hours',email:'email',phone:'phone'};
-       if(CONTACTS[idx])CONTACTS[idx][map[f]]=e.target.value;update();}));
-     B('cb-add').addEventListener('click',()=>{CONTACTS.push({name:'',role:'',office:'',hours:'',email:'',phone:''});
-       renderControls();update();});
-     wrap.querySelectorAll('[data-rm]').forEach(btn=>btn.addEventListener('click',e=>{
-       CONTACTS.splice(+e.target.getAttribute('data-rm'),1);renderControls();update();}));
-   }else if(TYPE==='callout'){
-     wrap.innerHTML=`${field('cb-heading','Heading (optional)','','Good to know')}
-       <label for="cb-body">Text</label><textarea id="cb-body" placeholder="Write your note. Leave a blank line between paragraphs."></textarea>`;
-     wrap.querySelectorAll('input,textarea').forEach(el=>el.addEventListener('input',update));
-   }else{
-     wrap.innerHTML=`${field('cb-title','Title','Introduction','Introduction')}
-       <label for="cb-body">Text</label><textarea id="cb-body" placeholder="Write your content. Leave a blank line between paragraphs."></textarea>
-       <p class="muted" style="margin:.5rem 0 0;">The colour and icon are chosen automatically from the words in your title — the same way the converter styles a course.</p>`;
-     wrap.querySelectorAll('input,textarea').forEach(el=>el.addEventListener('input',update));
-   }
-   // theme picker is relevant for contacts + callout; the section card themes itself
-   B('cb-themewrap').classList.toggle('hide',TYPE==='section');
-   B('cb-iconwrap').classList.toggle('hide',TYPE!=='callout');
- }
+ const RAW_LABEL={p:'Paragraph',h1:'Heading',h2:'Heading',h3:'Heading',h4:'Heading',h5:'Heading',h6:'Heading',
+   ul:'List',ol:'List',table:'Table',img:'Image',iframe:'Embed',figure:'Figure',blockquote:'Quote',hr:'Divider',div:'Styled box'};
+ const KIND_LABEL={contacts:'Contact cards',callout:'Callout',section:'Section'};
+ // Bar label: the block's kind, plus (for pasted content) the first few words of its text so
+ // a teacher can tell which "Block" is the stuck one. An empty shell says so outright.
+ function label(b){
+   if(b.kind!=='raw')return [KIND_LABEL[b.kind],b.model?'':'edited by hand'];
+   const t=rootTag(b.html);
+   let kind=RAW_LABEL[t]||'Block';
+   if(t==='p'&&/^\s*<p[^>]*>\s*<img/i.test(b.html))kind='Image';
+   // a space after every tag so words in neighbouring elements don't run together
+   const d=new DOMParser().parseFromString('<body>'+b.html.replace(/>/g,'> ')+'</body>','text/html');
+   let txt=d.body.textContent.replace(/\s+/g,' ').trim();
+   if(!txt)return [kind,d.body.querySelector('img,iframe,video,audio,table,svg')?'':'(empty)'];
+   if(txt.length>48)txt=txt.slice(0,46).replace(/\s+\S*$/,'')+'…';
+   return [kind,txt];}
+ function setLabel(el,b){const [k,sn]=label(b);el.querySelector('.pgb-kind').textContent=k;el.querySelector('.pgb-sn').textContent=sn;
+   // screen readers otherwise hear nine bare "Delete"s in a row
+   const what=k+(sn?': '+sn:'');
+   const set=(act,verb)=>{const x=el.querySelector(`[data-act="${act}"]`);if(x)x.setAttribute('aria-label',verb+' '+what);};
+   set('del','Delete');set('up','Move up');set('down','Move down');set('edit','Settings for');}
 
- function renderSwatches(){
-   B('cb-swatch').innerHTML=TOKENS.map(t=>`<button type="button" class="sw" data-tok="${t}" title="${t}" aria-pressed="${t===THEME}" style="background:${BADGE[t]||COLORS[t]};"></button>`).join('');
-   B('cb-swatch').querySelectorAll('.sw').forEach(b=>b.addEventListener('click',()=>{THEME=b.getAttribute('data-tok');
-     B('cb-swatch').querySelectorAll('.sw').forEach(x=>x.setAttribute('aria-pressed',x===b));update();}));
- }
- function renderIcons(){
-   B('cb-icons').innerHTML=CALLOUT_ICONS.map(k=>`<button type="button" class="ic" data-ic="${k}" title="${k}" aria-pressed="${k===CIC}">${iconSvg(k,'currentColor','1.15rem')}</button>`).join('');
-   B('cb-icons').querySelectorAll('.ic').forEach(b=>b.addEventListener('click',()=>{CIC=b.getAttribute('data-ic');
-     B('cb-icons').querySelectorAll('.ic').forEach(x=>x.setAttribute('aria-pressed',x===b));update();}));
- }
-
+ /* ---------- output ---------- */
  // Brightspace's Source-Code editor opens on a fixed starter shell (two D2L stylesheet
- // links + a Lato/12px body). Wrapping the block in that SAME shell lets a teacher just
+ // links + a Lato/12px body). Wrapping the page in that SAME shell lets a teacher just
  // select-all and paste over everything, instead of hunting for where the <body> is.
  function wrapDoc(inner){return `<!DOCTYPE html>
 <html><head><link rel="stylesheet" href="https://s.brightspace.com/lib/fonts/0.6.1/fonts.css"><link rel="stylesheet" href="https://templates.lcs.brightspace.com/lib/assets/css/styles.min.css"></head><body style="color: rgb(32, 33, 34); font-family: Lato, sans-serif; font-size: 12px;">
 ${inner}
 </body></html>`;}
- function update(){const inner=genHtml();B('cb-preview').innerHTML=inner;
-   B('cb-code').value=B('cb-wrap').checked?wrapDoc(inner):inner;}
+ function pageOut(){
+   const parts=BLOCKS.map(b=>b.html+(NOPAD.has(rootTag(b.html))?'':'\n<p>&nbsp;</p>'));
+   let inner=parts.join('\n');
+   if(WRAP)inner=WRAP+'\n'+inner+'\n</div>';
+   return wrapDoc(inner);}
+
+ /* ---------- state: autosave, undo ---------- */
+ // The last few undo steps are saved too, so "Start over" or "Load page" followed by a reload
+ // is not a way to lose a forty-block page.
+ function save(){try{localStorage.setItem(STORE,JSON.stringify({v:1,blocks:BLOCKS,wrap:WRAP,hist:HIST.slice(-5)}));}catch(e){}}
+ function validBlocks(list){return (Array.isArray(list)?list:[]).filter(b=>b&&typeof b==='object'&&typeof b.id==='string'
+     &&typeof b.html==='string'&&(b.kind==='raw'||GEN[b.kind]))
+   .map(b=>({id:b.id,kind:b.kind,model:(b.kind!=='raw'&&b.model&&typeof b.model==='object')?b.model:null,html:clean(b.html)}));}
+ function restore(){try{const s=JSON.parse(localStorage.getItem(STORE)||'null');
+   if(s&&s.v===1){BLOCKS=validBlocks(s.blocks);WRAP=typeof s.wrap==='string'?s.wrap:null;
+     HIST=(Array.isArray(s.hist)?s.hist:[]).filter(x=>typeof x==='string');}}catch(e){}}
+ function snap(){HIST.push(JSON.stringify({blocks:BLOCKS,wrap:WRAP}));if(HIST.length>30)HIST.shift();B('pg-undo').disabled=false;}
+ function undo(){const s=HIST.pop();if(!s)return;let o;try{o=JSON.parse(s);}catch(e){return;}
+   BLOCKS=validBlocks(o.blocks);WRAP=typeof o.wrap==='string'?o.wrap:null;SEL=null;EDIT_SNAP=null;
+   B('pg-undo').disabled=!HIST.length;renderCanvas();note('Undone.');}
+ function note(msg){B('pg-note').textContent=msg||'';}
+ function syncOut(){B('pg-code').value=pageOut();B('pg-copy').disabled=!BLOCKS.length;B('pg-copyhint').hidden=!!BLOCKS.length;
+   B('pg-clear').disabled=!BLOCKS.length;B('pg-undo').disabled=!HIST.length;save();}
+
+ /* ---------- the canvas ---------- */
+ const canvas=B('pg-canvas');
+ function renderCanvas(){
+   canvas.innerHTML='';
+   if(!BLOCKS.length){canvas.innerHTML='<div class="pgempty">Nothing on the page yet. <b>Add a block</b> above, or paste in a page from Brightspace.</div>';syncOut();return;}
+   BLOCKS.forEach((b,i)=>{
+     const el=document.createElement('div');el.className='pgb';el.dataset.id=b.id;
+     el.innerHTML=`<div class="pgb-bar"><span class="pgb-grip" title="Drag to move" aria-hidden="true">&#8942;&#8942;</span><span class="pgb-kind"></span><span class="pgb-sn"></span>`
+       +(b.model?`<button type="button" data-act="edit" aria-expanded="${b.id===SEL}">Settings</button>`:'')
+       +`<button type="button" data-act="up" aria-label="Move up" title="Move up"${i?'':' disabled'}>&uarr;</button>`
+       +`<button type="button" data-act="down" aria-label="Move down" title="Move down"${i<BLOCKS.length-1?'':' disabled'}>&darr;</button>`
+       +`<button type="button" class="del" data-act="del">Delete</button></div>`
+       +`<div class="pgb-body" contenteditable="true" aria-label="Block content: click to edit the text"></div>`;
+     setLabel(el,b);
+     el.querySelector('.pgb-body').innerHTML=clean(b.html);
+     if(b.id===SEL&&b.model){const f=document.createElement('div');f.className='pgb-form bform';el.appendChild(f);renderForm(f,b);}
+     canvas.appendChild(el);});
+   syncOut();}
+ function refresh(b){const el=canvas.querySelector(`.pgb[data-id="${b.id}"]`);if(!el)return;
+   el.querySelector('.pgb-body').innerHTML=clean(b.html);setLabel(el,b);syncOut();}
+ // Keyboard users lose their place when the canvas re-renders; put focus back on the same block.
+ function focusBlock(id,act){const el=canvas.querySelector(`.pgb[data-id="${id}"]`);if(!el)return false;
+   const b=el.querySelector(`[data-act="${act}"]`);const t=(b&&!b.disabled)?b:el.querySelector('[data-act="del"]');
+   if(t){t.focus({preventScroll:true});el.scrollIntoView({block:'nearest'});}return true;}
+ canvas.addEventListener('focusin',e=>{const el=e.target.closest('.pgb');if(el)LAST=el.dataset.id;
+   if(e.target.closest('.pgb-body'))EDIT_SNAP=null;});
+
+ canvas.addEventListener('click',e=>{
+   const btn=e.target.closest('[data-act]');if(!btn)return;
+   const el=btn.closest('.pgb'),id=el.dataset.id,i=idx(id),act=btn.dataset.act;if(i<0)return;
+   if(act==='del'){snap();BLOCKS.splice(i,1);if(SEL===id)SEL=null;if(LAST===id)LAST=null;renderCanvas();
+     const nb=BLOCKS[Math.min(i,BLOCKS.length-1)];
+     if(!(nb&&focusBlock(nb.id,'del')))B('pg-undo').focus();
+     note(`Block deleted (${BLOCKS.length} left). Undo brings it back.`);}
+   else if(act==='up'&&i>0){snap();[BLOCKS[i-1],BLOCKS[i]]=[BLOCKS[i],BLOCKS[i-1]];renderCanvas();focusBlock(id,'up');
+     note(`Moved up — now ${i} of ${BLOCKS.length}.`);}
+   else if(act==='down'&&i<BLOCKS.length-1){snap();[BLOCKS[i+1],BLOCKS[i]]=[BLOCKS[i],BLOCKS[i+1]];renderCanvas();focusBlock(id,'down');
+     note(`Moved down — now ${i+2} of ${BLOCKS.length}.`);}
+   else if(act==='edit'){SEL=SEL===id?null:id;renderCanvas();
+     if(SEL){const f=canvas.querySelector(`.pgb[data-id="${id}"] .pgb-form input,.pgb[data-id="${id}"] .pgb-form textarea`);if(f)f.focus({preventScroll:true});}}
+ });
+ // Typing straight into a block. A generated block edited by hand becomes plain HTML from
+ // then on -- its settings form would otherwise overwrite the hand edits.
+ canvas.addEventListener('input',e=>{
+   const body=e.target.closest('.pgb-body');if(!body)return;
+   const el=body.closest('.pgb'),b=find(el.dataset.id);if(!b)return;
+   if(EDIT_SNAP!==b.id){snap();EDIT_SNAP=b.id;}   // one undo step per editing session in a block
+   b.html=clean(body.innerHTML);
+   if(b.model){b.model=null;if(SEL===b.id)SEL=null;
+     const s=el.querySelector('[data-act="edit"]');if(s)s.remove();
+     const f=el.querySelector('.pgb-form');if(f)f.remove();
+     setLabel(el,b);note('Now edited by hand — Settings are off for this block. Undo brings them back.');}
+   syncOut();});
+ // Paste into a block as plain text: Word / browser clipboards carry styles Brightspace chokes on.
+ canvas.addEventListener('paste',e=>{const body=e.target.closest('.pgb-body');if(!body)return;
+   e.preventDefault();const t=(e.clipboardData||window.clipboardData).getData('text/plain');
+   document.execCommand('insertText',false,t);});
+
+ // Drag to reorder. The block is only draggable while the grip is held, so selecting text
+ // inside the editable body still works normally.
+ canvas.addEventListener('mousedown',e=>{const g=e.target.closest('.pgb-grip');if(g)g.closest('.pgb').draggable=true;});
+ // A click on the grip with no drag must not leave the block draggable (the next text selection
+ // would move the block). mouseup doesn't fire during a real drag, so real drags are unaffected.
+ document.addEventListener('mouseup',()=>canvas.querySelectorAll('.pgb[draggable="true"]').forEach(x=>x.draggable=false));
+ canvas.addEventListener('dragstart',e=>{const el=e.target.closest?e.target.closest('.pgb'):null;
+   if(!el||!el.draggable)return;DRAG=el.dataset.id;el.classList.add('dragging');
+   e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain',DRAG);}catch(_){}});
+ const dropSide=(el,e)=>{const r=el.getBoundingClientRect();return e.clientY<r.top+r.height/2?'before':'after';};
+ function clearDrop(){canvas.querySelectorAll('.drop-before,.drop-after').forEach(x=>x.classList.remove('drop-before','drop-after'));}
+ function endDrag(){clearDrop();canvas.querySelectorAll('.pgb').forEach(x=>{x.classList.remove('dragging');x.draggable=false;});DRAG=null;}
+ canvas.addEventListener('dragover',e=>{if(!DRAG)return;e.preventDefault();e.dataTransfer.dropEffect='move';
+   const el=e.target.closest('.pgb');clearDrop();if(!el||el.dataset.id===DRAG)return;el.classList.add('drop-'+dropSide(el,e));});
+ canvas.addEventListener('dragleave',e=>{if(!canvas.contains(e.relatedTarget))clearDrop();});
+ canvas.addEventListener('drop',e=>{
+   if(!DRAG){   // something dragged in from outside (a browser page, Word): plain text only, like paste
+     const body=e.target.closest('.pgb-body');if(!body)return;e.preventDefault();
+     const t=e.dataTransfer.getData('text/plain');if(t){body.focus();document.execCommand('insertText',false,t);}return;}
+   e.preventDefault();
+   const el=e.target.closest('.pgb'),from=idx(DRAG);
+   if(el&&el.dataset.id!==DRAG&&from>=0){const side=dropSide(el,e);snap();
+     const [b]=BLOCKS.splice(from,1);BLOCKS.splice(idx(el.dataset.id)+(side==='after'?1:0),0,b);endDrag();renderCanvas();}
+   else endDrag();});
+ canvas.addEventListener('dragend',endDrag);
+
+ /* ---------- settings form for a generated block ---------- */
+ const fld=(lbl,k,val,ph,i)=>`<label><span>${lbl}</span><input type="text" data-k="${k}"${i===undefined?'':` data-i="${i}"`} value="${xesc(String(val==null?'':val))}" placeholder="${ph||''}"></label>`;
+ const TOKEN_NAME={forest:'Forest green',green:'Green',teal:'Teal',egg:'Plum',violet:'Violet',slate:'Slate grey',orange:'Orange',gold:'Gold'};
+ const ICON_NAME={alert:'Warning triangle',flag:'Flag',check:'Tick',star:'Star',clock:'Clock',pin:'Map pin',book:'Book',help:'Life ring',compass:'Compass',resources:'Light bulb'};
+ const swatches=t=>`<div class="fl" id="pg-themelbl">Colour theme</div><div class="swatches" role="group" aria-labelledby="pg-themelbl">${TOKENS.map(x=>`<button type="button" class="sw" data-tok="${x}" title="${TOKEN_NAME[x]}" aria-label="${TOKEN_NAME[x]}" aria-pressed="${x===t}" style="background:${BADGE[x]||COLORS[x]};"></button>`).join('')}</div>`;
+ const icons=c=>`<div class="fl" id="pg-iconlbl">Icon</div><div class="iconpick" role="group" aria-labelledby="pg-iconlbl">${CALLOUT_ICONS.map(k=>`<button type="button" class="ic" data-ic="${k}" title="${ICON_NAME[k]}" aria-label="${ICON_NAME[k]}" aria-pressed="${k===c}">${iconSvg(k,'currentColor','1.15rem')}</button>`).join('')}</div>`;
+ function renderForm(f,b){const m=b.model;let h='';
+   if(b.kind==='contacts'){
+     h=fld('Section heading (optional)','heading',m.heading,'Primary Faculty Contacts')
+      +m.people.map((p,i)=>`<div class="entry">${m.people.length>1?`<button type="button" class="rm" data-rm="${i}">remove</button>`:''}<div class="brow">
+        <div>${fld('Name','name',p.name,'Dr. Jane Doe',i)}</div><div>${fld('Role / title','role',p.role,'Lead Instructor',i)}</div>
+        <div>${fld('Office','office',p.office,'Room 1234',i)}</div><div>${fld('Office hours','hours',p.hours,'Mon / Wed 1–3 PM',i)}</div>
+        <div>${fld('Email','email',p.email,'name@rdpolytech.ca',i)}</div><div>${fld('Phone','phone',p.phone,'403-555-0100',i)}</div></div></div>`).join('')
+      +`<button type="button" class="addbtn" data-add-person>+ Add another person</button>`+swatches(m.theme);
+   }else if(b.kind==='callout'){
+     h=fld('Heading (optional)','heading',m.heading,'Good to know')
+      +`<label><span>Text</span><textarea data-k="body" placeholder="Write your note. Leave a blank line between paragraphs.">${esc(m.body||'')}</textarea></label>`
+      +swatches(m.theme)+icons(m.icon);
+   }else{
+     h=fld('Title','title',m.title,'Introduction')
+      +`<label><span>Text</span><textarea data-k="body" placeholder="Write your content. Leave a blank line between paragraphs.">${esc(m.body||'')}</textarea></label>`
+      +`<p class="muted" style="margin:.5rem 0 0;">The colour and icon are chosen automatically from the words in your title — the same way the converter styles a course.</p>`;
+   }
+   f.innerHTML=h+`<button type="button" class="pgb-done" data-done>Done</button>`;
+   f.oninput=e=>{const k=e.target.dataset.k;if(!k)return;const i=e.target.dataset.i;
+     if(i!==undefined&&m.people&&m.people[+i])m.people[+i][k]=e.target.value;else m[k]=e.target.value;
+     regen(b);refresh(b);};
+   f.onclick=e=>{const t=e.target.closest('button');if(!t)return;
+     if(t.hasAttribute('data-add-person')){m.people.push(blankPerson());regen(b);refresh(b);renderForm(f,b);
+       const es=f.querySelectorAll('.entry');const last=es[es.length-1];if(last)last.querySelector('input').focus();}
+     else if(t.dataset.rm!==undefined){m.people.splice(+t.dataset.rm,1);regen(b);refresh(b);renderForm(f,b);}
+     else if(t.dataset.tok){m.theme=t.dataset.tok;f.querySelectorAll('.sw').forEach(x=>x.setAttribute('aria-pressed',x===t));regen(b);refresh(b);}
+     else if(t.dataset.ic){m.icon=t.dataset.ic;f.querySelectorAll('.ic').forEach(x=>x.setAttribute('aria-pressed',x===t));regen(b);refresh(b);}
+     else if(t.hasAttribute('data-done')){SEL=null;renderCanvas();}};
+ }
+
+ /* ---------- top controls ---------- */
+ B('pg-add').addEventListener('click',e=>{const t=e.target.closest('[data-add]');if(!t)return;
+   const b={id:uid(),kind:t.dataset.add,model:newModel(t.dataset.add),html:''};regen(b);
+   // goes in after the block the teacher was last working in, else at the end
+   const at=idx(LAST);snap();
+   if(at>=0){BLOCKS.splice(at+1,0,b);note('Added below the block you were on.');}else{BLOCKS.push(b);note('');}
+   SEL=b.id;LAST=b.id;renderCanvas();
+   const el=canvas.querySelector(`.pgb[data-id="${b.id}"]`);
+   if(el){el.scrollIntoView({behavior:'smooth',block:'nearest'});
+     const f=el.querySelector('.pgb-form input,.pgb-form textarea');if(f)f.focus({preventScroll:true});}});
+ B('pg-load').addEventListener('click',()=>{
+   const html=B('pg-paste').value;
+   if(!html.trim()){note('Paste the page’s Source Code into the box first.');return;}
+   const r=importPage(html);
+   if(!r.blocks.length){note('Nothing to show — that didn’t look like a page. Copy it from the Source Code (</>) view in Brightspace.');return;}
+   snap();
+   BLOCKS=r.blocks.map(h=>({id:uid(),kind:'raw',model:null,html:h}));WRAP=r.wrap;SEL=null;
+   B('pg-paste').value='';B('pg-pastewrap').open=false;renderCanvas();
+   note(`Loaded ${BLOCKS.length} block${BLOCKS.length===1?'':'s'}. Delete, move or click into any of them, then Copy page.`);
+   B('builder').querySelector('.blbl').scrollIntoView({behavior:'smooth',block:'start'});});
+ B('pg-undo').addEventListener('click',undo);
+ // Start over asks once, in place (no browser dialog), then clears. Undo still brings it back.
+ let clearArmed=null;
+ B('pg-clear').addEventListener('click',()=>{if(!BLOCKS.length)return;const btn=B('pg-clear');
+   if(!clearArmed){btn.textContent=`Really remove all ${BLOCKS.length}?`;
+     clearArmed=setTimeout(()=>{clearArmed=null;btn.textContent='Start over';},4000);return;}
+   clearTimeout(clearArmed);clearArmed=null;btn.textContent='Start over';
+   snap();BLOCKS=[];WRAP=null;SEL=null;LAST=null;renderCanvas();note('Cleared. Undo brings it back.');B('pg-undo').focus();});
+ B('pg-copy').addEventListener('click',async()=>{
+   const t=B('pg-code'),btn=B('pg-copy');let ok=false;
+   try{await navigator.clipboard.writeText(t.value);ok=true;}catch(e){try{t.select();ok=document.execCommand('copy');}catch(_){}}
+   btn.textContent=ok?'Copied ✓':'Copy page';btn.classList.toggle('ok',ok);
+   note(ok?'Copied. Now in Brightspace: Source Code (</>), select all, paste, Save.'
+          :'Copying didn’t work here — open "Show the code" below, select it all, and copy by hand.');
+   setTimeout(()=>{btn.textContent='Copy page';btn.classList.remove('ok');},1600);});
 
  /* ---------- init ---------- */
- B('cb-tabs').querySelectorAll('.btab').forEach(tab=>tab.addEventListener('click',()=>{
-   TYPE=tab.getAttribute('data-type');
-   B('cb-tabs').querySelectorAll('.btab').forEach(t=>t.setAttribute('aria-selected',t===tab));
-   renderControls();update();}));
- B('cb-wrap').addEventListener('change',update);
- B('cb-copy').addEventListener('click',async()=>{
-   const t=B('cb-code');t.select();
-   try{await navigator.clipboard.writeText(t.value);}catch(e){try{document.execCommand('copy');}catch(_){}}
-   const btn=B('cb-copy');btn.textContent='Copied ✓';btn.classList.add('ok');
-   setTimeout(()=>{btn.textContent='Copy HTML';btn.classList.remove('ok');},1600);});
-
- renderSwatches();renderIcons();renderControls();update();
+ try{document.execCommand('defaultParagraphSeparator',false,'p');}catch(e){}
+ try{restore();renderCanvas();}
+ catch(e){console.error(e);BLOCKS=[];WRAP=null;HIST=[];try{localStorage.removeItem(STORE);}catch(_){}renderCanvas();}
+ if(BLOCKS.length)note('Picked up where you left off.');else B('pg-pastewrap').open=true;
 })();
 
-/* ---- Top-level mode switch: Restyle a course  <>  Build a content block ---- */
+/* ---- Top-level mode switch: Restyle a course  <>  Build or fix a page ---- */
 (function(){
  const nav=document.querySelector('.modenav');if(!nav)return;
  const conv=document.getElementById('mode-convert'),build=document.getElementById('mode-build');
@@ -1381,7 +1640,10 @@ ${inner}
    nav.querySelectorAll('.modebtn').forEach(b=>b.setAttribute('aria-selected',b.dataset.mode===m));
    try{localStorage.setItem('rdp-tool-mode',m);}catch(e){}}
  nav.querySelectorAll('.modebtn').forEach(b=>b.addEventListener('click',()=>set(b.dataset.mode)));
+ // #build / #convert in the link wins (so a help page can link straight to the page editor);
+ // otherwise the mode from last visit.
  let start='convert';try{const s=localStorage.getItem('rdp-tool-mode');if(s==='build'||s==='convert')start=s;}catch(e){}
+ const h=location.hash.replace('#','');if(h==='build'||h==='convert')start=h;
  set(start);
 })();
 </script>
