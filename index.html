@@ -4,103 +4,181 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Course Template Converter</title>
 <style>
-  :root{--egg:#51284F;--forest:#004238;--green:#00AD50;--ink:#3a4248;--border:#E8E8E8;--bg:#f4f2f5;}
+  :root{--egg:#51284F;--forest:#004238;--green:#00AD50;--ink:#3a4248;--border:#E8E8E8;--bg:#f4f2f5;--muted:#6b6470;--done:#067a3a;}
   *{box-sizing:border-box;}
-  body{font-family:'Inter',Arial,Helvetica,sans-serif;color:var(--ink);background:var(--bg);
-       margin:0;line-height:1.6;}
-  .wrap{max-width:780px;margin:0 auto;padding:1.5rem 1.2rem 4rem;}
-  h1{color:var(--egg);font-size:1.45rem;margin:.2rem 0 .2rem;}
-  .sub{color:#6b6470;margin:0 0 1.4rem;font-size:.95rem;}
-  .card{background:#fff;border:1px solid var(--border);border-radius:1rem;
-        box-shadow:0 3px 10px rgba(16,40,34,.06);padding:1.3rem 1.4rem;margin-bottom:1.2rem;}
-  #drop{border:2px dashed #7a6e79;border-radius:1rem;background:#fff;padding:2.2rem 1rem;text-align:center;
-        cursor:pointer;transition:.15s;color:#6b6470;}
-  #drop.hot{border-color:var(--forest);background:#f0faf2;color:var(--forest);}
-  #drop:focus-visible{outline:3px solid var(--egg);outline-offset:2px;}
-  #drop strong{color:var(--egg);font-size:1.05rem;}
-  .opts{display:flex;flex-wrap:wrap;gap:1.2rem;align-items:center;margin-top:1rem;font-size:.92rem;}
-  .opts label{display:flex;align-items:center;gap:.4rem;}
-  input[type=text]{border:1px solid var(--border);border-radius:.5rem;padding:.4rem .6rem;font:inherit;min-width:240px;}
-  button{font:inherit;font-weight:700;border:0;border-radius:.6rem;padding:.7rem 1.3rem;cursor:pointer;}
-  .go{background:var(--egg);color:#fff;font-size:1.02rem;}
-  .go:disabled{background:#c8bcc7;cursor:not-allowed;}
-  .dl{display:inline-block;background:var(--forest);color:#fff;text-decoration:none;border-radius:.6rem;
-      padding:.6rem 1rem;margin:.35rem .5rem .35rem 0;font-weight:700;font-size:.92rem;}
-  .dl.safe{background:#067a3a;}
-  #log{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;background:#0f1b18;color:#cfe9da;
-       border-radius:.7rem;padding:.9rem 1rem;white-space:pre-wrap;max-height:340px;overflow:auto;margin-top:1rem;display:none;}
-  .pass{color:#7ee0a6;font-weight:700;} .warn{color:#ffd27d;font-weight:700;} .err{color:#ff9b9b;font-weight:700;}
-  .pill{display:inline-block;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
-        background:#f0e8f0;color:var(--egg);border-radius:1rem;padding:.15rem .6rem;margin-left:.5rem;}
-  .muted{color:#6b6470;font-size:.85rem;}
+  body{font-family:'Inter',Arial,Helvetica,sans-serif;color:var(--ink);background:var(--bg);margin:0;line-height:1.6;}
+  .wrap{max-width:780px;margin:0 auto;padding:1.2rem 1.2rem 5rem;}
+  .top{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin:0 0 .6rem;}
+  h1{color:var(--egg);font-size:1.35rem;margin:0;}
+  #savestate{font-size:.82rem;color:var(--muted);}
+  #savestate:not(:empty)::before{content:"✓ ";color:var(--done);}
+  .muted{color:var(--muted);font-size:.85rem;}
   .hide{display:none;}
+  [hidden]{display:none!important;}
+  button{font:inherit;font-weight:700;border:0;border-radius:.6rem;padding:.7rem 1.3rem;cursor:pointer;}
+  button:focus-visible,[tabindex]:focus-visible,summary:focus-visible{outline:3px solid var(--egg);outline-offset:2px;}
+  .pri{background:var(--egg);color:#fff;font-size:1.02rem;padding:.75rem 1.4rem;min-height:44px;}
+  .pri:disabled{background:#c8bcc7;cursor:not-allowed;}
+  .pri.ok{background:var(--done);}
   .linkbtn{background:none;border:0;padding:0;font:inherit;color:var(--forest);text-decoration:underline;
         text-underline-offset:2px;cursor:pointer;font-weight:600;}
   .linkbtn:hover{color:var(--egg);}
-  .steps{list-style:none;counter-reset:s;padding:0;margin:.4rem 0 0;}
-  .steps li{counter-increment:s;position:relative;padding:.55rem 0 .55rem 2.6rem;border-top:1px solid var(--border);}
-  .steps li:first-child{border-top:0;}
-  .steps li::before{content:counter(s);position:absolute;left:0;top:.5rem;width:1.75rem;height:1.75rem;
-        background:var(--egg);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;
-        font-weight:700;font-size:.95rem;}
-  .ext{display:inline-block;background:#0f1b18;color:#7ee0a6;font-family:ui-monospace,Menlo,Consolas,monospace;
-        font-weight:700;border-radius:.35rem;padding:.05rem .4rem;}
-  .note{background:#fff7e6;border:1px solid #f0d9a8;border-radius:.7rem;padding:.8rem 1rem;margin:1rem 0 0;font-size:.92rem;}
-  .note b{color:#a8500a;}
-  .path{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.86rem;color:var(--forest);}
-  #modlist{margin-top:.3rem;}
-  .modrow{display:flex;align-items:center;gap:.55rem;padding:.4rem .2rem;border-top:1px solid var(--border);font-size:.95rem;cursor:pointer;}
-  .modrow:first-child{border-top:0;}
-  .modrow input{width:1.1rem;height:1.1rem;flex-shrink:0;}
+  .linkbtn:disabled{color:#b9b1bf;text-decoration:none;cursor:default;}
 
-  /* Walkthrough: show the short path, layer the caveats. Faculty told us the old
-     page overwhelmed them -- every warning was inline, so the wall of text arrived
-     before the thing they actually had to do. Nothing was deleted; it moved into
-     "If something looks different" below. */
-  .steps li b.warn{color:#a8500a;}
-  /* Screenshot slots. Drop a PNG into shots/ with the matching name and it appears;
-     until then the reader sees a labelled placeholder rather than a broken image. */
-  .shot{margin:.55rem 0 .2rem;}
-  .shot img{display:block;max-width:100%;border:1px solid var(--border);border-radius:.5rem;}
-  .shot .ph{display:none;}
-  .shot.missing img{display:none;}
-  .shot.missing .ph{display:flex;align-items:center;gap:.5rem;border:1.5px dashed #c9c2d0;border-radius:.5rem;
-        padding:.6rem .75rem;color:#6b6470;background:#faf9fb;font-size:.85rem;}
-  .shot .ph code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;color:var(--egg);}
-  details.help{margin:.9rem 0 0;border:1px solid var(--border);border-radius:.7rem;background:#fbfafc;}
-  details.help>summary{cursor:pointer;padding:.65rem .9rem;font-weight:700;color:var(--forest);font-size:.95rem;
-        list-style:none;}
+  /* ---- The rail: three stages, 1:1 with what has actually happened ---- */
+  .rail{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.4rem;
+        padding:.5rem 0;margin:0 0 1rem;background:var(--bg);}
+  .rs{display:flex;align-items:center;gap:.5rem;min-width:0;background:#fff;border:1.5px solid var(--border);border-radius:.7rem;
+        padding:.5rem .7rem;font-size:.88rem;font-weight:700;color:var(--muted);text-align:left;cursor:pointer;}
+  .rs .n{display:inline-flex;align-items:center;justify-content:center;width:1.5rem;height:1.5rem;border-radius:50%;
+        background:#e9e4ea;color:var(--muted);font-size:.8rem;flex-shrink:0;}
+  .rs.cur{border-color:var(--egg);color:var(--egg);box-shadow:0 2px 10px rgba(81,40,79,.12);}
+  .rs.cur .n{background:var(--egg);color:#fff;}
+  .rs.ok{color:var(--forest);}
+  .rs.ok .n{background:var(--done);color:#fff;}
+  .rs:disabled{cursor:default;opacity:.6;}
+  @media (max-width:560px){.rs{padding:.45rem .5rem;font-size:.8rem;} .rs .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}}
+
+  /* ---- Stages: one open, the others a single line ---- */
+  .stage{background:#fff;border:1px solid var(--border);border-radius:1rem;box-shadow:0 3px 10px rgba(16,40,34,.06);
+        padding:1rem 1.4rem;margin-bottom:.9rem;}
+  .stage.cur{border-color:#d8c4d7;padding:1.2rem 1.4rem 1.4rem;}
+  .sh{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;min-height:2rem;}
+  .sh .sn{display:inline-flex;align-items:center;justify-content:center;width:1.7rem;height:1.7rem;border-radius:50%;
+        background:var(--egg);color:#fff;font-weight:700;font-size:.9rem;flex-shrink:0;}
+  .stage.later .sh .sn{background:#e9e4ea;color:var(--muted);}
+  .stage.done .sh .sn{background:var(--done);}
+  .sh h2{margin:0;font-size:1.15rem;color:var(--egg);}
+  .sh h2:focus{outline:none;}
+  .stage.later .sh h2,.stage.done .sh h2{font-size:1rem;color:var(--muted);}
+  .receipt{flex:1;font-size:.9rem;color:var(--forest);font-weight:600;min-width:0;}
+  .receipt:empty{display:none;}
+  .stage.later .receipt{color:var(--muted);font-weight:400;}
+  .sb{margin-top:.9rem;}
+  .stage.later .sb,.stage.done .sb{display:none;}
+  .stage.cur .chg{display:none;}
+  .chg{font-size:.85rem;margin-left:auto;}
+  .stage.later .chg{display:none;}
+  .stage.later{box-shadow:none;background:#fbfafc;}
+  .act{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-top:1.1rem;}
+  .act .links{display:flex;gap:1rem;font-size:.9rem;}
+
+  /* ---- Stage 1: one intake box ---- */
+  #drop{border:2px dashed #9a8e99;border-radius:1rem;background:#fff;padding:1.6rem 1rem 1.3rem;text-align:center;
+        cursor:pointer;transition:.15s;color:var(--muted);}
+  #drop.hot{border-color:var(--forest);background:#f0faf2;color:var(--forest);}
+  #drop strong{color:var(--egg);font-size:1.05rem;display:block;margin-bottom:.2rem;}
+  #drop .btnrow{margin-top:.8rem;}
+  #drop .btab{pointer-events:none;}
+  #drop-msg{margin:.6rem 0 0;font-size:.92rem;}
+  #drop-msg.err{background:#fff2f4;border:1px solid #f0c4cc;border-radius:.6rem;padding:.6rem .8rem;color:#7a2d43;}
+  .or{display:flex;align-items:center;gap:.8rem;color:var(--muted);font-size:.85rem;margin:.9rem 0 .5rem;}
+  .or::before,.or::after{content:"";flex:1;border-top:1px solid var(--border);}
+  #pg-paste{width:100%;min-height:5.2rem;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.78rem;line-height:1.5;
+        border:2px dashed #9a8e99;border-radius:.8rem;padding:.7rem .8rem;resize:vertical;background:#fff;}
+  #pg-paste:focus{border-style:solid;border-color:var(--forest);outline:none;}
+  #paste-msg{margin:.5rem 0 0;font-size:.92rem;}
+  #paste-msg.err{background:#fff2f4;border:1px solid #f0c4cc;border-radius:.6rem;padding:.6rem .8rem;color:#7a2d43;}
+  .quiet{font-size:.85rem;color:var(--muted);margin:.8rem 0 0;}
+  .newpage{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;border:2px dashed #9a8e99;border-radius:.8rem;padding:.8rem 1rem;}
+  .newpage strong{display:block;color:var(--egg);}
+  .newpage .muted{display:block;font-size:.85rem;}
+  .newpage .btab{white-space:nowrap;}
+  .btab{background:#f0e8f0;color:var(--egg);border:1px solid transparent;border-radius:.6rem;
+        padding:.5rem .9rem;font-weight:700;font-size:.9rem;cursor:pointer;}
+  .btab:hover{background:#e4d6e3;}
+
+  /* ---- help that folds away ---- */
+  details.help{margin:.8rem 0 0;border:1px solid var(--border);border-radius:.7rem;background:#fbfafc;}
+  details.help>summary{cursor:pointer;padding:.6rem .9rem;font-weight:700;color:var(--forest);font-size:.92rem;list-style:none;}
   details.help>summary::-webkit-details-marker{display:none;}
   details.help>summary::before{content:"▸ ";color:var(--egg);}
   details.help[open]>summary::before{content:"▾ ";}
   details.help .body{padding:0 .9rem .85rem;font-size:.92rem;}
   details.help .body p{margin:.5rem 0;}
   details.help .body h4{margin:.9rem 0 .2rem;font-size:.92rem;color:var(--forest);}
-  /* The walkthrough itself folds away. First visit it's open; once you close it, it stays
-     closed on later visits, so regulars get a short page and newcomers still get the steps. */
-  details.howto>summary{font-size:1rem;padding:.75rem .9rem;}
-  details.howto>.body{padding:0 .9rem .9rem;font-size:1rem;}
+  .steps{list-style:none;counter-reset:s;padding:0;margin:.4rem 0 0;}
+  .steps li{counter-increment:s;position:relative;padding:.5rem 0 .5rem 2.5rem;border-top:1px solid var(--border);}
+  .steps li:first-child{border-top:0;}
+  .steps li::before{content:counter(s);position:absolute;left:0;top:.45rem;width:1.7rem;height:1.7rem;
+        background:var(--egg);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;
+        font-weight:700;font-size:.9rem;}
+  .steps li b.warn{color:#a8500a;}
+  .steps details{margin:.25rem 0 0;}
+  .steps details>summary{cursor:pointer;color:var(--forest);font-size:.85rem;font-weight:600;list-style:none;}
+  .steps details>summary::-webkit-details-marker{display:none;}
+  .steps details>summary::before{content:"▸ ";color:var(--egg);}
+  .steps details[open]>summary::before{content:"▾ ";}
+  .ext{display:inline-block;background:#0f1b18;color:#7ee0a6;font-family:ui-monospace,Menlo,Consolas,monospace;
+        font-weight:700;border-radius:.35rem;padding:.05rem .4rem;}
+  .path{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.86rem;color:var(--forest);}
+  .shot{margin:.45rem 0 .2rem;}
+  .shot img{display:block;max-width:100%;border:1px solid var(--border);border-radius:.5rem;}
+  .shot .ph{display:none;}
+  .shot.missing img{display:none;}
+  .shot.missing .ph{display:flex;align-items:center;gap:.5rem;border:1.5px dashed #c9c2d0;border-radius:.5rem;
+        padding:.6rem .75rem;color:var(--muted);background:#faf9fb;font-size:.85rem;}
+  .shot .ph code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;color:var(--egg);}
+  .note{background:#fff7e6;border:1px solid #f0d9a8;border-radius:.7rem;padding:.7rem 1rem;margin:.9rem 0 0;font-size:.9rem;}
+  .note b{color:#a8500a;}
 
-  /* ---- Top-level mode switch: restyle a course  vs  build a block ---- */
-  .modenav{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin:.2rem 0 1.7rem;}
-  @media (max-width:560px){.modenav{grid-template-columns:1fr;}}
-  .modebtn{text-align:left;background:#fff;border:1.5px solid var(--border);border-radius:.9rem;
-        padding:.85rem 1rem;cursor:pointer;transition:border-color .12s,box-shadow .12s,background .12s;}
-  .modebtn:hover{border-color:#b9a7b8;}
-  .modebtn[aria-selected="true"]{border-color:var(--egg);background:#f7f2f6;box-shadow:0 2px 10px rgba(81,40,79,.10);}
-  .modebtn .mt{display:block;font-weight:700;color:var(--egg);font-size:1rem;}
-  .modebtn .md{display:block;color:#6b6470;font-size:.83rem;font-weight:400;margin-top:.15rem;line-height:1.35;}
+  /* ---- Stage 2, course ---- */
+  .opts{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;margin-top:.6rem;font-size:.92rem;}
+  .opts label{display:flex;align-items:center;gap:.4rem;}
+  #modlist{margin-top:.3rem;}
+  .modrow{display:flex;align-items:center;gap:.55rem;padding:.4rem .2rem;border-top:1px solid var(--border);font-size:.95rem;cursor:pointer;}
+  .modrow:first-child{border-top:0;}
+  .modrow input{width:1.1rem;height:1.1rem;flex-shrink:0;}
+  #log{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;background:#0f1b18;color:#cfe9da;
+       border-radius:.7rem;padding:.9rem 1rem;white-space:pre-wrap;max-height:260px;overflow:auto;margin-top:1rem;display:none;}
+  .pass{color:#7ee0a6;font-weight:700;} .warn{color:#ffd27d;font-weight:700;} .err{color:#ff9b9b;font-weight:700;}
+  .dl{display:inline-block;background:var(--forest);color:#fff;text-decoration:none;border-radius:.6rem;
+      padding:.7rem 1.1rem;margin:.35rem .5rem .35rem 0;font-weight:700;font-size:.95rem;}
+  .dl.safe{background:var(--done);}
 
-  /* ---- Page editor: build or fix a page ----
-     A second tool on the same page. The page is a list of BLOCKS on a canvas: add
-     generated ones (contact cards / callout / section) or paste a page's Source Code
-     out of Brightspace and it splits into blocks you can delete, move and edit.
-     Reuses the engine (COLORS / SVG / card / esc). */
-  .btab{background:#f0e8f0;color:var(--egg);border:1px solid transparent;border-radius:.6rem;
-        padding:.5rem .9rem;font-weight:700;font-size:.9rem;cursor:pointer;}
-  .btab:hover{background:#e4d6e3;}
-  .pgtools{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin:1.1rem 0 .6rem;}
-  .pgtools .lbl{font-weight:700;color:var(--forest);font-size:.9rem;margin-right:.2rem;}
+  /* ---- Stage 2, page: the canvas ---- */
+  #pg-note{font-size:.9rem;color:var(--forest);min-height:1.4em;margin:0 0 .5rem;}
+  #pg-note.on{background:#eef8f1;border-radius:.5rem;padding:.4rem .7rem;display:inline-block;}
+  #pg-note.on::before{content:"✓ ";color:var(--done);}
+  .pgempty{border:2px dashed #c9c2d0;border-radius:.9rem;padding:1.4rem 1rem;text-align:center;color:var(--muted);background:#fff;}
+  .pgempty .pgtools{justify-content:center;margin:.7rem 0 .2rem;}
+  .pgtools{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;}
+  .pgtools .lbl{font-weight:700;color:var(--forest);font-size:.85rem;margin-right:.2rem;}
+  .pgb{border:1px solid var(--border);border-radius:.9rem;background:#fff;margin:.6rem 0;position:relative;transition:opacity .15s;}
+  .pgb.sel{border-color:var(--egg);box-shadow:0 0 0 1px var(--egg);}
+  .pgb.dragging{opacity:.4;}
+  .pgb.drop-before{box-shadow:0 -4px 0 0 var(--green);}
+  .pgb.drop-after{box-shadow:0 4px 0 0 var(--green);}
+  #pg-canvas.editing .pgb:not(.sel){opacity:.45;}
+  @keyframes pgflash{0%{background:#eef8f1;}100%{background:#fff;}}
+  .pgb.flash{animation:pgflash .7s ease-out;}
+  @media (prefers-reduced-motion:reduce){.pgb.flash{animation:none;} .pgb{transition:none;}}
+  .pgb-bar{display:flex;align-items:center;gap:.3rem;padding:.35rem .5rem;border-bottom:1px solid var(--border);
+        background:#fbfafc;border-radius:.9rem .9rem 0 0;font-size:.8rem;min-height:2.3rem;}
+  .pgb-grip{cursor:grab;color:#9a90a0;padding:.1rem .3rem;font-size:1.05rem;user-select:none;letter-spacing:-.15em;}
+  .pgb-grip:active{cursor:grabbing;}
+  .pgb-kind{font-weight:700;color:var(--forest);text-transform:uppercase;letter-spacing:.05em;font-size:.72rem;white-space:nowrap;}
+  .pgb-sn{flex:1;color:var(--muted);font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+  .pgb-bar button{background:#fff;border:1px solid var(--border);border-radius:.45rem;padding:.2rem .55rem;
+        font-size:.8rem;font-weight:600;color:var(--forest);}
+  /* controls only on the selected block; still reachable by keyboard (focusing one selects the block) */
+  .pgb:not(.sel) .pgb-bar button{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;padding:0;}
+  .pgb-bar button:hover{border-color:#b9a7b8;}
+  .pgb-bar button:disabled{opacity:.35;cursor:default;border-color:var(--border);}
+  .pgb-bar button.del{color:#b0466a;}
+  .pgb-bar button[aria-expanded="true"]{background:var(--egg);color:#fff;border-color:var(--egg);}
+  .pgb-body{padding:.9rem 1rem;overflow-x:auto;cursor:text;}
+  .pgb-body:focus{background:#fffdf7;outline:2px solid var(--egg);outline-offset:-2px;}
+  .pgb-body h1,.pgb-body h2,.pgb-body h3,.pgb-body h4{color:revert;font-size:revert;margin:revert;}
+  .pgb-form{padding:.2rem 1rem 1rem;border-top:1px dashed var(--border);background:#fbfafc;}
+  .pgb-done{margin-top:.9rem;background:var(--egg);color:#fff;border-radius:.5rem;padding:.45rem 1rem;font-size:.88rem;}
+  .pgb-add{display:none;align-items:center;gap:.4rem;flex-wrap:wrap;padding:.45rem .7rem;border-top:1px solid var(--border);
+        background:#fbfafc;border-radius:0 0 .9rem .9rem;font-size:.8rem;color:var(--muted);}
+  .pgb.sel .pgb-add{display:flex;}
+  .pgb-add button{background:#fff;border:1px solid var(--border);border-radius:.45rem;padding:.2rem .6rem;font-size:.8rem;font-weight:600;color:var(--egg);}
+  .pgb-add button:hover{border-color:#b9a7b8;}
+  .pgb-add .plus{font-weight:700;color:var(--egg);}
+  /* settings form */
   .bform label{display:block;font-weight:600;font-size:.85rem;color:var(--forest);margin:.75rem 0 .25rem;}
   .bform label span{display:block;margin-bottom:.25rem;}
   .bform .fl{font-weight:600;font-size:.85rem;color:var(--forest);margin:.9rem 0 .25rem;}
@@ -109,296 +187,170 @@
   .bform textarea{min-height:5rem;resize:vertical;line-height:1.5;}
   .brow{display:grid;grid-template-columns:1fr 1fr;gap:.15rem 1rem;}
   @media (max-width:640px){.brow{grid-template-columns:1fr;}}
-  .entry{border:1px solid var(--border);border-radius:.7rem;padding:.7rem .9rem 1rem;margin:.8rem 0;
-        position:relative;background:#fff;}
-  .entry .rm{position:absolute;top:.55rem;right:.55rem;background:none;border:0;color:#b0466a;
-        font-weight:700;cursor:pointer;font-size:.8rem;padding:.1rem .35rem;}
+  .entry{border:1px solid var(--border);border-radius:.7rem;padding:.7rem .9rem 1rem;margin:.8rem 0;position:relative;background:#fff;}
+  .entry .rm{position:absolute;top:.55rem;right:.55rem;background:none;border:0;color:#b0466a;font-weight:700;cursor:pointer;font-size:.8rem;padding:.1rem .35rem;}
   .entry .rm:hover{text-decoration:underline;}
-  .addbtn{background:#eef0f1;color:var(--forest);border:1px dashed #b9b1bf;border-radius:.6rem;
-        padding:.5rem .9rem;font-weight:700;font-size:.88rem;cursor:pointer;margin-top:.3rem;}
+  .addbtn{background:#eef0f1;color:var(--forest);border:1px dashed #b9b1bf;border-radius:.6rem;padding:.5rem .9rem;font-weight:700;font-size:.88rem;cursor:pointer;margin-top:.3rem;}
   .swatches{display:flex;flex-wrap:wrap;gap:.45rem;margin:.3rem 0 .2rem;}
-  .sw{width:1.9rem;height:1.9rem;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--border);
-        cursor:pointer;padding:0;}
+  .sw{width:1.9rem;height:1.9rem;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--border);cursor:pointer;padding:0;}
   .sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--egg);}
   .iconpick{display:flex;flex-wrap:wrap;gap:.35rem;margin:.3rem 0;}
-  .ic{width:2.1rem;height:2.1rem;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);
-        border-radius:.5rem;background:#fff;cursor:pointer;color:var(--ink);padding:0;}
+  .ic{width:2.1rem;height:2.1rem;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:.5rem;background:#fff;cursor:pointer;color:var(--ink);padding:0;}
   .ic[aria-pressed="true"]{border-color:var(--egg);background:#f0e8f0;color:var(--egg);}
   .ic svg{width:1.15rem;height:1.15rem;}
-  .blbl{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#6b6470;margin:1.3rem 0 .35rem;
-        display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;}
-  .blbl .sp{flex:1;}
-  .blbl .linkbtn{text-transform:none;letter-spacing:0;font-size:.85rem;}
-  .blbl .linkbtn:disabled{color:#b9b1bf;text-decoration:none;cursor:default;}
-  #pg-note{font-size:.88rem;color:var(--forest);min-height:1.3em;margin:.2rem 0 .4rem;}
-  .pastebox textarea{width:100%;min-height:7rem;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.76rem;
-        line-height:1.5;border:1px solid var(--border);border-radius:.6rem;padding:.6rem .7rem;resize:vertical;margin:.4rem 0 .5rem;}
-  /* the canvas */
-  .pgempty{border:2px dashed #c9c2d0;border-radius:.9rem;padding:1.6rem 1rem;text-align:center;color:#6b6470;background:#fff;}
-  .pgb{border:1px solid var(--border);border-radius:.9rem;background:#fff;margin:.6rem 0;position:relative;}
-  .pgb:focus-within{border-color:#b9a7b8;}
-  .pgb.dragging{opacity:.4;}
-  .pgb.drop-before{box-shadow:0 -4px 0 0 var(--green);}
-  .pgb.drop-after{box-shadow:0 4px 0 0 var(--green);}
-  .pgb-bar{display:flex;align-items:center;gap:.3rem;padding:.35rem .5rem;border-bottom:1px solid var(--border);
-        background:#fbfafc;border-radius:.9rem .9rem 0 0;font-size:.8rem;}
-  .pgb-grip{cursor:grab;color:#9a90a0;padding:.1rem .3rem;font-size:1.05rem;user-select:none;letter-spacing:-.15em;}
-  .pgb-grip:active{cursor:grabbing;}
-  .pgb-kind{font-weight:700;color:var(--forest);text-transform:uppercase;letter-spacing:.05em;font-size:.72rem;white-space:nowrap;}
-  .pgb-sn{flex:1;color:#6b6470;font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
-  .pgb-bar button{background:#fff;border:1px solid var(--border);border-radius:.45rem;padding:.2rem .55rem;
-        font-size:.8rem;font-weight:600;color:var(--forest);}
-  .pgb-bar button:hover{border-color:#b9a7b8;}
-  .pgb-bar button:disabled{opacity:.35;cursor:default;border-color:var(--border);}
-  .pgb-bar button.del{color:#b0466a;}
-  .pgb-bar button[aria-expanded="true"]{background:var(--egg);color:#fff;border-color:var(--egg);}
-  .pgb-body{padding:.9rem 1rem;overflow-x:auto;cursor:text;border-radius:0 0 .9rem .9rem;}
-  .pgb-body:focus{background:#fffdf7;outline:2px solid var(--egg);outline-offset:-2px;}
-  /* pasted pages carry their own look; keep the tool's h1/h2 styling off them */
-  .pgb-body h1,.pgb-body h2,.pgb-body h3,.pgb-body h4{color:revert;font-size:revert;margin:revert;}
-  .pgb-form{padding:.2rem 1rem 1rem;border-top:1px dashed var(--border);background:#fbfafc;border-radius:0 0 .9rem .9rem;}
-  .pgb-done{margin-top:.9rem;background:var(--egg);color:#fff;border-radius:.5rem;padding:.45rem 1rem;font-size:.88rem;}
+
+  /* ---- Stage 3 ---- */
   .bcode textarea{width:100%;min-height:8rem;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.76rem;
         line-height:1.5;background:#0f1b18;color:#cfe9da;border:0;border-radius:.7rem;padding:.9rem 1rem;resize:vertical;}
-  .copybtn{background:var(--forest);color:#fff;border-radius:.6rem;padding:.6rem 1.2rem;font-weight:700;
-        font-size:.95rem;margin-top:.3rem;}
-  .copybtn.ok{background:#067a3a;}
-  .copybtn:disabled{background:#c8bcc7;cursor:not-allowed;}
+  .then{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin:.6rem 0 0;font-size:.95rem;}
+  .then .arrow{color:var(--muted);}
 </style></head>
 <body><div class="wrap">
-  <h1>Course Template Converter</h1>
-  <p class="sub">Two tools in one page. <b>Restyle a whole course</b> to the RDP look, or <b>build or fix a
-     single page</b> — add contact cards, callouts and sections, or bring in a page from Brightspace to remove
-     or rearrange what's on it. Pick one:</p>
+  <div class="top"><h1>Course Template Converter</h1><span id="savestate" role="status"></span></div>
 
-  <div class="modenav" role="tablist" aria-label="What do you want to do?">
-    <button type="button" class="modebtn" data-mode="convert" role="tab" id="tab-convert" aria-selected="true" aria-controls="mode-convert">
-      <span class="mt">Restyle a whole course</span>
-      <span class="md">Apply the RDP look to a Brightspace course export (.imscc or package).</span>
-    </button>
-    <button type="button" class="modebtn" data-mode="build" role="tab" id="tab-build" aria-selected="false" aria-controls="mode-build">
-      <span class="mt">Build or fix a page</span>
-      <span class="md">Make contact cards, callouts or sections &mdash; or paste in a page to remove or rearrange what&rsquo;s on it.</span>
-    </button>
-  </div>
+  <nav class="rail" aria-label="Progress">
+    <button type="button" class="rs cur" data-stage="1" aria-current="step"><span class="n">1</span><span class="t">Get it in</span></button>
+    <button type="button" class="rs" data-stage="2" disabled><span class="n">2</span><span class="t">Personalize</span></button>
+    <button type="button" class="rs" data-stage="3" disabled><span class="n">3</span><span class="t">Put it back</span></button>
+  </nav>
 
-  <div id="mode-convert" role="tabpanel" aria-labelledby="tab-convert">
-  <details class="help">
-    <summary>Is this safe? Will it change my real course?</summary>
-    <div class="body">
-      <p><b>It's safe, and it won't.</b> Your real Brightspace course is never touched &mdash; this only makes a
-         <i>new file</i> from the copy you export, which you then choose whether to import.</p>
-      <p>Your course file is <b>never uploaded anywhere</b>. There is no server: everything happens inside your
-         own browser on your own computer. You could disconnect from the internet and this page would still work.</p>
-      <p class="muted">Works best in an up-to-date Chrome or Edge.</p>
-    </div>
-  </details>
+  <!-- ===== Stage 1: one intake box. The tool works out what you gave it. ===== -->
+  <section class="stage cur" id="s1" aria-labelledby="h1s">
+    <div class="sh"><span class="sn" aria-hidden="true">1</span><h2 id="h1s">Get it in</h2><span class="receipt" id="r1"></span>
+      <button type="button" class="linkbtn chg" data-go="1">Change</button></div>
+    <div class="sb">
+      <div id="drop" role="button" tabindex="0" aria-label="Drop your Brightspace course export here, or press Enter to choose the file">
+        <strong>Restyle a whole course</strong>
+        <span class="muted">Drop your Brightspace course export (.zip) here</span>
+        <div class="btnrow"><span class="btab">Choose the file</span></div>
+        <input id="file" type="file" accept=".zip,.imscc" aria-label="Choose your exported course file" class="hide"></div>
+      <div id="drop-msg" role="status" aria-live="polite"></div>
 
-  <div class="card">
-    <h2 style="margin:.1rem 0 .3rem;color:var(--forest);font-size:1.1rem;">Step 1 &nbsp;Get your course file out of Brightspace</h2>
-    <p class="muted" style="margin:.1rem 0 .5rem;">You need a <b>Brightspace Package</b> export &mdash; a file
-       named like <span class="path">D2LExport_&hellip;.zip</span>. Already have it? Go straight to Step 2.</p>
+      <div class="or">or</div>
+      <label for="pg-paste" style="display:block;font-weight:700;color:var(--egg);margin:0 0 .3rem;">Personalize one page that's already in Brightspace
+        <span class="muted" style="font-weight:400;">paste its Source Code here — it loads by itself</span></label>
+      <textarea id="pg-paste" spellcheck="false" placeholder="Paste here…"></textarea>
+      <div id="paste-msg" role="status" aria-live="polite"></div>
 
-    <details class="help howto" id="howto">
-      <summary>Show me how to export it &mdash; 6 steps, with pictures</summary>
-      <div class="body">
-    <ol class="steps">
-      <li><b>Course Admin</b> <span class="muted">(in the course navbar, along the top)</span>
-        <figure class="shot"><img src="shots/1-course-admin.png" alt="The Course Admin link in the Brightspace course navbar" onerror="this.closest('.shot').classList.add('missing')"><div class="ph">Screenshot goes here &mdash; save it as <code>shots/1-course-admin.png</code></div></figure></li>
+      <div class="or">or</div>
+      <div class="newpage"><div><strong>Add a new page to a course</strong><span class="muted">Build it from blocks — contact cards, callouts, sections — then paste it into Brightspace.</span></div>
+        <button type="button" class="btab" id="start-blank">Make a new page</button></div>
+      <p class="quiet">Nothing leaves your computer: there is no server, it all happens in this tab.</p>
 
-      <li><b>Import / Export / Copy Components</b>
-        <figure class="shot"><img src="shots/2-import-export.png" alt="The Import / Export / Copy Components option on the Course Admin page" onerror="this.closest('.shot').classList.add('missing')"><div class="ph">Screenshot goes here &mdash; save it as <code>shots/2-import-export.png</code></div></figure></li>
-
-      <li>Choose <b>Export as Brightspace Package</b><br>
-        <b class="warn">Not</b> "Export as Common Cartridge", <b class="warn">not</b> "Thin Common Cartridge".
-        <figure class="shot"><img src="shots/3-brightspace-package.png" alt="The three export options, with Export as Brightspace Package selected. Export as Common Cartridge and Export as Thin Common Cartridge are the two unselected options." onerror="this.closest('.shot').classList.add('missing')"><div class="ph">Screenshot goes here &mdash; save it as <code>shots/3-brightspace-package.png</code></div></figure></li>
-
-      <li>Tick <b>Select All Components</b>, then <b>Continue</b>
-        <figure class="shot"><img src="shots/4-select-all.png" alt="The Select All Components tick box ticked on the Select Components to Export screen, with the Continue button below" onerror="this.closest('.shot').classList.add('missing')"><div class="ph">Screenshot goes here &mdash; save it as <code>shots/4-select-all.png</code></div></figure></li>
-
-      <li>On the confirm screen, under <b>"Should I include course files?"</b>, tick
-        <b>Include course files in the export package</b> &mdash; then click <b>Export</b><br>
-        <b class="warn">Don't skip the tick</b> &mdash; it's off by default, and without it your pages
-        and pictures stay behind.
-        <span class="muted">Every section should say "Export all items".</span>
-        <figure class="shot"><img src="shots/5-confirm-include-files.png" alt="The Confirm Components to Export screen with the Include course files in the export package box ticked, and the Export button below" onerror="this.closest('.shot').classList.add('missing')"><div class="ph">Screenshot goes here &mdash; save it as <code>shots/5-confirm-include-files.png</code></div></figure></li>
-
-      <li>Wait for <b>"The course export was successful"</b>, then click
-        <b>"Click here to download the export Zip package"</b>
-        <span class="muted">&mdash; the export takes a minute or two. Don't click <b>Done</b> until you've
-        downloaded it.</span>
-        <figure class="shot"><img src="shots/6-download-zip.png" alt="The Export Summary screen reading The course export was successful, with the link Click here to download the export Zip package" onerror="this.closest('.shot').classList.add('missing')"><div class="ph">Screenshot goes here &mdash; save it as <code>shots/6-download-zip.png</code></div></figure></li>
-    </ol>
-    <p style="margin:.7rem 0 0;">That download is your course file &mdash; something like
-       <span class="path">D2LExport_12345_YourCourse.zip</span>. Take it to Step 2 <b>exactly as it is</b>:
-       <b>don't open, unzip, or re-zip it</b>.</p>
-    <p class="muted" style="margin:.35rem 0 0;">It ends in ".zip", so it's tempting to unzip it.
-       Don't &mdash; this tool needs it whole, exactly as it downloaded.</p>
-
-    <details class="help">
-      <summary>If something looks different, or it went wrong</summary>
-      <!-- nested inside the walkthrough: only relevant to someone reading the steps -->
-      <div class="body">
-        <h4>My screen doesn't match / I'm not sure which export to pick</h4>
-        <p>Pick <b>Export as Brightspace Package</b> &mdash; it carries the most: your pages, pictures,
-           the intro text and images on each unit, quizzes, assignments and discussions. (Got a
-           <span class="ext">.imscc</span> Common Cartridge file from somewhere instead? The tool accepts
-           that too, but a Common Cartridge export <b>leaves out each unit's intro text and images</b>,
-           so export a Brightspace Package when you can.)</p>
-
-        <h4>Which components should I tick?</h4>
-        <p>Tick the top box, <b>Select All Components</b> &mdash; that gets everything (Content, Assignments,
-           Quizzes, and so on). When in doubt, take it all: including extra components does no harm, and
-           <i>leaving things out</i> is what usually goes wrong. If it asks whether to include <b>all items</b>
-           or pick them individually, choose <b>all items</b>. And on the confirm screen, <b>tick
-           "Include course files in the export package"</b> &mdash; that's the box that brings your actual
-           pages and pictures along.</p>
-
-        <h4>I clicked Done / navigated away, and never got the download</h4>
-        <p>Nothing is lost &mdash; the export is still waiting for you. When it's ready, the <b>bell (🔔)</b>
-           in the top bar picks up an orange dot:</p>
-        <figure class="shot"><img src="shots/bell-notification.png" alt="The notification bell in the Brightspace navbar with an orange dot" onerror="this.closest('.shot').classList.add('missing')"><div class="ph">Screenshot goes here &mdash; save it as <code>shots/bell-notification.png</code></div></figure>
-        <p>Click the bell and you'll see <b>Export finished</b>. Open that to get back to the download link.</p>
-        <figure class="shot"><img src="shots/bell-export-finished.png" alt="The bell notification list showing Export finished, with the name of the exported course" onerror="this.closest('.shot').classList.add('missing')"><div class="ph">Screenshot goes here &mdash; save it as <code>shots/bell-export-finished.png</code></div></figure>
-        <p class="muted">The export runs in the background, so it's also fine to close the tab and come
-           back for it later.</p>
-
-        <h4>I can't see ".zip" on the end of the file name</h4>
-        <p>That's normal &mdash; Windows usually hides it. As long as the name starts with
-           <span class="path">D2LExport_</span> and you chose <b>Brightspace Package</b>, it's the right file.</p>
-
-        <h4>My Mac turned it into a folder instead of a file</h4>
-        <p>Safari unzipped it for you. Turn off <b>Safari → Settings → General → "Open safe files after
-           downloading"</b>, then download it again. Don't try to re-zip the folder yourself &mdash; a
-           re-zipped folder is not the same file and won't import properly.</p>
-
-        <h4>This is a Blackboard course, not Brightspace</h4>
-        <p>This tool works on <b>Brightspace</b> exports. A Blackboard export won't have the right shape inside.</p>
-      </div>
-    </details>
-      </div>
-    </details>
-  </div>
-
-  <div class="card">
-    <h2 style="margin:.1rem 0 .6rem;color:var(--forest);font-size:1.1rem;">Step 2 &nbsp;Drop that file here</h2>
-    <div id="drop" role="button" tabindex="0"
-         aria-label="Upload your exported course file: drag and drop here, or press Enter to browse">
-      <strong>Drag your course file onto this box</strong><br>
-      <span class="muted">…or click here to find it on your computer</span>
-      <input id="file" type="file" accept=".zip,.imscc" aria-label="Choose your exported course file" class="hide"></div>
-
-    <div id="pkgnote" class="note hide" style="margin-top:1.2rem;">📦 <b>Brightspace Package detected.</b>
-      Your pages will get the RDP style; your unit descriptions (including their pictures), quizzes,
-      assignments, discussions and links all travel through <b>untouched</b> — including in the
-      combined version, which only ever merges plain content pages.</div>
-    <div id="combinebox" class="hide" style="margin-top:1.2rem;">
-      <p style="margin:.2rem 0 .3rem;font-weight:700;">Want fewer pages to click through?
-        <span class="muted" style="font-weight:400;">(optional)</span></p>
-      <p class="muted" style="margin:0 0 .5rem;">Here are the <b>modules</b> of your course. <b>Tick the ones you'd like combined</b> —
-        I'll merge the short pages in them (just a sentence or a single link) into fewer, fuller pages,
-        so students do less clicking. Leave a module unticked to keep all its pages exactly as they are.
-        &nbsp;<button type="button" id="ticktoggle" class="linkbtn">Tick all</button></p>
-      <div id="modlist" aria-live="polite"></div>
-      <p class="muted" style="margin:.5rem 0 0;">Tick nothing and both downloads will look the same — that's fine.</p>
-    </div>
-
-    <div style="margin-top:1.2rem"><button id="go" class="go" disabled aria-describedby="gohint">Apply the RDP style to my course</button>
-      <span id="fname" class="muted"></span>
-      <span id="gohint" class="muted"><span aria-hidden="true">↑ </span>choose your course file above first</span></div>
-
-    <details style="margin-top:1rem;">
-      <summary class="muted" style="cursor:pointer;">More choices (you can skip these)</summary>
-      <div class="opts" style="margin-top:.7rem;">
-        <label><input type="radio" name="mode" value="both" checked> Make both versions (recommended)</label>
-        <label><input type="radio" name="mode" value="restyle"> Styled only</label>
-        <label><input type="radio" name="mode" value="combine"> Styled + combined only</label>
-      </div>
-    </details>
-    <div id="downloads" style="margin-top:.8rem"></div>
-    <pre id="log" role="status" aria-live="polite"></pre>
-  </div>
-
-  <div class="card">
-    <h2 style="margin:.1rem 0 .6rem;color:var(--forest);font-size:1.1rem;">Step 3 &nbsp;Put it back into Brightspace</h2>
-    <p style="margin:.1rem 0;">When it's done, you'll see a <b>download button</b> above:</p>
-    <ul style="margin:.4rem 0 .2rem 1.2rem;padding:0;">
-      <li><b>Template Applied</b> — your course restyled: same pages, same unit intros and pictures,
-          same quizzes and assignments — only the look changes</li>
-      <li><b>Template Applied (Condensed Content)</b> — the same, plus the short pages in the modules
-          you ticked are merged together for less clicking (quizzes, links and unit intros stay put)</li>
-    </ul>
-    <p style="margin:.6rem 0 0;">Import one back into Brightspace:
-       <b>Course Admin → Import / Export / Copy Components → Import Components → Start → Upload your file → Import All Components</b>.</p>
-    <p class="muted" style="margin:.5rem 0 0;">If the combined version looks off, just use the plain
-       <b>Template Applied</b> file instead.</p>
-    <div class="note" style="background:#f0e8f0;border-color:#d8c4d7;">💡 <b>Good to know:</b> this tool never changes
-       your real course — it only makes a new file. When you import into your live course, the import <i>adds</i>
-       pages as new modules (it never overwrites), so delete the old modules first to avoid two copies.
-       Your exported <span class="path">.imscc</span> also makes a handy backup.</div>
-  </div>
-
-  </div><!-- /#mode-convert -->
-
-  <div id="mode-build" class="hide" role="tabpanel" aria-labelledby="tab-build">
-  <div class="card" id="builder">
-    <h2 style="margin:.1rem 0 .3rem;color:var(--egg);font-size:1.2rem;">Build or fix a page</h2>
-    <p class="sub" style="margin:0 0 1rem;"><b>Bring in a page you already have in Brightspace</b> to remove or
-      rearrange what's on it, or put a new page together block by block &mdash; contact cards, a callout, a titled
-      section. Click any text to edit it. When it looks right, <b>Copy page</b> and paste it over the page's
-      Source Code in Brightspace.</p>
-
-    <details class="help" id="pg-pastewrap">
-      <summary>Fix a page that's already in Brightspace</summary>
-      <div class="body">
-        <p>Something stuck on a page that you can't remove? Brightspace's editor can't select or delete a styled
-           box once it's on the page &mdash; the box stays behind even after you empty it, and the cursor gets
-           trapped inside. Bring the page here instead:</p>
-        <ol class="steps">
-          <li>In Brightspace, open the page for editing. In the editor toolbar click <b>Source Code</b>
-              <span class="ext">&lt;/&gt;</span>.</li>
-          <li><b>Select all</b> <span class="muted">(Ctrl+A, or &#8984;A on a Mac)</span> and <b>copy</b>.</li>
-          <li>Paste it in the box below and click <b>Load page</b>. Every part of the page shows up as a block
-              you can <b>delete</b>, <b>move</b>, or click into and <b>edit</b>.</li>
-          <li>When it's right, <b>Copy page</b> at the bottom, go back to Source Code in Brightspace, select all,
-              paste, then <b>Save</b>.</li>
-        </ol>
-        <div class="pastebox">
-          <textarea id="pg-paste" spellcheck="false" aria-label="Paste the page's Source Code here" placeholder="Paste the page's Source Code here…"></textarea>
+      <details class="help" id="howpaste">
+        <summary>How do I copy a page's Source Code?</summary>
+        <div class="body">
+          <ol class="steps">
+            <li>In Brightspace, open the page for editing and click <b>Source Code</b> <span class="ext">&lt;/&gt;</span> in the editor toolbar.</li>
+            <li><b>Select all</b> <span class="muted">(Ctrl+A, or &#8984;A on a Mac)</span>, <b>copy</b>, and paste it in the box above.</li>
+          </ol>
+          <p class="muted">Why here and not in Brightspace? Its editor can't select or delete a styled box once it's on the page. Here every part of the page is a block you can delete, move, edit or add to.</p>
         </div>
-        <button type="button" class="copybtn" id="pg-load" style="margin-top:0;">Load page</button>
-        <span class="muted" style="margin-left:.5rem;">This replaces the page below &mdash; Undo brings it back.</span>
-      </div>
-    </details>
+      </details>
 
-    <div class="pgtools" id="pg-add"><span class="lbl">Add a block:</span>
-      <button class="btab" type="button" data-add="contacts">People / contact cards</button>
-      <button class="btab" type="button" data-add="callout">Callout / note box</button>
-      <button class="btab" type="button" data-add="section">Titled section card</button>
+      <details class="help" id="howto">
+        <summary>Don't have the course export yet? Show me how to get it</summary>
+        <div class="body">
+          <ol class="steps">
+            <li><b>Course Admin</b> <span class="muted">(in the course navbar, along the top)</span>
+              <details><summary>Show me</summary><figure class="shot"><img src="shots/1-course-admin.png" alt="The Course Admin link in the Brightspace course navbar" loading="lazy" onerror="this.closest('.shot').classList.add('missing')"><div class="ph">Screenshot goes here &mdash; <code>shots/1-course-admin.png</code></div></figure></details></li>
+            <li><b>Import / Export / Copy Components</b>
+              <details><summary>Show me</summary><figure class="shot"><img src="shots/2-import-export.png" alt="The Import / Export / Copy Components option on the Course Admin page" loading="lazy" onerror="this.closest('.shot').classList.add('missing')"><div class="ph">Screenshot goes here &mdash; <code>shots/2-import-export.png</code></div></figure></details></li>
+            <li>Choose <b>Export as Brightspace Package</b> <span class="muted">(not Common Cartridge)</span>
+              <details><summary>Show me</summary><figure class="shot"><img src="shots/3-brightspace-package.png" alt="The three export options, with Export as Brightspace Package selected" loading="lazy" onerror="this.closest('.shot').classList.add('missing')"><div class="ph">Screenshot goes here &mdash; <code>shots/3-brightspace-package.png</code></div></figure></details></li>
+            <li>Tick <b>Select All Components</b>, then <b>Continue</b>
+              <details><summary>Show me</summary><figure class="shot"><img src="shots/4-select-all.png" alt="The Select All Components tick box ticked, with the Continue button below" loading="lazy" onerror="this.closest('.shot').classList.add('missing')"><div class="ph">Screenshot goes here &mdash; <code>shots/4-select-all.png</code></div></figure></details></li>
+            <li>Tick <b>Include course files in the export package</b>, then <b>Export</b>
+              <span class="muted">— <b class="warn">don't skip this tick</b>; it's off by default and without it your pages stay behind.</span>
+              <details><summary>Show me</summary><figure class="shot"><img src="shots/5-confirm-include-files.png" alt="The confirm screen with Include course files in the export package ticked, and the Export button below" loading="lazy" onerror="this.closest('.shot').classList.add('missing')"><div class="ph">Screenshot goes here &mdash; <code>shots/5-confirm-include-files.png</code></div></figure></details></li>
+            <li>Wait for <b>"The course export was successful"</b>, then click <b>download the export Zip package</b>
+              <span class="muted">— a minute or two. Don't click Done until you've downloaded it.</span>
+              <details><summary>Show me</summary><figure class="shot"><img src="shots/6-download-zip.png" alt="The Export Summary screen with the link Click here to download the export Zip package" loading="lazy" onerror="this.closest('.shot').classList.add('missing')"><div class="ph">Screenshot goes here &mdash; <code>shots/6-download-zip.png</code></div></figure></details></li>
+          </ol>
+          <p style="margin:.7rem 0 0;">Drop that download in the box above <b>exactly as it is</b> &mdash; don't unzip it.</p>
+          <details class="help">
+            <summary>If it went wrong</summary>
+            <div class="body">
+              <h4>I clicked Done, or navigated away, and never got the download</h4>
+              <p>Nothing is lost. When the export is ready the <b>bell (🔔)</b> in the top bar gets an orange dot; click it and open <b>Export finished</b> to get the download link.</p>
+              <figure class="shot"><img src="shots/bell-export-finished.png" alt="The bell notification list showing Export finished" loading="lazy" onerror="this.closest('.shot').classList.add('missing')"><div class="ph">Screenshot goes here &mdash; <code>shots/bell-export-finished.png</code></div></figure>
+              <h4>My Mac turned it into a folder</h4>
+              <p>Safari unzipped it. Turn off <b>Safari → Settings → General → "Open safe files after downloading"</b>, then download it again. Don't re-zip the folder yourself.</p>
+              <h4>This is a Blackboard course</h4>
+              <p>This tool works on <b>Brightspace</b> exports only.</p>
+            </div>
+          </details>
+        </div>
+      </details>
     </div>
+  </section>
 
-    <div class="blbl">Your page <span class="sp"></span>
-      <button type="button" class="linkbtn" id="pg-undo" disabled>Undo</button>
-      <button type="button" class="linkbtn" id="pg-clear" disabled>Start over</button></div>
-    <div id="pg-note" role="status" aria-live="polite"></div>
-    <div id="pg-canvas"></div>
-  </div>
+  <!-- ===== Stage 2: fix it. Which body shows depends on what arrived in stage 1. ===== -->
+  <section class="stage later" id="s2" aria-labelledby="h2s">
+    <div class="sh"><span class="sn" aria-hidden="true">2</span><h2 id="h2s">Personalize it</h2><span class="receipt" id="r2"></span>
+      <button type="button" class="linkbtn chg" data-go="2">Open</button></div>
+    <div class="sb">
+      <p class="muted" id="s2-wait" style="margin:0;">After step 1.</p>
 
-  <div class="card">
-    <h2 style="margin:.1rem 0 .5rem;color:var(--forest);font-size:1.1rem;">Put it into Brightspace</h2>
-    <p style="margin:.1rem 0 .6rem;">Click <b>Copy page</b>. In Brightspace, open the page's editor, click
-       <b>Source Code</b> <span class="ext">&lt;/&gt;</span>, <b>select all</b>, <b>paste</b>, then <b>Save</b>.
-       It pastes straight over everything that was there, so there's nowhere to get lost.</p>
-    <button class="copybtn" type="button" id="pg-copy" aria-describedby="pg-copyhint">Copy page</button>
-    <span id="pg-copyhint" class="muted"><span aria-hidden="true">&uarr; </span>add a block or load a page first</span>
-    <p class="muted" style="margin:.6rem 0 0;">Everything is styled inline, so Brightspace keeps the look (it strips a pasted
-       <span class="ext">&lt;style&gt;</span> block, but not inline styles).</p>
-    <details style="margin-top:.7rem;">
-      <summary class="muted" style="cursor:pointer;">Show the code</summary>
-      <div class="bcode" style="margin-top:.5rem;"><textarea id="pg-code" readonly spellcheck="false" aria-label="Generated page HTML"></textarea></div>
-    </details>
-  </div>
-  </div><!-- /#mode-build -->
+      <div id="s2-course" hidden>
+        <div id="pkgnote" class="note hide">📦 <b>Brightspace Package:</b> pages get the RDP style; unit descriptions, quizzes, assignments, discussions and links travel through untouched.</div>
+        <div id="combinebox" style="margin-top:.4rem;">
+          <p style="margin:.2rem 0 .2rem;font-weight:700;">Want fewer pages to click through? <span class="muted" style="font-weight:400;">(optional)</span></p>
+          <p class="muted" style="margin:0 0 .4rem;">Tick a module and its short pages (a sentence, a single link) get merged into fuller ones. Untouched modules keep every page as it is.
+            &nbsp;<button type="button" id="ticktoggle" class="linkbtn">Tick all</button></p>
+          <div id="modlist" aria-live="polite"></div>
+        </div>
+        <details style="margin-top:.8rem;">
+          <summary class="muted" style="cursor:pointer;">More choices (you can skip these)</summary>
+          <div class="opts">
+            <label><input type="radio" name="mode" value="both" checked> Make both versions (recommended)</label>
+            <label><input type="radio" name="mode" value="restyle"> Styled only</label>
+            <label><input type="radio" name="mode" value="combine"> Styled + combined only</label>
+          </div>
+        </details>
+        <div class="act"><span class="muted" id="fname"></span><button id="go" class="pri" disabled>Apply the RDP style</button></div>
+        <pre id="log" role="status" aria-live="polite"></pre>
+      </div>
+
+      <div id="s2-page" hidden>
+        <div id="pg-note" role="status" aria-live="polite"></div>
+        <div id="pg-canvas"></div>
+        <div class="act"><span class="links">
+            <button type="button" class="linkbtn" id="pg-undo" disabled>Undo</button>
+            <button type="button" class="linkbtn" id="pg-clear" disabled>Start over</button></span>
+          <button type="button" class="pri" id="pg-next">Continue to Put it back</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Stage 3: put it back into Brightspace ===== -->
+  <section class="stage later" id="s3" aria-labelledby="h3s">
+    <div class="sh"><span class="sn" aria-hidden="true">3</span><h2 id="h3s">Put it back into Brightspace</h2><span class="receipt" id="r3"></span>
+      <button type="button" class="linkbtn chg" data-go="3">Open</button></div>
+    <div class="sb">
+      <p class="muted" id="s3-wait" style="margin:0;">After step 2.</p>
+
+      <div id="s3-course" hidden>
+        <div id="downloads"></div>
+        <p class="muted" style="margin:.3rem 0 0;"><b>Template Applied</b> is your course restyled. <b>Condensed Content</b> is the same with the ticked modules' short pages merged. If the condensed one looks off, use the plain one.</p>
+        <p style="margin:.9rem 0 0;">Then, in Brightspace: <b>Course Admin → Import / Export / Copy Components → Import Components → Start</b>, upload the file, <b>Import All Components</b>.</p>
+        <div class="note" style="background:#f0e8f0;border-color:#d8c4d7;">💡 The import <i>adds</i> the restyled pages as new modules and never overwrites, so delete the old modules afterwards to avoid two copies. Your real course is never touched by this tool.</div>
+      </div>
+
+      <div id="s3-page" hidden>
+        <div class="act" style="margin-top:0;justify-content:flex-start;"><button class="pri" type="button" id="pg-copy" aria-describedby="pg-copyhint">Copy page</button>
+          <span id="pg-copyhint" class="muted">add a block or load a page first</span></div>
+        <div class="then">Then in Brightspace, open the page for editing: <b>Source Code</b> <span class="ext">&lt;/&gt;</span> <span class="arrow">→</span> <b>select all</b> <span class="arrow">→</span> <b>paste</b> <span class="arrow">→</span> <b>Save.</b>
+          <span class="muted">It pastes over everything that was there.</span></div>
+        <p class="muted" id="newpage-hint" style="margin:.5rem 0 0;">Adding a new page? In your course go to <b>Content</b>, open the module, <b>Upload / Create → Create a File</b>, give it a title, then <b>Source Code</b> and paste.</p>
+        <details style="margin-top:.9rem;">
+          <summary class="muted" style="cursor:pointer;">View the code</summary>
+          <div class="bcode" style="margin-top:.5rem;"><textarea id="pg-code" readonly spellcheck="false" aria-label="Generated page HTML"></textarea></div>
+          <p class="muted" style="margin:.4rem 0 0;">Everything is styled inline, so Brightspace keeps the look.</p>
+        </details>
+      </div>
+    </div>
+  </section>
 </div>
 <script>
 /* =========================================================================
@@ -1174,28 +1126,34 @@ async function repairRefs(blob){
 /* ===================== UI ===================== */
 let FILE=null, MODEL=null;
 
+const FRIENDLY={
+ FOLDER:'That is a folder, not the file. Brightspace gives you one .zip named like D2LExport_….zip — if your Mac unzipped it, download it again.',
+ NOTZIP:'That is not a .zip file. The export Brightspace gives you is named like D2LExport_….zip.',
+ NOMANIFEST:'There is no course inside this zip. Use the untouched D2LExport_….zip that Brightspace downloaded, not one you zipped yourself.'};
 async function setFile(f){
  FILE=f; MODEL=null; $('#go').disabled=true;
- $('#fname').textContent=f?`— ${f.name} (${(f.size/1048576).toFixed(0)} MB)`:'';
- $('#gohint').style.display=f?'none':'inline';
+ $('#fname').textContent=f?`${f.name} (${(f.size/1048576).toFixed(0)} MB)`:'';
  clearDownloads(); $('#log').style.display='none'; $('#log').textContent='';
- if(!f){$('#combinebox').classList.add('hide');$('#pkgnote').classList.add('hide');return;}
- $('#combinebox').classList.remove('hide');$('#pkgnote').classList.add('hide');
- $('#ticktoggle').textContent='Tick all';
- $('#modlist').innerHTML='<span class="muted">Reading your course… (a big course can take a moment)</span>';
+ if(!f)return;
+ FLOW.dropMsg('Reading your course… (a big course can take a moment)');
  try{
-   const zip=readZip(await f.arrayBuffer());
+   let zip;
+   try{zip=readZip(await f.arrayBuffer());}
+   catch(e){if(e.message===ZIP64MSG)throw e;throw new Error(f.size===0?'FOLDER':'NOTZIP');}
    const man=await zip.text('imsmanifest.xml');
-   if(!man){$('#modlist').innerHTML='<span class="err">This file has no course manifest inside — it may not be the export that Brightspace produced. (A .zip you zipped yourself won\'t work — use the untouched <b>D2LExport_…zip</b> download.)</span>';return;}
+   if(!man)throw new Error('NOMANIFEST');
    const m=buildModel(zip,man);
    // A D2L "Brightspace Package" export (not Common Cartridge): its manifest carries unit
    // descriptions, quiz/assignment payloads etc., so it takes the d2l-aware combine path.
    const isD2L=/desire2learn\.com\/xsd\/d2lcp/i.test(man);
    MODEL={zip,man,m,isD2L};
    $('#pkgnote').classList.toggle('hide',!isD2L);
+   $('#ticktoggle').textContent='Tick all';
    renderModules(m);
    $('#go').disabled=false;
- }catch(err){$('#modlist').innerHTML='<span class="err">Could not read this file: '+esc(err.message)+'</span>';console.error(err);}
+   const pages=Object.keys(m.titleByHref).filter(hh=>{const e=m.entryFor(hh);return e&&e.toLowerCase().endsWith('.html');}).length;
+   FLOW.course(f.name,pages);
+ }catch(err){FLOW.dropMsg(FRIENDLY[err.message]||('Could not read this file: '+err.message),true);console.error(err);}
 }
 // The real top-level modules often sit under a single untitled wrapper <item>; descend to them.
 function topModules(org){
@@ -1233,7 +1191,7 @@ let dlUrls=[];
 function clearDownloads(){dlUrls.forEach(u=>URL.revokeObjectURL(u));dlUrls=[];$('#downloads').innerHTML='';}
 function dlButton(blob,name,safe){const url=URL.createObjectURL(blob);dlUrls.push(url);const a=document.createElement('a');
  a.href=url;a.download=name;a.className='dl'+(safe?' safe':'');
- a.innerHTML='<span aria-hidden="true">⬇ </span>'+esc(name);$('#downloads').appendChild(a);}
+ a.innerHTML='<span aria-hidden="true">⬇ </span>'+esc(name);a.addEventListener('click',()=>FLOW.downloaded(name));$('#downloads').appendChild(a);}
 
 $('#go').addEventListener('click',async()=>{
  if(!FILE||!MODEL)return;
@@ -1286,10 +1244,64 @@ $('#go').addEventListener('click',async()=>{
      log('Double-checking it:');await verify(b);dlButton(b,`${base} - Template Applied (Condensed Content).imscc`,false);log('');
    }
    }
-   log('All done! Click the download button(s) above.','pass');
+   log('All done!','pass');FLOW.built();
  }catch(err){log('Something went wrong: '+err.message,'err');console.error(err);}
  $('#go').disabled=false;
 });
+
+/* =========================================================================
+   FLOW — the three stages. One thing open at a time; finished stages shrink to
+   a one-line receipt; the rail is 1:1 with what has actually happened. The tool
+   decides which path (course / page) from what arrived in stage 1, so there is
+   no mode switch to get wrong.
+   ========================================================================= */
+const FLOW=(()=>{
+ let kind=null, cur=1, reached=1, booted=false; const R={};
+ const S=n=>document.getElementById('s'+n);
+ const hhmm=()=>{const d=new Date();return d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');};
+ function receipt(n,txt){R[n]=txt||'';document.getElementById('r'+n).textContent=R[n];paint();}
+ function paint(){
+   for(let i=1;i<=3;i++){const s=S(i);s.classList.remove('cur','done','later');
+     s.classList.add(i===cur?'cur':(i<=reached?'done':'later'));}
+   document.querySelectorAll('.rs').forEach(b=>{const i=+b.dataset.stage;
+     b.disabled=i>reached;b.classList.toggle('cur',i===cur);
+     b.classList.toggle('ok',i!==cur&&!!R[i]);
+     if(i===cur)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');});}
+ function show(n,quiet){cur=n;reached=Math.max(reached,n);paint();
+   if(!quiet&&booted){S(n).scrollIntoView({behavior:'smooth',block:'start'});
+     const h=S(n).querySelector('h2');if(h){h.setAttribute('tabindex','-1');h.focus({preventScroll:true});}}}
+ function setKind(k){kind=k;
+   for(const n of [2,3]){document.getElementById('s'+n+'-course').hidden=k!=='course';
+     document.getElementById('s'+n+'-page').hidden=k!=='page';document.getElementById('s'+n+'-wait').hidden=!!k;}}
+ function msg(id,text,err,showme){const el=document.getElementById(id);el.textContent=text||'';el.classList.toggle('err',!!err);
+   if(text&&showme){el.appendChild(document.createTextNode(' '));const b=document.createElement('button');b.type='button';b.className='linkbtn';
+     b.textContent='Show me';b.addEventListener('click',()=>{const d=document.getElementById(showme);d.open=true;d.scrollIntoView({behavior:'smooth',block:'start'});});el.appendChild(b);}}
+ document.querySelectorAll('.rs').forEach(b=>b.addEventListener('click',()=>{if(!b.disabled)show(+b.dataset.stage);}));
+ document.querySelectorAll('.chg').forEach(b=>b.addEventListener('click',()=>show(+b.dataset.go)));
+ return {
+   kind:()=>kind,
+   boot(){booted=true;},
+   // stage 1 outcomes
+   course(name,pages){setKind('course');receipt(1,'Course export received · '+name+(pages?' · '+pages+' pages':''));
+     receipt(2,'');receipt(3,'');msg('drop-msg','');show(2);},
+   page(how,n){setKind('page');
+     receipt(1,how==='blank'?('New page'+(n?' · '+n+' block'+(n===1?'':'s'):'')):(how==='restored'?'Your page from last time · ':'Page loaded · ')+n+' block'+(n===1?'':'s'));
+     receipt(2,'');receipt(3,'');msg('paste-msg','');show(2,how==='restored');},
+   dropMsg(text,err){msg('drop-msg',text,err,err?'howto':null);},
+   pasteMsg(text,err){msg('paste-msg',text,err,err?'howpaste':null);},
+   // stage 2 outcomes
+   pageChanged(n){if(kind!=='page')return;
+     if(R[3]&&!/Changed/.test(R[3]))receipt(3,'Changed since you copied');
+     if(cur!==1&&R[1]){if(/^New page/.test(R[1]))receipt(1,'New page'+(n?' · '+n+' block'+(n===1?'':'s'):''));
+       else receipt(1,R[1].replace(/\d+ blocks?$/,n+' block'+(n===1?'':'s')));}},
+   pageNext(n){receipt(2,n+' block'+(n===1?'':'s')+' ready');show(3);},
+   built(files){receipt(2,'RDP style applied');receipt(3,'');show(3);},
+   // stage 3 outcomes
+   copied(){receipt(3,'Copied '+hhmm());paint();},
+   downloaded(name){receipt(3,'Downloaded '+hhmm());paint();},
+   go:show
+ };
+})();
 
 /* =========================================================================
    PAGE EDITOR  (Build or fix a page)
@@ -1465,17 +1477,24 @@ ${inner}
  function undo(){const s=HIST.pop();if(!s)return;let o;try{o=JSON.parse(s);}catch(e){return;}
    BLOCKS=validBlocks(o.blocks);WRAP=typeof o.wrap==='string'?o.wrap:null;SEL=null;EDIT_SNAP=null;
    B('pg-undo').disabled=!HIST.length;renderCanvas();note('Undone.');}
- function note(msg){B('pg-note').textContent=msg||'';}
+ function note(msg,undoable){const n=B('pg-note');n.textContent=msg||'';n.classList.toggle('on',!!msg);
+   if(msg&&undoable&&HIST.length){n.appendChild(document.createTextNode(' '));const u=document.createElement('button');u.type='button';u.className='linkbtn';u.textContent='Undo';u.addEventListener('click',undo);n.appendChild(u);}}
  function syncOut(){B('pg-code').value=pageOut();B('pg-copy').disabled=!BLOCKS.length;B('pg-copyhint').hidden=!!BLOCKS.length;
-   B('pg-clear').disabled=!BLOCKS.length;B('pg-undo').disabled=!HIST.length;save();}
+   B('pg-clear').disabled=!BLOCKS.length;B('pg-undo').disabled=!HIST.length;save();
+   B('savestate').textContent=BLOCKS.length?'Saved on this computer':'';FLOW.pageChanged(BLOCKS.length);}
 
  /* ---------- the canvas ---------- */
  const canvas=B('pg-canvas');
+ const ADDBTNS=cls=>`<span class="${cls}"><button type="button" data-add="contacts">People / contacts</button><button type="button" data-add="callout">Callout</button><button type="button" data-add="section">Section</button></span>`;
+ // One block is "selected": its controls show, the others' stay tucked away (still keyboard-reachable).
+ function select(id){LAST=id;canvas.querySelectorAll('.pgb').forEach(x=>x.classList.toggle('sel',x.dataset.id===id));}
+ function flash(id){const el=canvas.querySelector(`.pgb[data-id="${id}"]`);if(!el)return;el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');}
  function renderCanvas(){
    canvas.innerHTML='';
-   if(!BLOCKS.length){canvas.innerHTML='<div class="pgempty">Nothing on the page yet. <b>Add a block</b> above, or paste in a page from Brightspace.</div>';syncOut();return;}
+   canvas.classList.toggle('editing',!!SEL);
+   if(!BLOCKS.length){canvas.innerHTML='<div class="pgempty">Nothing on the page yet. Add your first block:'+ADDBTNS('pgtools')+'<p class="muted" style="margin:.4rem 0 0;">or go back to step 1 and paste a page in.</p></div>';syncOut();return;}
    BLOCKS.forEach((b,i)=>{
-     const el=document.createElement('div');el.className='pgb';el.dataset.id=b.id;
+     const el=document.createElement('div');el.className='pgb'+(b.id===LAST?' sel':'');el.dataset.id=b.id;
      el.innerHTML=`<div class="pgb-bar"><span class="pgb-grip" title="Drag to move" aria-hidden="true">&#8942;&#8942;</span><span class="pgb-kind"></span><span class="pgb-sn"></span>`
        +(b.model?`<button type="button" data-act="edit" aria-expanded="${b.id===SEL}">Settings</button>`:'')
        +`<button type="button" data-act="up" aria-label="Move up" title="Move up"${i?'':' disabled'}>&uarr;</button>`
@@ -1485,6 +1504,7 @@ ${inner}
      setLabel(el,b);
      el.querySelector('.pgb-body').innerHTML=clean(b.html);
      if(b.id===SEL&&b.model){const f=document.createElement('div');f.className='pgb-form bform';el.appendChild(f);renderForm(f,b);}
+     el.insertAdjacentHTML('beforeend','<div class="pgb-add"><span class="plus">+</span> Add below:'+ADDBTNS('')+'</div>');
      canvas.appendChild(el);});
    syncOut();}
  function refresh(b){const el=canvas.querySelector(`.pgb[data-id="${b.id}"]`);if(!el)return;
@@ -1493,19 +1513,20 @@ ${inner}
  function focusBlock(id,act){const el=canvas.querySelector(`.pgb[data-id="${id}"]`);if(!el)return false;
    const b=el.querySelector(`[data-act="${act}"]`);const t=(b&&!b.disabled)?b:el.querySelector('[data-act="del"]');
    if(t){t.focus({preventScroll:true});el.scrollIntoView({block:'nearest'});}return true;}
- canvas.addEventListener('focusin',e=>{const el=e.target.closest('.pgb');if(el)LAST=el.dataset.id;
+ canvas.addEventListener('focusin',e=>{const el=e.target.closest('.pgb');if(el&&el.dataset.id!==LAST)select(el.dataset.id);
    if(e.target.closest('.pgb-body'))EDIT_SNAP=null;});
 
  canvas.addEventListener('click',e=>{
+   const ab=e.target.closest('[data-add]');if(ab){addBlock(ab.dataset.add);return;}
    const btn=e.target.closest('[data-act]');if(!btn)return;
    const el=btn.closest('.pgb'),id=el.dataset.id,i=idx(id),act=btn.dataset.act;if(i<0)return;
    if(act==='del'){snap();BLOCKS.splice(i,1);if(SEL===id)SEL=null;if(LAST===id)LAST=null;renderCanvas();
      const nb=BLOCKS[Math.min(i,BLOCKS.length-1)];
      if(!(nb&&focusBlock(nb.id,'del')))B('pg-undo').focus();
-     note(`Block deleted (${BLOCKS.length} left). Undo brings it back.`);}
-   else if(act==='up'&&i>0){snap();[BLOCKS[i-1],BLOCKS[i]]=[BLOCKS[i],BLOCKS[i-1]];renderCanvas();focusBlock(id,'up');
+     note(`Block deleted (${BLOCKS.length} left).`,true);}
+   else if(act==='up'&&i>0){snap();[BLOCKS[i-1],BLOCKS[i]]=[BLOCKS[i],BLOCKS[i-1]];renderCanvas();focusBlock(id,'up');flash(id);
      note(`Moved up — now ${i} of ${BLOCKS.length}.`);}
-   else if(act==='down'&&i<BLOCKS.length-1){snap();[BLOCKS[i+1],BLOCKS[i]]=[BLOCKS[i],BLOCKS[i+1]];renderCanvas();focusBlock(id,'down');
+   else if(act==='down'&&i<BLOCKS.length-1){snap();[BLOCKS[i+1],BLOCKS[i]]=[BLOCKS[i],BLOCKS[i+1]];renderCanvas();focusBlock(id,'down');flash(id);
      note(`Moved down — now ${i+2} of ${BLOCKS.length}.`);}
    else if(act==='edit'){SEL=SEL===id?null:id;renderCanvas();
      if(SEL){const f=canvas.querySelector(`.pgb[data-id="${id}"] .pgb-form input,.pgb[data-id="${id}"] .pgb-form textarea`);if(f)f.focus({preventScroll:true});}}
@@ -1529,7 +1550,8 @@ ${inner}
 
  // Drag to reorder. The block is only draggable while the grip is held, so selecting text
  // inside the editable body still works normally.
- canvas.addEventListener('mousedown',e=>{const g=e.target.closest('.pgb-grip');if(g)g.closest('.pgb').draggable=true;});
+ canvas.addEventListener('mousedown',e=>{const el=e.target.closest('.pgb');if(el&&el.dataset.id!==LAST)select(el.dataset.id);
+   const g=e.target.closest('.pgb-grip');if(g)g.closest('.pgb').draggable=true;});
  // A click on the grip with no drag must not leave the block draggable (the next text selection
  // would move the block). mouseup doesn't fire during a real drag, so real drags are unaffected.
  document.addEventListener('mouseup',()=>canvas.querySelectorAll('.pgb[draggable="true"]').forEach(x=>x.draggable=false));
@@ -1590,25 +1612,37 @@ ${inner}
  }
 
  /* ---------- top controls ---------- */
- B('pg-add').addEventListener('click',e=>{const t=e.target.closest('[data-add]');if(!t)return;
-   const b={id:uid(),kind:t.dataset.add,model:newModel(t.dataset.add),html:''};regen(b);
+ function addBlock(kind){
+   const b={id:uid(),kind,model:newModel(kind),html:''};regen(b);
    // goes in after the block the teacher was last working in, else at the end
    const at=idx(LAST);snap();
    if(at>=0){BLOCKS.splice(at+1,0,b);note('Added below the block you were on.');}else{BLOCKS.push(b);note('');}
    SEL=b.id;LAST=b.id;renderCanvas();
+   if(FLOW.kind()!=='page')FLOW.page('blank',BLOCKS.length);else FLOW.pageChanged(BLOCKS.length);
    const el=canvas.querySelector(`.pgb[data-id="${b.id}"]`);
    if(el){el.scrollIntoView({behavior:'smooth',block:'nearest'});
-     const f=el.querySelector('.pgb-form input,.pgb-form textarea');if(f)f.focus({preventScroll:true});}});
- B('pg-load').addEventListener('click',()=>{
-   const html=B('pg-paste').value;
-   if(!html.trim()){note('Paste the page’s Source Code into the box first.');return;}
+     const f=el.querySelector('.pgb-form input,.pgb-form textarea');if(f)f.focus({preventScroll:true});}}
+ // Stage 1's paste box loads by itself: as soon as something that looks like a page lands in
+ // it, it becomes blocks. Words without tags means they copied the page, not its Source Code.
+ function loadPasted(html){
    const r=importPage(html);
-   if(!r.blocks.length){note('Nothing to show — that didn’t look like a page. Copy it from the Source Code (</>) view in Brightspace.');return;}
+   if(!r.blocks.length){FLOW.pasteMsg('Nothing to show — that didn’t look like a page. Copy it from the Source Code (</>) view in Brightspace.',true);return false;}
    snap();
-   BLOCKS=r.blocks.map(h=>({id:uid(),kind:'raw',model:null,html:h}));WRAP=r.wrap;SEL=null;
-   B('pg-paste').value='';B('pg-pastewrap').open=false;renderCanvas();
-   note(`Loaded ${BLOCKS.length} block${BLOCKS.length===1?'':'s'}. Delete, move or click into any of them, then Copy page.`);
-   B('builder').querySelector('.blbl').scrollIntoView({behavior:'smooth',block:'start'});});
+   BLOCKS=r.blocks.map(x=>({id:uid(),kind:'raw',model:null,html:x}));WRAP=r.wrap;SEL=null;LAST=null;
+   B('pg-paste').value='';renderCanvas();
+   FLOW.page('loaded',BLOCKS.length);
+   note(`Loaded ${BLOCKS.length} block${BLOCKS.length===1?'':'s'}. Click a block to delete, move or edit it.`);return true;}
+ let pasteT=null;
+ B('pg-paste').addEventListener('input',()=>{clearTimeout(pasteT);pasteT=setTimeout(()=>{
+   const v=B('pg-paste').value;if(!v.trim()){FLOW.pasteMsg('');return;}
+   if(/<[a-z!\/][^>]*>/i.test(v))loadPasted(v);
+   else FLOW.pasteMsg('That looks like the page’s words, not its code. In Brightspace click Source Code (</>) in the editor toolbar, select all, copy, and paste again.',true);},150);});
+ B('start-blank').addEventListener('click',()=>{
+   if(BLOCKS.length){snap();BLOCKS=[];WRAP=null;SEL=null;LAST=null;renderCanvas();}
+   FLOW.page('blank',0);note('');});
+ B('pg-next').addEventListener('click',()=>{
+   if(!BLOCKS.length){note('Add a block first, or paste a page in step 1.');return;}
+   FLOW.pageNext(BLOCKS.length);});
  B('pg-undo').addEventListener('click',undo);
  // Start over asks once, in place (no browser dialog), then clears. Undo still brings it back.
  let clearArmed=null;
@@ -1619,32 +1653,23 @@ ${inner}
    snap();BLOCKS=[];WRAP=null;SEL=null;LAST=null;renderCanvas();note('Cleared. Undo brings it back.');B('pg-undo').focus();});
  B('pg-copy').addEventListener('click',async()=>{
    const t=B('pg-code'),btn=B('pg-copy');let ok=false;
-   try{await navigator.clipboard.writeText(t.value);ok=true;}catch(e){try{t.select();ok=document.execCommand('copy');}catch(_){}}
+   try{await navigator.clipboard.writeText(t.value);ok=true;}catch(e){
+     // fallback: the code box lives in a closed <details>, which can't be selected; open it for the copy
+     const d=t.closest('details'),was=d&&d.open;try{if(d)d.open=true;t.select();ok=document.execCommand('copy');}catch(_){}finally{if(d&&!was)d.open=false;window.getSelection().removeAllRanges();}}
    btn.textContent=ok?'Copied ✓':'Copy page';btn.classList.toggle('ok',ok);
+   if(ok)FLOW.copied();
    note(ok?'Copied. Now in Brightspace: Source Code (</>), select all, paste, Save.'
-          :'Copying didn’t work here — open "Show the code" below, select it all, and copy by hand.');
+          :'Copying didn’t work here — open "View the code" below, select it all, and copy by hand.');
    setTimeout(()=>{btn.textContent='Copy page';btn.classList.remove('ok');},1600);});
 
  /* ---------- init ---------- */
  try{document.execCommand('defaultParagraphSeparator',false,'p');}catch(e){}
  try{restore();renderCanvas();}
  catch(e){console.error(e);BLOCKS=[];WRAP=null;HIST=[];try{localStorage.removeItem(STORE);}catch(_){}renderCanvas();}
- if(BLOCKS.length)note('Picked up where you left off.');else B('pg-pastewrap').open=true;
+ if(BLOCKS.length){FLOW.page('restored',BLOCKS.length);note('Picked up where you left off.');}
+ else if(location.hash==='#build'){FLOW.page('blank',0);}
+ FLOW.boot();
 })();
 
-/* ---- Top-level mode switch: Restyle a course  <>  Build or fix a page ---- */
-(function(){
- const nav=document.querySelector('.modenav');if(!nav)return;
- const conv=document.getElementById('mode-convert'),build=document.getElementById('mode-build');
- function set(m){conv.classList.toggle('hide',m!=='convert');build.classList.toggle('hide',m!=='build');
-   nav.querySelectorAll('.modebtn').forEach(b=>b.setAttribute('aria-selected',b.dataset.mode===m));
-   try{localStorage.setItem('rdp-tool-mode',m);}catch(e){}}
- nav.querySelectorAll('.modebtn').forEach(b=>b.addEventListener('click',()=>set(b.dataset.mode)));
- // #build / #convert in the link wins (so a help page can link straight to the page editor);
- // otherwise the mode from last visit.
- let start='convert';try{const s=localStorage.getItem('rdp-tool-mode');if(s==='build'||s==='convert')start=s;}catch(e){}
- const h=location.hash.replace('#','');if(h==='build'||h==='convert')start=h;
- set(start);
-})();
 </script>
 </body></html>
