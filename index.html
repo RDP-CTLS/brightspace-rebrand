@@ -578,9 +578,23 @@ const TITLE_RULES=[
  [/feedback|survey|evaluation|reflect on/,['slate','doc']],
  [/navigat|how to use|getting around|find your way/,['green','compass']],
  [/introduction|intro\b|kick[- ]?off/,['teal','flag']],
- [/conclusion|wrap[- ]?up|summary|recap/,['forest','conclude']]];
+ [/conclusion|wrap[- ]?up|summary|recap/,['forest','conclude']],
+ // --- the design guide's own section words (MARKER_COLOR / MARKER_SVG below), so a page or block
+ // titled with one of them lands on the guide's colour even with extra words ("Read: chapter 3") ---
+ [/learning activit/,['violet','activity']],
+ [/\bread(ing)?\b/,['forest','read']],
+ [/\btopics?\b/,['green','topics']],
+ [/time commitment|how long/,['violet','clock']],
+ [/references|bibliograph|works cited/,['slate','book']],
+ [/overview|at a glance/,['orange','book']],
+ [/objectives?\b/,['egg','outcomes']],
+ [/catch[- ]?up/,['green','refresh']]];
 function titleMatch(t){t=(t||'').toLowerCase();for(const[re,v]of TITLE_RULES)if(re.test(t))return v;return null;}
-function titleStyle(t){return titleMatch(t)||['forest','book'];}
+// A title that IS one of the design guide's section words ("Read", "Learning Activity", "Do") takes
+// the guide's colour + icon outright; only then do the keyword rules get a say.
+function titleStyle(t){const k=(t||'').trim().toLowerCase().replace(/[\s:.!-]+$/,'');
+ if(typeof MARKER_COLOR!=='undefined'&&MARKER_COLOR[k])return [MARKER_COLOR[k],MARKER_SVG[k]||'book'];
+ return titleMatch(t)||['forest','book'];}
 const MARKER_COLOR={introduction:'teal','course learning outcomes':'egg','learning outcomes':'egg',topics:'green',
  'learning activity':'violet',read:'forest',watch:'orange','additional resources':'orange',references:'slate',
  conclusion:'forest','time commitment':'violet','catch up':'green','concepts of the week':'green',bring:'slate',do:'slate',overview:'orange',assessment:'egg',
@@ -1661,10 +1675,27 @@ ${inner}
  });
  // Typing straight into a block. A generated block edited by hand becomes plain HTML from
  // then on -- its settings form would otherwise overwrite the hand edits.
+ // Is the caret in a generated Section's title strip (card > marker strip > h2)? Then the title
+ // is being typed over in place, and the model can follow it -- so colour and icon follow too.
+ function titleH2(body){const sel=window.getSelection();const n=sel&&sel.anchorNode;if(!n)return null;
+   const h=(n.nodeType===1?n:n.parentElement).closest('h2');
+   const strip=body.firstElementChild&&body.firstElementChild.firstElementChild;
+   return (h&&strip&&h.parentElement===strip)?h:null;}
  canvas.addEventListener('input',e=>{
    const body=e.target.closest('.pgb-body');if(!body)return;
    const el=body.closest('.pgb'),b=find(el.dataset.id);if(!b)return;
    if(EDIT_SNAP!==b.id){snap();EDIT_SNAP=b.id;}   // one undo step per editing session in a block
+   if(b.kind==='section'&&b.model){const h=titleH2(body);
+     if(h){const sel=window.getSelection(),off=sel.anchorOffset;
+       b.model.title=h.textContent.replace(/\s+/g,' ').trim();regen(b);
+       const inp=el.querySelector('.pgb-form input[data-k="title"]');if(inp)inp.value=b.model.title;
+       // an emptied title stays empty on screen (regen would drop "Section title" under the caret)
+       if(!b.model.title){syncOut();return;}
+       refresh(b);
+       // regen replaced the strip: put the caret back where it was in the new heading
+       const nh=el.querySelector('.pgb-body h2'),tn=nh&&nh.firstChild;
+       if(tn){const r=document.createRange();r.setStart(tn,Math.min(off,tn.length));r.collapse(true);sel.removeAllRanges();sel.addRange(r);}
+       return;}}
    b.html=clean(body.innerHTML);
    if(b.model){b.model=null;if(SEL===b.id)SEL=null;
      const s=el.querySelector('[data-act="edit"]');if(s)s.remove();
