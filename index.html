@@ -317,6 +317,8 @@
 
       <div id="s2-page" hidden>
         <div id="pg-note" role="status" aria-live="polite"></div>
+        <p class="muted" id="pg-frame" hidden style="margin:0 0 .5rem;">Everything below sits inside the page's card frame, which comes along when you copy.
+          <button type="button" class="linkbtn" id="pg-frame-rm">Remove the frame</button></p>
         <div id="pg-canvas"></div>
         <div class="act"><span class="links">
             <button type="button" class="linkbtn" id="pg-undo" disabled>Undo</button>
@@ -1418,14 +1420,18 @@ const FLOW=(()=>{
    // plain width wrapper, and an RDP card (the restyle engine puts a whole page inside one, so
    // stopping at the card would make the entire page a single block). Every wrapper's open tag
    // is kept and put back on the way out, so the frame survives.
-   const isCard=el=>/border-top:\s*4px solid/i.test(el.getAttribute('style')||'');
+   // Rule: while the page is one container holding everything, step inside it -- whatever it is
+   // styled like -- as long as what's inside is more than one thing (or another container).
+   // A box that holds a single paragraph stays a block, so a lone callout isn't torn open.
+   const CONT=new Set(['DIV','SECTION','ARTICLE','MAIN']);
    const wrapTags=[];
-   for(let depth=0;depth<4;depth++){
+   for(let depth=0;depth<6;depth++){
      const kids=[...root.children].filter(el=>!isPad(el));
      if(kids.length!==1||hasText(root))break;
-     const k=kids[0];
-     if(!(isWrapper(k)||(k.tagName==='DIV'&&!hasText(k)&&isCard(k))))break;
-     const oh=k.cloneNode(false).outerHTML;wrapTags.push(oh.slice(0,oh.length-'</div>'.length));root=k;}
+     const k=kids[0];if(!CONT.has(k.tagName)||hasText(k))break;
+     const inner=[...k.children].filter(el=>!isPad(el));
+     if(!(inner.length>=2||(inner.length===1&&CONT.has(inner[0].tagName))))break;
+     const oh=k.cloneNode(false).outerHTML;wrapTags.push(oh.slice(0,oh.lastIndexOf('</')));root=k;}
    const wrap=wrapTags.length?wrapTags.join(''):null;
    // An attribute-less <div> is only a grouping: open it up so what's inside can move on its own.
    const plain=el=>el.tagName==='DIV'&&!el.attributes.length&&!hasText(el)&&el.children.length;
@@ -1459,6 +1465,7 @@ const FLOW=(()=>{
    let kind=RAW_LABEL[t]||'Block';
    if(t==='p'&&/^\s*<p[^>]*>\s*<img/i.test(b.html))kind='Image';
    if(t==='div'&&isBanner(b.html))kind='Title banner';
+   else if(t==='div'&&/^\s*<div[^>]*style="[^"]*(box-shadow|border-top:\s*\d+px solid)/i.test(b.html))kind='Card';
    // a space after every tag so words in neighbouring elements don't run together
    const d=new DOMParser().parseFromString('<body>'+b.html.replace(/>/g,'> ')+'</body>','text/html');
    let txt=d.body.textContent.replace(/\s+/g,' ').trim();
@@ -1483,9 +1490,15 @@ ${inner}
    const parts=BLOCKS.map(b=>b.html+((NOPAD.has(rootTag(b.html))||isBanner(b.html))?'':'\n<p>&nbsp;</p>'));
    let inner=parts.join('\n');
    // WRAP may hold several nested open tags (width wrapper, then a card); close each of them
-   if(WRAP)inner=WRAP+'\n'+inner+'\n'+'</div>'.repeat((WRAP.match(/<div\b/gi)||[]).length);
+   if(WRAP)inner=WRAP+'\n'+inner+'\n'+frameTags().map(t=>'</'+t.match(/^<(\w+)/)[1]+'>').reverse().join('');
    return wrapDoc(inner);}
 
+ // The frame: the wrappers a pasted page arrived inside (kept in WRAP as open tags). A styled
+ // one -- a card, a coloured box -- is exactly the kind of thing that gets stuck in Brightspace,
+ // so it is named on screen and can be removed on its own.
+ function frameTags(){return WRAP?WRAP.split(/(?=<(?:div|section|article|main)\b)/i).filter(Boolean):[];}
+ const styledTag=t=>/style="[^"]*(border|background|box-shadow)/i.test(t.replace(/box-sizing:[^;"]*;?/gi,''));
+ function updateFrame(){const el=B('pg-frame');if(!el)return;const n=frameTags().filter(styledTag).length;el.hidden=!n;}
  /* ---------- state: autosave, undo ---------- */
  // The last few undo steps are saved too, so "Start over" or "Load page" followed by a reload
  // is not a way to lose a forty-block page.
@@ -1504,7 +1517,7 @@ ${inner}
    if(msg&&undoable&&HIST.length){n.appendChild(document.createTextNode(' '));const u=document.createElement('button');u.type='button';u.className='linkbtn';u.textContent='Undo';u.addEventListener('click',undo);n.appendChild(u);}}
  function syncOut(){B('pg-code').value=pageOut();B('pg-copy').disabled=!BLOCKS.length;B('pg-copyhint').hidden=!!BLOCKS.length;
    B('pg-clear').disabled=!BLOCKS.length;B('pg-undo').disabled=!HIST.length;save();
-   B('savestate').textContent=BLOCKS.length?'Saved on this computer':'';FLOW.pageChanged(BLOCKS.length);}
+   B('savestate').textContent=BLOCKS.length?'Saved on this computer':'';updateFrame();FLOW.pageChanged(BLOCKS.length);}
 
  /* ---------- the canvas ---------- */
  const canvas=B('pg-canvas');
@@ -1666,6 +1679,8 @@ ${inner}
  B('pg-next').addEventListener('click',()=>{
    if(!BLOCKS.length){note('Add a block first, or paste a page in step 1.');return;}
    FLOW.pageNext(BLOCKS.length);});
+ B('pg-frame-rm').addEventListener('click',()=>{snap();WRAP=frameTags().filter(t=>!styledTag(t)).join('')||null;renderCanvas();
+   note('Frame removed — the blocks now sit straight on the page.',true);});
  B('pg-undo').addEventListener('click',undo);
  // Start over asks once, in place (no browser dialog), then clears. Undo still brings it back.
  let clearArmed=null;
