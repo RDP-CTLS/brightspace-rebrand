@@ -161,8 +161,11 @@
   .pgb-sn{flex:1;color:var(--muted);font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
   .pgb-bar button{background:#fff;border:1px solid var(--border);border-radius:.45rem;padding:.2rem .55rem;
         font-size:.8rem;font-weight:600;color:var(--forest);}
-  /* controls only on the selected block; still reachable by keyboard (focusing one selects the block) */
-  .pgb:not(.sel) .pgb-bar button{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;padding:0;}
+  /* every card carries its own Up / Down / Delete, quiet until you hover or select it */
+  .pgb:not(.sel) .pgb-bar button{background:transparent;border-color:transparent;color:#9a90a0;}
+  .pgb:not(.sel) .pgb-bar button.del{color:#c9a0ad;}
+  .pgb:not(.sel):hover .pgb-bar button{background:#fff;border-color:var(--border);color:var(--forest);}
+  .pgb:not(.sel):hover .pgb-bar button.del{color:#b0466a;}
   .pgb-bar button:hover{border-color:#b9a7b8;}
   .pgb-bar button:disabled{opacity:.35;cursor:default;border-color:var(--border);}
   .pgb-bar button.del{color:#b0466a;}
@@ -1403,23 +1406,38 @@ const FLOW=(()=>{
  // max-width, no border/background -- or (b) a bare container with no style at all holding
  // two or more things. A CARD is never unwrapped: cards carry border/background styling.
  function isWrapper(el){if(el.tagName!=='DIV'||hasText(el))return false;
-   const st=el.getAttribute('style')||'';
+   // 'box-sizing:border-box' is not a border: drop it before looking for a frame
+   const st=(el.getAttribute('style')||'').replace(/box-sizing:[^;]*;?/gi,'');
    if(st)return /max-width/i.test(st)&&!/border|background/i.test(st);
    return [...el.children].filter(x=>!isPad(x)).length>=2;}
  const BLOCKISH='div,p,table,ul,ol,h1,h2,h3,h4,h5,h6,blockquote,pre,figure,section,article';
  function importPage(html){
    const d=new DOMParser().parseFromString(html,'text/html');cleanDoc(d);
-   let root=d.body, wrap=null;
-   // Unwrap the page wrapper one level so the cards show up as separate blocks; keep the
-   // wrapper (it carries the font / width styling) and put it back on the way out.
-   const kids=[...root.children].filter(el=>!isPad(el));
-   if(kids.length===1&&isWrapper(kids[0])&&!hasText(root)){
-     const oh=kids[0].cloneNode(false).outerHTML;wrap=oh.slice(0,oh.length-'</div>'.length);root=kids[0];}
+   let root=d.body;
+   // Descend through the page's wrappers so the pieces inside show up as separate blocks: the
+   // plain width wrapper, and an RDP card (the restyle engine puts a whole page inside one, so
+   // stopping at the card would make the entire page a single block). Every wrapper's open tag
+   // is kept and put back on the way out, so the frame survives.
+   const isCard=el=>/border-top:\s*4px solid/i.test(el.getAttribute('style')||'');
+   const wrapTags=[];
+   for(let depth=0;depth<4;depth++){
+     const kids=[...root.children].filter(el=>!isPad(el));
+     if(kids.length!==1||hasText(root))break;
+     const k=kids[0];
+     if(!(isWrapper(k)||(k.tagName==='DIV'&&!hasText(k)&&isCard(k))))break;
+     const oh=k.cloneNode(false).outerHTML;wrapTags.push(oh.slice(0,oh.length-'</div>'.length));root=k;}
+   const wrap=wrapTags.length?wrapTags.join(''):null;
+   // An attribute-less <div> is only a grouping: open it up so what's inside can move on its own.
+   const plain=el=>el.tagName==='DIV'&&!el.attributes.length&&!hasText(el)&&el.children.length;
+   let nodes=[...root.childNodes];
+   for(let pass=0;pass<3;pass++){const next=[];let hit=false;
+     for(const n of nodes){if(n.nodeType===1&&plain(n)){next.push(...n.childNodes);hit=true;}else next.push(n);}
+     nodes=next;if(!hit)break;}
    const out=[];let run=[];
    const flush=()=>{while(run.length&&run[run.length-1].nodeType===3&&!run[run.length-1].textContent.trim())run.pop();
      if(!run.length)return;const p=d.createElement('p');run.forEach(n=>p.appendChild(n));
      if(!isPad(p))out.push(p.outerHTML);run=[];};
-   for(const n of [...root.childNodes]){
+   for(const n of nodes){
      if(n.nodeType===3){if(n.textContent.trim()||run.length)run.push(n);continue;}   // keep the spaces BETWEEN inline bits
      if(n.nodeType!==1)continue;
      if(INLINE.has(n.tagName.toLowerCase())&&!n.querySelector(BLOCKISH)){run.push(n);continue;}   // loose inline bits -> one paragraph
@@ -1429,6 +1447,9 @@ const FLOW=(()=>{
  }
  const RAW_LABEL={p:'Paragraph',h1:'Heading',h2:'Heading',h3:'Heading',h4:'Heading',h5:'Heading',h6:'Heading',
    ul:'List',ol:'List',table:'Table',img:'Image',iframe:'Embed',figure:'Figure',blockquote:'Quote',hr:'Divider',div:'Styled box'};
+ // The restyle engine's title strip at the top of a card: a flex row pulled out to the card's
+ // edges with negative margins, holding an icon and the page title.
+ const isBanner=h=>/^\s*<div[^>]*style="[^"]*margin:-/i.test(h)&&/<svg/i.test(h)&&/<h[1-6]/i.test(h);
  const KIND_LABEL={contacts:'Contact cards',callout:'Callout',section:'Section'};
  // Bar label: the block's kind, plus (for pasted content) the first few words of its text so
  // a teacher can tell which "Block" is the stuck one. An empty shell says so outright.
@@ -1437,6 +1458,7 @@ const FLOW=(()=>{
    const t=rootTag(b.html);
    let kind=RAW_LABEL[t]||'Block';
    if(t==='p'&&/^\s*<p[^>]*>\s*<img/i.test(b.html))kind='Image';
+   if(t==='div'&&isBanner(b.html))kind='Title banner';
    // a space after every tag so words in neighbouring elements don't run together
    const d=new DOMParser().parseFromString('<body>'+b.html.replace(/>/g,'> ')+'</body>','text/html');
    let txt=d.body.textContent.replace(/\s+/g,' ').trim();
@@ -1458,9 +1480,10 @@ const FLOW=(()=>{
 ${inner}
 </body></html>`;}
  function pageOut(){
-   const parts=BLOCKS.map(b=>b.html+(NOPAD.has(rootTag(b.html))?'':'\n<p>&nbsp;</p>'));
+   const parts=BLOCKS.map(b=>b.html+((NOPAD.has(rootTag(b.html))||isBanner(b.html))?'':'\n<p>&nbsp;</p>'));
    let inner=parts.join('\n');
-   if(WRAP)inner=WRAP+'\n'+inner+'\n</div>';
+   // WRAP may hold several nested open tags (width wrapper, then a card); close each of them
+   if(WRAP)inner=WRAP+'\n'+inner+'\n'+'</div>'.repeat((WRAP.match(/<div\b/gi)||[]).length);
    return wrapDoc(inner);}
 
  /* ---------- state: autosave, undo ---------- */
