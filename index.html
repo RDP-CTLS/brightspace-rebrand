@@ -209,9 +209,11 @@
   .pgb-body:focus{background:#fbf8fc;outline:2px solid var(--plum);outline-offset:-2px;}
   .pgb-body h1,.pgb-body h2,.pgb-body h3,.pgb-body h4{color:revert;font-size:revert;margin:revert;}
   /* a cleared / recovered title keeps its box; this ghost shows where to click and type (canvas only).
-     Scoped to the Section header band marker() emits (margin:-1.35rem ...), so an unrelated pasted
-     card with a negative margin doesn't get a spurious "Section title" ghost. */
-  .pgb-body div[style*="margin:-1.35rem"]>h2:empty::before{content:"Section title";color:#9a90a0;font-weight:400;}
+     Scoped to the Section header band marker() emits (margin:-1.35rem -1.4rem 1.2rem), so an unrelated
+     pasted card with a negative margin doesn't get a spurious "Section title" ghost. We match the
+     colon-free value, NOT "margin:-1.35rem": restyleSection's style writes make Chrome reserialize the
+     inline style to "margin: -1.35rem ..." (a space after the colon), which "margin:-1.35rem" misses. */
+  .pgb-body div[style*="-1.35rem -1.4rem 1.2rem"]>h2:empty::before{content:"Section title";color:#9a90a0;font-weight:400;}
   .pgb-form{padding:.2rem 1rem 1rem;border-top:1px dashed var(--s-border);background:var(--s-subdued);border-radius:0 0 8px 8px;}
   .pgb-done{margin-top:.9rem;background:var(--plum);color:#fff;border-radius:4px;padding:.45rem 1rem;font-size:.88rem;}
 
@@ -1477,13 +1479,16 @@ const FLOW=(()=>{
      :esc(val.trim());
    return `<div style="display:flex;flex-direction:column;gap:.15rem;"><span style="display:flex;align-items:center;gap:.4rem;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:${color};">${iconSvg(key,color,'.95rem')}${label}</span><span style="font-size:.92rem;color:#3a4248;line-height:1.4;padding-left:1.35rem;">${inner}</span></div>`;
  }
+ // The grey hints the generators show for an empty field, in ONE place so the generators (below) and
+ // stripFiller's FILLER_TEXT (further down) can never drift apart -- reword a hint here and both follow.
+ const HINT_BODY='Your text here.', HINT_CONTACT='Add office, hours, email or phone.';
  function contactCard(p,tok){
    const c=BADGE[tok]||COLORS[tok],bg=BG[tok],badge=BADGE[tok]||COLORS[tok],ink=BADGE_INK[tok]||'#fff';
    const raw=(p.name||'').split(/\s+/).filter(Boolean).map(w=>w[0]).slice(0,2).join('').toUpperCase();
    const initials=raw?esc(raw):'\u2022';
    const rows=[contactRow('pin','Office',p.office,c),contactRow('clock','Office hours',p.hours,c),
      contactRow('mail','Email',p.email,c,true),contactRow('phone','Phone',p.phone,c)].join('');
-   return `<div style="background:#fff;border:1px solid #E8E8E8;border-top:4px solid ${c};border-radius:1.1rem;box-shadow:0 3px 10px rgba(16,40,34,.06);overflow:hidden;box-sizing:border-box;"><div style="display:flex;align-items:center;gap:.85rem;padding:1.05rem 1.15rem;background:${bg};border-bottom:1px solid rgba(0,0,0,.06);box-sizing:border-box;"><div style="width:2.75rem;height:2.75rem;border-radius:50%;background:${badge};color:${ink};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;flex-shrink:0;box-sizing:border-box;">${initials}</div><div style="min-width:0;"><div style="font-weight:700;font-size:1.05rem;color:${c};line-height:1.25;">${esc(p.name||'Name')}</div>${p.role&&p.role.trim()?`<div style="font-size:.85rem;color:#5B6770;margin-top:1px;">${esc(p.role)}</div>`:''}</div></div><div style="padding:1.05rem 1.15rem;display:flex;flex-direction:column;gap:.8rem;box-sizing:border-box;">${rows||'<span style="color:#9a90a0;font-size:.85rem;">Add office, hours, email or phone.</span>'}</div></div>`;
+   return `<div style="background:#fff;border:1px solid #E8E8E8;border-top:4px solid ${c};border-radius:1.1rem;box-shadow:0 3px 10px rgba(16,40,34,.06);overflow:hidden;box-sizing:border-box;"><div style="display:flex;align-items:center;gap:.85rem;padding:1.05rem 1.15rem;background:${bg};border-bottom:1px solid rgba(0,0,0,.06);box-sizing:border-box;"><div style="width:2.75rem;height:2.75rem;border-radius:50%;background:${badge};color:${ink};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;flex-shrink:0;box-sizing:border-box;">${initials}</div><div style="min-width:0;"><div style="font-weight:700;font-size:1.05rem;color:${c};line-height:1.25;">${esc(p.name||'Name')}</div>${p.role&&p.role.trim()?`<div style="font-size:.85rem;color:#5B6770;margin-top:1px;">${esc(p.role)}</div>`:''}</div></div><div style="padding:1.05rem 1.15rem;display:flex;flex-direction:column;gap:.8rem;box-sizing:border-box;">${rows||`<span style="color:#9a90a0;font-size:.85rem;">${HINT_CONTACT}</span>`}</div></div>`;
  }
  function genContacts(m){
    const tok=m.theme,c=BADGE[tok]||COLORS[tok],bg=BG[tok],heading=(m.heading||'').trim();
@@ -1495,13 +1500,13 @@ const FLOW=(()=>{
    const tok=m.theme,c=COLORS[tok],bg=BG[tok],heading=(m.heading||'').trim();
    const icon=(m.icon&&SVG[m.icon])?`<div style="flex-shrink:0;margin-top:.1rem;">${iconSvg(m.icon,c,'1.3rem')}</div>`:'';
    const h=heading?`<div style="font-weight:700;color:${c};margin-bottom:.25rem;font-size:1rem;">${esc(heading)}</div>`:'';
-   const inner=paras(m.body)||'<span style="color:#9a90a0;">Your text here.</span>';
+   const inner=paras(m.body)||`<span style="color:#9a90a0;">${HINT_BODY}</span>`;
    return `<div style="display:flex;gap:.8rem;background:${bg};border-left:4px solid ${c};border-radius:.7rem;padding:.95rem 1.1rem;margin:1.1rem 0;box-sizing:border-box;">${icon}<div style="min-width:0;">${h}<div style="color:#3a4248;">${inner}</div></div></div>`;
  }
  function genSection(m){
    const label=(m.title||'').trim();                       // shipped heading text: an emptied title stays empty, never the literal "Section title"
    const seed=label||'Section title';                       // ...but colour + icon still seed from the placeholder word, matching the on-screen restyle
-   const inner=paras(m.body)||'<p style="margin:0;color:#9a90a0;">Your text here.</p>';
+   const inner=paras(m.body)||`<p style="margin:0;color:#9a90a0;">${HINT_BODY}</p>`;
    const [tok,svg]=titleStyle(seed);
    return card(label,inner,tok,svg);   // empty label -> an :empty <h2> so the canvas ghost keeps showing on re-render
  }
@@ -1643,10 +1648,12 @@ ${inner}
  // course page. (Once typed over, real content is no longer grey, so only untouched hints go.)
  // Only the generators' OWN hints go -- an element must be both the grey we emit AND carry one of
  // the exact filler phrases. A teacher's real content that happens to use the same grey is kept.
- const FILLER_TEXT=new Set(['your text here.','add office, hours, email or phone.']);
+ // Built from the same HINT_* constants the generators emit, normalised the way the lookup below is.
+ const fillerKey=s=>s.replace(/\s+/g,' ').trim().toLowerCase();
+ const FILLER_TEXT=new Set([HINT_BODY,HINT_CONTACT].map(fillerKey));
  function stripFiller(html){const d=new DOMParser().parseFromString('<body>'+(html||'')+'</body>','text/html');
    d.body.querySelectorAll('[style*="#9a90a0"]').forEach(el=>{
-     if(FILLER_TEXT.has(el.textContent.replace(/\s+/g,' ').trim().toLowerCase()))el.remove();});
+     if(FILLER_TEXT.has(fillerKey(el.textContent)))el.remove();});
    return d.body.innerHTML;}
  // One built part per block, cached on the block by its html. A keystroke only changes the block
  // being edited, so the other N-1 blocks reuse their cached part instead of re-running DOMParser.
