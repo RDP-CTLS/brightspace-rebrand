@@ -4,10 +4,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Course Template Studio</title>
 <style>
-  :root{--egg:#51284F;--forest:#004238;--green:#00AD50;
+  :root{--plum:#51284F;--forest:#004238;--green:#00AD50;
     /* Slate neutral scale (from DESIGN.md) — the calm ground the RDP accents sit on */
     --s-canvas:#F8FAFC;--s-surface:#FFFFFF;--s-subdued:#F1F5F9;--s-active:#E2E8F0;--s-border:#CBD5E1;--s-muted:#64748B;--s-text:#0F172A;
-    --egg-tint:#F1EAF1;--danger:#B91C1C;
+    --plum-tint:#F1EAF1;--danger:#B91C1C;
     /* Elevation 0–2 */
     --el1:0 1px 3px rgba(15,23,42,.05);--el2:0 4px 12px rgba(15,23,42,.08);
     /* legacy aliases now mapped onto the slate scale so the chrome shifts together */
@@ -19,7 +19,7 @@
   .top{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin:0 0 .6rem;}
   .brand{display:flex;align-items:center;gap:.55rem;min-width:0;}
   .brand .mark{width:1.85rem;height:1.85rem;flex-shrink:0;display:block;}
-  h1{color:var(--egg);font-size:1.3rem;margin:0;letter-spacing:-.01em;line-height:1.2;}
+  h1{color:var(--plum);font-size:1.3rem;margin:0;letter-spacing:-.01em;line-height:1.2;}
   #savestate{font-size:.76rem;color:var(--s-muted);font-weight:600;display:inline-flex;align-items:center;gap:.4rem;
         background:var(--s-subdued);border:1px solid var(--s-border);border-radius:999px;padding:.22rem .65rem;font-variant-numeric:tabular-nums;}
   #savestate:empty{display:none;}
@@ -28,13 +28,13 @@
   .hide{display:none;}
   [hidden]{display:none!important;}
   button{font:inherit;font-weight:700;border:0;border-radius:.6rem;padding:.7rem 1.3rem;cursor:pointer;}
-  button:focus-visible,[tabindex]:focus-visible,summary:focus-visible{outline:3px solid var(--egg);outline-offset:2px;}
-  .pri{background:var(--egg);color:#fff;font-size:1.02rem;padding:.75rem 1.4rem;min-height:44px;}
+  button:focus-visible,[tabindex]:focus-visible,summary:focus-visible{outline:3px solid var(--plum);outline-offset:2px;}
+  .pri{background:var(--plum);color:#fff;font-size:1.02rem;padding:.75rem 1.4rem;min-height:44px;}
   .pri:disabled{background:#c8bcc7;cursor:not-allowed;}
   .pri.ok{background:var(--done);}
   .linkbtn{background:none;border:0;padding:0;font:inherit;color:var(--forest);text-decoration:underline;
         text-underline-offset:2px;cursor:pointer;font-weight:600;}
-  .linkbtn:hover{color:var(--egg);}
+  .linkbtn:hover{color:var(--plum);}
   .linkbtn:disabled{color:#b9b1bf;text-decoration:none;cursor:default;}
 
   /* ---- The rail: three stages, 1:1 with what has actually happened ---- */
@@ -44,8 +44,8 @@
         padding:.5rem .7rem;font-size:.88rem;font-weight:700;color:var(--muted);text-align:left;cursor:pointer;}
   .rs .n{display:inline-flex;align-items:center;justify-content:center;width:1.5rem;height:1.5rem;border-radius:50%;
         background:var(--s-active);color:var(--muted);font-size:.8rem;flex-shrink:0;}
-  .rs.cur{border-color:var(--egg);color:var(--egg);box-shadow:0 2px 10px rgba(81,40,79,.12);}
-  .rs.cur .n{background:var(--egg);color:#fff;}
+  .rs.cur{border-color:var(--plum);color:var(--plum);box-shadow:0 2px 10px rgba(81,40,79,.12);}
+  .rs.cur .n{background:var(--plum);color:#fff;}
   .rs.ok{color:var(--forest);}
   .rs.ok .n{background:var(--done);color:#fff;}
   .rs:disabled{cursor:default;opacity:.6;}
@@ -57,10 +57,10 @@
   .stage.cur{border-color:#d8c4d7;padding:1.2rem 1.4rem 1.4rem;}
   .sh{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;min-height:2rem;}
   .sh .sn{display:inline-flex;align-items:center;justify-content:center;width:1.7rem;height:1.7rem;border-radius:50%;
-        background:var(--egg);color:#fff;font-weight:700;font-size:.9rem;flex-shrink:0;}
+        background:var(--plum);color:#fff;font-weight:700;font-size:.9rem;flex-shrink:0;}
   .stage.later .sh .sn{background:var(--s-active);color:var(--muted);}
   .stage.done .sh .sn{background:var(--done);}
-  .sh h2{margin:0;font-size:1.15rem;color:var(--egg);}
+  .sh h2{margin:0;font-size:1.15rem;color:var(--plum);}
   .sh h2:focus{outline:none;}
   .stage.later .sh h2,.stage.done .sh h2{font-size:1rem;color:var(--muted);}
   .receipt{flex:1;font-size:.9rem;color:var(--forest);font-weight:600;min-width:0;font-variant-numeric:tabular-nums;}
@@ -79,7 +79,7 @@
   #drop{border:2px dashed #9a8e99;border-radius:1rem;background:#fff;padding:1.6rem 1rem 1.3rem;text-align:center;
         cursor:pointer;transition:.15s;color:var(--muted);}
   #drop.hot{border-color:var(--forest);background:#f0faf2;color:var(--forest);}
-  #drop strong{color:var(--egg);font-size:1.05rem;display:block;margin-bottom:.2rem;}
+  #drop strong{color:var(--plum);font-size:1.05rem;display:block;margin-bottom:.2rem;}
   #drop .btnrow{margin-top:.8rem;}
   #drop .btab{pointer-events:none;}
   #drop-msg{margin:.6rem 0 0;font-size:.92rem;}
@@ -93,10 +93,10 @@
   #paste-msg.err{background:#fff2f4;border:1px solid #f0c4cc;border-radius:.6rem;padding:.6rem .8rem;color:#7a2d43;}
   .quiet{font-size:.85rem;color:var(--muted);margin:.8rem 0 0;}
   .newpage{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;border:2px dashed #9a8e99;border-radius:.8rem;padding:.8rem 1rem;}
-  .newpage strong{display:block;color:var(--egg);}
+  .newpage strong{display:block;color:var(--plum);}
   .newpage .muted{display:block;font-size:.85rem;}
   .newpage .btab{white-space:nowrap;}
-  .btab{background:#f0e8f0;color:var(--egg);border:1px solid transparent;border-radius:.6rem;
+  .btab{background:#f0e8f0;color:var(--plum);border:1px solid transparent;border-radius:.6rem;
         padding:.5rem .9rem;font-weight:700;font-size:.9rem;cursor:pointer;}
   .btab:hover{background:#e4d6e3;}
 
@@ -104,7 +104,7 @@
   details.help{margin:.8rem 0 0;border:1px solid var(--border);border-radius:.7rem;background:#fbfafc;}
   details.help>summary{cursor:pointer;padding:.6rem .9rem;font-weight:700;color:var(--forest);font-size:.92rem;list-style:none;}
   details.help>summary::-webkit-details-marker{display:none;}
-  details.help>summary::before{content:"▸ ";color:var(--egg);}
+  details.help>summary::before{content:"▸ ";color:var(--plum);}
   details.help[open]>summary::before{content:"▾ ";}
   details.help .body{padding:0 .9rem .85rem;font-size:.92rem;}
   details.help .body p{margin:.5rem 0;}
@@ -113,13 +113,13 @@
   .steps li{counter-increment:s;position:relative;padding:.5rem 0 .5rem 2.5rem;border-top:1px solid var(--border);}
   .steps li:first-child{border-top:0;}
   .steps li::before{content:counter(s);position:absolute;left:0;top:.45rem;width:1.7rem;height:1.7rem;
-        background:var(--egg);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;
+        background:var(--plum);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;
         font-weight:700;font-size:.9rem;}
   .steps li b.warn{color:#a8500a;}
   .steps details{margin:.25rem 0 0;}
   .steps details>summary{cursor:pointer;color:var(--forest);font-size:.85rem;font-weight:600;list-style:none;}
   .steps details>summary::-webkit-details-marker{display:none;}
-  .steps details>summary::before{content:"▸ ";color:var(--egg);}
+  .steps details>summary::before{content:"▸ ";color:var(--plum);}
   .steps details[open]>summary::before{content:"▾ ";}
   .ext{display:inline-block;background:#0f1b18;color:#7ee0a6;font-family:ui-monospace,Menlo,Consolas,monospace;
         font-weight:700;border-radius:.35rem;padding:.05rem .4rem;}
@@ -130,7 +130,7 @@
   .shot.missing img{display:none;}
   .shot.missing .ph{display:flex;align-items:center;gap:.5rem;border:1.5px dashed #c9c2d0;border-radius:.5rem;
         padding:.6rem .75rem;color:var(--muted);background:#faf9fb;font-size:.85rem;}
-  .shot .ph code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;color:var(--egg);}
+  .shot .ph code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;color:var(--plum);}
   .note{background:#fff7e6;border:1px solid #f0d9a8;border-radius:.7rem;padding:.7rem 1rem;margin:.9rem 0 0;font-size:.9rem;}
   .note b{color:#a8500a;}
 
@@ -162,21 +162,21 @@
 
   /* ---- Stage 2, page: the canvas ---- */
   .pgempty{border:1px dashed var(--s-border);border-radius:8px;padding:1.6rem 1rem;text-align:center;color:var(--s-muted);background:var(--s-surface);box-shadow:var(--el1);}
-  .pgempty-plus{width:2.4rem;height:2.4rem;margin:0 auto .3rem;border-radius:50%;background:var(--s-subdued);color:var(--egg);display:flex;align-items:center;justify-content:center;}
+  .pgempty-plus{width:2.4rem;height:2.4rem;margin:0 auto .3rem;border-radius:50%;background:var(--s-subdued);color:var(--plum);display:flex;align-items:center;justify-content:center;}
   .pgempty-plus svg{width:1.3rem;height:1.3rem;}
   .pgempty-t{margin:.1rem 0 .8rem;font-weight:600;color:var(--s-text);}
 
   /* ---- chip palette (shared: end dropzone, insert lines, empty state) ---- */
   .chips{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;justify-content:center;}
   .chip{display:inline-flex;align-items:center;gap:.32rem;background:var(--s-subdued);border:1px solid var(--s-border);
-        border-radius:4px;padding:.34rem .6rem;font:inherit;font-size:.8rem;font-weight:600;color:var(--egg);cursor:pointer;transition:background .12s;}
+        border-radius:4px;padding:.34rem .6rem;font:inherit;font-size:.8rem;font-weight:600;color:var(--plum);cursor:pointer;transition:background .12s;}
   .chip:hover{background:var(--s-surface);border-color:#b9a7b8;}
   .chip svg{width:1rem;height:1rem;flex-shrink:0;}
 
   .pgb{border:1px solid var(--s-border);border-radius:8px;background:var(--s-surface);margin:.5rem 0;position:relative;
         box-shadow:var(--el1);transition:box-shadow .12s,opacity .15s;}
   .pgb:hover{box-shadow:var(--el2);}
-  .pgb.sel{border-color:var(--egg);box-shadow:var(--el1),inset 3px 0 0 0 var(--egg);}
+  .pgb.sel{border-color:var(--plum);box-shadow:var(--el1),inset 3px 0 0 0 var(--plum);}
   .pgb.dragging{opacity:.4;}
   .pgb.drop-before{box-shadow:0 -4px 0 0 var(--green);}
   .pgb.drop-after{box-shadow:0 4px 0 0 var(--green);}
@@ -187,11 +187,11 @@
 
   .pgb-bar{display:flex;align-items:center;gap:.4rem;padding:.28rem .4rem .28rem .3rem;border-bottom:1px solid var(--s-border);
         background:var(--s-subdued);border-radius:8px 8px 0 0;font-size:.8rem;min-height:2.2rem;}
-  .pgb.sel .pgb-bar{background:var(--egg-tint);border-bottom-color:#e0cfe0;}
+  .pgb.sel .pgb-bar{background:var(--plum-tint);border-bottom-color:#e0cfe0;}
   .pgb-grip{cursor:grab;color:#aab2bd;padding:.1rem .25rem;font-size:1rem;line-height:1;user-select:none;letter-spacing:-.15em;}
   .pgb-grip:active{cursor:grabbing;}
   .pgb-kind{font-weight:700;color:var(--forest);text-transform:uppercase;letter-spacing:.04em;font-size:.68rem;white-space:nowrap;}
-  .pgb.sel .pgb-kind{color:var(--egg);}
+  .pgb.sel .pgb-kind{color:var(--plum);}
   .pgb-sn{flex:1;color:var(--s-muted);font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
   .pgb-acts{display:flex;align-items:center;gap:.1rem;margin-left:auto;flex-shrink:0;}
   /* icon buttons: a 16px glyph in a 28px hit area — quiet grey at rest, full strength on hover / when the card is selected */
@@ -200,16 +200,16 @@
   .ib svg{display:block;}
   .ib:hover{background:var(--s-surface);border-color:var(--s-border);color:var(--forest);}
   .pgb.sel .ib{color:#8a6d88;}
-  .pgb.sel .ib:hover{color:var(--egg);border-color:#d8c4d7;background:var(--s-surface);}
+  .pgb.sel .ib:hover{color:var(--plum);border-color:#d8c4d7;background:var(--s-surface);}
   .ib.del:hover{color:var(--danger);border-color:#e6bcbc;background:#fdf3f3;}
   .ib:disabled{opacity:.35;cursor:default;background:transparent;border-color:transparent;color:#9aa3ae;}
-  .ib[aria-expanded="true"]{background:var(--egg);color:#fff;border-color:var(--egg);}
+  .ib[aria-expanded="true"]{background:var(--plum);color:#fff;border-color:var(--plum);}
 
   .pgb-body{padding:.9rem 1rem;overflow-x:auto;cursor:text;}
-  .pgb-body:focus{background:#fbf8fc;outline:2px solid var(--egg);outline-offset:-2px;}
+  .pgb-body:focus{background:#fbf8fc;outline:2px solid var(--plum);outline-offset:-2px;}
   .pgb-body h1,.pgb-body h2,.pgb-body h3,.pgb-body h4{color:revert;font-size:revert;margin:revert;}
   .pgb-form{padding:.2rem 1rem 1rem;border-top:1px dashed var(--s-border);background:var(--s-subdued);border-radius:0 0 8px 8px;}
-  .pgb-done{margin-top:.9rem;background:var(--egg);color:#fff;border-radius:4px;padding:.45rem 1rem;font-size:.88rem;}
+  .pgb-done{margin-top:.9rem;background:var(--plum);color:#fff;border-radius:4px;padding:.45rem 1rem;font-size:.88rem;}
 
   /* ---- insert line: a thin bar between every pair of cards; hover / keyboard focus reveals "+ Insert block" ---- */
   .pgb-ins{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:1.3rem;}
@@ -225,7 +225,7 @@
 
   /* ---- the one "Add a block" dropzone at the end of the stack ---- */
   .pgb-end{border:1px dashed var(--s-border);border-radius:8px;background:var(--s-subdued);padding:.9rem 1rem;margin:.6rem 0 0;text-align:center;}
-  .pgb-end-head{display:inline-flex;align-items:center;gap:.35rem;font-weight:700;color:var(--egg);font-size:.9rem;margin-bottom:.55rem;}
+  .pgb-end-head{display:inline-flex;align-items:center;gap:.35rem;font-weight:700;color:var(--plum);font-size:.9rem;margin-bottom:.55rem;}
   .pgb-end-head svg{width:1.05rem;height:1.05rem;}
   /* settings form */
   .bform label{display:block;font-weight:600;font-size:.85rem;color:var(--forest);margin:.75rem 0 .25rem;}
@@ -242,10 +242,10 @@
   .addbtn{background:#eef0f1;color:var(--forest);border:1px dashed #b9b1bf;border-radius:.6rem;padding:.5rem .9rem;font-weight:700;font-size:.88rem;cursor:pointer;margin-top:.3rem;}
   .swatches{display:flex;flex-wrap:wrap;gap:.45rem;margin:.3rem 0 .2rem;}
   .sw{width:1.9rem;height:1.9rem;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--border);cursor:pointer;padding:0;}
-  .sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--egg);}
+  .sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--plum);}
   .iconpick{display:flex;flex-wrap:wrap;gap:.35rem;margin:.3rem 0;}
   .ic{width:2.1rem;height:2.1rem;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:.5rem;background:#fff;cursor:pointer;color:var(--ink);padding:0;}
-  .ic[aria-pressed="true"]{border-color:var(--egg);background:#f0e8f0;color:var(--egg);}
+  .ic[aria-pressed="true"]{border-color:var(--plum);background:#f0e8f0;color:var(--plum);}
   .ic svg{width:1.15rem;height:1.15rem;}
 
   /* ---- Stage 3 ---- */
@@ -276,7 +276,7 @@
       <div id="drop-msg" role="status" aria-live="polite"></div>
 
       <div class="or">or</div>
-      <label for="pg-paste" style="display:block;font-weight:700;color:var(--egg);margin:0 0 .3rem;">Personalize one page that's already in Brightspace
+      <label for="pg-paste" style="display:block;font-weight:700;color:var(--plum);margin:0 0 .3rem;">Personalize one page that's already in Brightspace
         <span class="muted" style="font-weight:400;">paste its Source Code here — it loads by itself</span></label>
       <textarea id="pg-paste" spellcheck="false" placeholder="Paste here…"></textarea>
       <div id="paste-msg" role="status" aria-live="polite"></div>
@@ -518,8 +518,8 @@ function makeZipWriter(){
 }
 
 /* ===================== ENGINE (ported from engine.py) ===================== */
-const COLORS={forest:'#004238',green:'#067a3a',teal:'#0f766e',orange:'#a8500a',egg:'#51284F',violet:'#685BC7',slate:'#5B6770',gold:'#7a5c00'};
-const BG={forest:'#e6f7ed',green:'#e6f7ed',teal:'#d8f3ef',orange:'#fff3e6',egg:'#f0e8f0',violet:'#efedf9',slate:'#eef0f1',gold:'#fef3c7'};
+const COLORS={forest:'#004238',green:'#067a3a',teal:'#0f766e',orange:'#a8500a',plum:'#51284F',violet:'#685BC7',slate:'#5B6770',gold:'#7a5c00'};
+const BG={forest:'#e6f7ed',green:'#e6f7ed',teal:'#d8f3ef',orange:'#fff3e6',plum:'#f0e8f0',violet:'#efedf9',slate:'#eef0f1',gold:'#fef3c7'};
 const BADGE={gold:'#f5c518'};const BADGE_INK={gold:'#4a3800'};
 const SVG={
  resources:'<line x1="9" y1="18" x2="15" y2="18"></line><line x1="10" y1="22" x2="14" y2="22"></line><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.6 4.6 0 0 1 8.91 14"></path>',
@@ -585,7 +585,7 @@ const SVG={
  bell:'<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path>',
  circle:'<circle cx="12" cy="12" r="9"></circle>'};
 const TITLE_RULES=[
- [/learning path|learning outcome|outcomes/,['egg','outcomes']],
+ [/learning path|learning outcome|outcomes/,['plum','outcomes']],
  [/\bbefore\b|pre[- ]?class|pre[- ]?lab|preparation|prep\b/,['teal','read']],
  [/\bduring\b/,['violet','activity']],
  [/\bafter\b|post[- ]?class|post class|wrap/,['forest','conclude']],
@@ -594,7 +594,7 @@ const TITLE_RULES=[
  [/instructor info|instructor information|faculty/,['slate','help']],
  [/skills? checklist|checklist|competenc/,['teal','check']],
  [/additional resources|supplemental|resources/,['orange','resources']],
- [/assessment|quiz|exam|test|rubric|drop\s*box/,['egg','assess']],
+ [/assessment|quiz|exam|test|rubric|drop\s*box/,['plum','assess']],
  [/schedule|calendar|dates/,['violet','calendar']],
  [/handbook|policy|policies|outline|contract|declaration|guide/,['slate','doc']],
  [/orientation|welcome|office hours|attendance/,['green','pin']],
@@ -605,25 +605,24 @@ const TITLE_RULES=[
  [/students|learners|who are/,['violet','users']],
  [/\bteam\b|staff|instructors|who is|people|roster|contact/,['slate','users']],
  [/role of|division|governance|responsibilit|partners?/,['orange','users']],
- [/key difference|differences|what you need to know|important|essential/,['egg','star']],
+ [/key difference|differences|what you need to know|important|essential/,['plum','star']],
  [/next steps?|getting started|get started|first steps?/,['gold','arrow']],
  [/action items?|^to[- ]?do|^do[:\s]|complete the|submit/,['violet','check']],
  [/halfway|touch\s?base|check[- ]?in|midpoint|mid[- ]?term check/,['green','calendar']],
  [/lessons learned|tips|keep in mind|best practice|things to/,['orange','resources']],
- [/crisis|emergenc|concern|safety|risk|wellbeing|minors/,['egg','alert']],
+ [/crisis|emergenc|concern|safety|risk|wellbeing|minors/,['plum','alert']],
  [/feedback|survey|evaluation|reflect on/,['slate','doc']],
  [/navigat|how to use|getting around|find your way/,['green','compass']],
  [/introduction|intro\b|kick[- ]?off/,['teal','flag']],
  [/conclusion|wrap[- ]?up|summary|recap/,['forest','conclude']],
  // --- the design guide's own section words (MARKER_COLOR / MARKER_SVG below), so a page or block
- // titled with one of them lands on the guide's colour even with extra words ("Read: chapter 3") ---
+ // titled with one of them lands on the guide's colour even with extra words ("Topics: week 3") ---
  [/learning activit/,['violet','activity']],
- [/\bread(ing)?\b/,['forest','read']],
  [/\btopics?\b/,['green','topics']],
  [/time commitment|how long/,['violet','clock']],
  [/references|bibliograph|works cited/,['slate','book']],
  [/overview|at a glance/,['orange','book']],
- [/objectives?\b/,['egg','outcomes']],
+ [/objectives?\b/,['plum','outcomes']],
  [/catch[- ]?up/,['green','refresh']]];
 function titleMatch(t){t=(t||'').toLowerCase();for(const[re,v]of TITLE_RULES)if(re.test(t))return v;return null;}
 // A title that IS one of the design guide's section words ("Read", "Learning Activity", "Do") takes
@@ -631,11 +630,11 @@ function titleMatch(t){t=(t||'').toLowerCase();for(const[re,v]of TITLE_RULES)if(
 function titleStyle(t){const k=(t||'').trim().toLowerCase().replace(/[\s:.!-]+$/,'');
  if(typeof MARKER_COLOR!=='undefined'&&MARKER_COLOR[k])return [MARKER_COLOR[k],MARKER_SVG[k]||'book'];
  return titleMatch(t)||['forest','book'];}
-const MARKER_COLOR={introduction:'teal','course learning outcomes':'egg','learning outcomes':'egg',topics:'green',
+const MARKER_COLOR={introduction:'teal','course learning outcomes':'plum','learning outcomes':'plum',topics:'green',
  'learning activity':'violet',read:'teal',watch:'teal','additional resources':'orange',references:'slate',
- conclusion:'forest','time commitment':'violet','catch up':'green','concepts of the week':'green',bring:'slate',do:'green',overview:'orange',assessment:'egg',
- // Blackboard-era button set (HET trades courses): outcome family stays on egg like 'learning outcomes'
- outcome:'egg',objectives:'egg','practice quiz':'green','supervised test':'orange',feedback:'violet',
+ conclusion:'forest','time commitment':'violet','catch up':'green','concepts of the week':'green',bring:'slate',do:'green',overview:'orange',assessment:'plum',
+ // Blackboard-era button set (HET trades courses): outcome family stays on plum like 'learning outcomes'
+ outcome:'plum',objectives:'plum','practice quiz':'green','supervised test':'orange',feedback:'violet',
  // --- activity vocabulary (Sep 2026): one colour per category ---
  // Information Acquisition (passive) -> teal
  listen:'teal',review:'teal',skim:'teal',analyze:'teal',study:'teal',observe:'teal',inspect:'teal',view:'teal',examine:'teal',discover:'teal',hear:'teal',browse:'teal',recap:'teal',digest:'teal',
@@ -647,8 +646,8 @@ const MARKER_COLOR={introduction:'teal','course learning outcomes':'egg','learni
  discuss:'violet',collaborate:'violet',debate:'violet',share:'violet',connect:'violet',network:'violet',reply:'violet',post:'violet',chat:'violet',converse:'violet',attend:'violet',meet:'violet',interact:'violet',present:'violet',pitch:'violet',lead:'violet','peer review':'violet',
  // Creation & Production -> gold
  create:'gold',build:'gold',write:'gold',draft:'gold',design:'gold',develop:'gold',construct:'gold',compose:'gold',model:'gold',draw:'gold',sketch:'gold',author:'gold',code:'gold',record:'gold',produce:'gold',formulate:'gold','record audio':'gold','record video':'gold',
- // Reflection & Metacognition -> egg
- reflect:'egg',evaluate:'egg',assess:'egg',journal:'egg',critique:'egg','self-check':'egg',question:'egg',synthesize:'egg',summarize:'egg',reconsider:'egg',conclude:'egg',brainstorm:'egg',
+ // Reflection & Metacognition -> plum
+ reflect:'plum',evaluate:'plum',assess:'plum',journal:'plum',critique:'plum','self-check':'plum',question:'plum',synthesize:'plum',summarize:'plum',reconsider:'plum',conclude:'plum',brainstorm:'plum',
  // Task Management & Submissions -> forest
  submit:'forest',complete:'forest',upload:'forest',quiz:'forest',exam:'forest',checklist:'forest','check-in':'forest',survey:'forest',verify:'forest',finish:'forest','sign off':'forest',log:'forest',milestone:'forest',
  // Administrative & Logistics -> slate
@@ -1453,7 +1452,7 @@ const FLOW=(()=>{
    ========================================================================= */
 (function(){
  const B=id=>document.getElementById(id);
- const TOKENS=['forest','green','teal','egg','violet','slate','orange','gold'];
+ const TOKENS=['forest','green','teal','plum','violet','slate','orange','gold'];
  const CALLOUT_ICONS=['alert','flag','check','star','clock','pin','book','help','compass','resources'];
  const STORE='rdp-page-editor';
  let BLOCKS=[], WRAP=null, SEL=null, HIST=[], REDO=[], DRAG=null, LAST=null, EDIT_SNAP=null;
@@ -1798,7 +1797,7 @@ ${inner}
 
  /* ---------- settings form for a generated block ---------- */
  const fld=(lbl,k,val,ph,i)=>`<label><span>${lbl}</span><input type="text" data-k="${k}"${i===undefined?'':` data-i="${i}"`} value="${xesc(String(val==null?'':val))}" placeholder="${ph||''}"></label>`;
- const TOKEN_NAME={forest:'Forest green',green:'Green',teal:'Teal',egg:'Plum',violet:'Violet',slate:'Slate grey',orange:'Orange',gold:'Gold'};
+ const TOKEN_NAME={forest:'Forest green',green:'Green',teal:'Teal',plum:'Plum',violet:'Violet',slate:'Slate grey',orange:'Orange',gold:'Gold'};
  const ICON_NAME={alert:'Warning triangle',flag:'Flag',check:'Tick',star:'Star',clock:'Clock',pin:'Map pin',book:'Book',help:'Life ring',compass:'Compass',resources:'Light bulb'};
  const swatches=t=>`<div class="fl" id="pg-themelbl">Colour theme</div><div class="swatches" role="group" aria-labelledby="pg-themelbl">${TOKENS.map(x=>`<button type="button" class="sw" data-tok="${x}" title="${TOKEN_NAME[x]}" aria-label="${TOKEN_NAME[x]}" aria-pressed="${x===t}" style="background:${BADGE[x]||COLORS[x]};"></button>`).join('')}</div>`;
  const icons=c=>`<div class="fl" id="pg-iconlbl">Icon</div><div class="iconpick" role="group" aria-labelledby="pg-iconlbl">${CALLOUT_ICONS.map(k=>`<button type="button" class="ic" data-ic="${k}" title="${ICON_NAME[k]}" aria-label="${ICON_NAME[k]}" aria-pressed="${k===c}">${iconSvg(k,'currentColor','1.15rem')}</button>`).join('')}</div>`;
