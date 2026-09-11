@@ -208,6 +208,9 @@
   .pgb-body{padding:.9rem 1rem;overflow-x:auto;cursor:text;}
   .pgb-body:focus{background:#fbf8fc;outline:2px solid var(--plum);outline-offset:-2px;}
   .pgb-body h1,.pgb-body h2,.pgb-body h3,.pgb-body h4{color:revert;font-size:revert;margin:revert;}
+  /* a cleared / recovered title keeps its box; this ghost shows where to click and type (canvas only).
+     Targets the h2 in any header band (the pulled-out strip carries a negative margin). */
+  .pgb-body div[style*="margin:-"]>h2:empty::before{content:"Section title";color:#9a90a0;font-weight:400;}
   .pgb-form{padding:.2rem 1rem 1rem;border-top:1px dashed var(--s-border);background:var(--s-subdued);border-radius:0 0 8px 8px;}
   .pgb-done{margin-top:.9rem;background:var(--plum);color:#fff;border-radius:4px;padding:.45rem 1rem;font-size:.88rem;}
 
@@ -1580,6 +1583,28 @@ const FLOW=(()=>{
  // The restyle engine's title strip at the top of a card: a flex row pulled out to the card's
  // edges with negative margins, holding an icon and the page title.
  const isBanner=h=>/^\s*<div[^>]*style="[^"]*margin:-/i.test(h)&&/<svg/i.test(h)&&/<h[1-6]/i.test(h);
+ // Auto-recovery: a card whose header band has the icon badge but NO title <h2> is one whose title
+ // was deleted (the old editor could dissolve it -- see the beforeinput guard). Re-insert an empty,
+ // colour-matched title <h2> so the teacher can click and name it again (a CSS ghost shows where).
+ const isBand=el=>!!(el&&el.tagName==='DIV'&&/margin:\s*-/.test(el.getAttribute('style')||'')&&el.querySelector('svg'));
+ function repairCard(html){
+   const d=new DOMParser().parseFromString('<body>'+(html||'')+'</body>','text/html');
+   const root=d.body.firstElementChild;if(!root||root.tagName!=='DIV')return {html,fixed:false};
+   // The header band is either the block itself (the importer often splits it out) or a card's first child.
+   const strip=isBand(root)?root:(isBand(root.firstElementChild)?root.firstElementChild:null);
+   if(!strip)return {html,fixed:false};
+   if(strip.querySelector('h1,h2,h3,h4,h5,h6'))return {html,fixed:false};       // still has its title
+   if((strip.textContent||'').trim())return {html,fixed:false};                 // has some other header text -> leave it be
+   // Colour-match the title: a card's border-top, else the badge circle's fill, else forest.
+   const card=strip.parentElement&&strip.parentElement.tagName==='DIV'?strip.parentElement:null;
+   const badge=strip.querySelector('span');
+   let c=(card&&card.style.borderTopColor)||(badge&&badge.style.backgroundColor)||'';
+   if(!c){const m=/border-top:[^;]*?(#[0-9a-f]{3,6})/i.exec((card&&card.getAttribute('style'))||'')
+         ||/background:\s*(#[0-9a-f]{3,6})/i.exec((badge&&badge.getAttribute('style'))||'');c=m?m[1]:COLORS.forest;}
+   const h2=d.createElement('h2');
+   h2.setAttribute('style','margin:0;font-weight:700;font-size:1.08rem;letter-spacing:.04em;text-transform:uppercase;line-height:1.2;color:'+c+';');
+   strip.appendChild(h2);
+   return {html:d.body.innerHTML,fixed:true};}
  const KIND_LABEL={contacts:'Contact cards',callout:'Callout',section:'Section'};
  // Bar label: the block's kind, plus (for pasted content) the first few words of its text so
  // a teacher can tell which "Block" is the stuck one. An empty shell says so outright.
@@ -1610,8 +1635,14 @@ const FLOW=(()=>{
 <html><head><link rel="stylesheet" href="https://s.brightspace.com/lib/fonts/0.6.1/fonts.css"><link rel="stylesheet" href="https://templates.lcs.brightspace.com/lib/assets/css/styles.min.css"></head><body style="color: rgb(32, 33, 34); font-family: Lato, sans-serif; font-size: 12px;">
 ${inner}
 </body></html>`;}
+ // On the way OUT, drop the grey "Your text here." / "Add office…" hints the generators show for
+ // an empty field. They help a teacher while editing on this page, but must never land on a live
+ // course page. (Once typed over, real content is no longer grey, so only untouched hints go.)
+ function stripFiller(html){const d=new DOMParser().parseFromString('<body>'+(html||'')+'</body>','text/html');
+   d.body.querySelectorAll('[style*="#9a90a0"]').forEach(el=>el.remove());return d.body.innerHTML;}
  function pageOut(){
-   const parts=BLOCKS.map(b=>b.html+((NOPAD.has(rootTag(b.html))||isBanner(b.html))?'':'\n<p>&nbsp;</p>'));
+   const parts=BLOCKS.map(b=>{const h=stripFiller(b.html);
+     return h+((NOPAD.has(rootTag(h))||isBanner(h))?'':'\n<p>&nbsp;</p>');});
    let inner=parts.join('\n');
    // WRAP may hold several nested open tags (width wrapper, then a card); close each of them
    if(WRAP)inner=WRAP+'\n'+inner+'\n'+frameTags().map(t=>'</'+t.match(/^<(\w+)/)[1]+'>').reverse().join('');
@@ -1742,31 +1773,111 @@ ${inner}
    const h=(n.nodeType===1?n:n.parentElement).closest('h2');
    const strip=body.firstElementChild&&body.firstElementChild.firstElementChild;
    return (h&&strip&&h.parentElement===strip)?h:null;}
+ // --- Default / placeholder text is meant to be typed straight over. Clicking it selects the
+ //     whole thing, so a teacher replaces it in one go -- no backspacing, and no landing the
+ //     caret mid-word and typing into the middle of the hint. ---
+ const PH_SEEDS=new Set(['Section title','Introduction']);
+ function selectContents(el){if(!el)return;const r=document.createRange();r.selectNodeContents(el);
+   const s=window.getSelection();s.removeAllRanges();s.addRange(r);}
+ function placeholderEl(body){const s=window.getSelection();
+   if(!s||!s.anchorNode||!s.isCollapsed)return null;            // a real selection is the teacher's -- leave it
+   let n=s.anchorNode;n=(n.nodeType===1?n:n.parentElement);
+   if(!n||!body.contains(n))return null;
+   const grey=n.closest('[style*="#9a90a0"]');                  // the grey hint the generators emit for an empty field
+   if(grey&&body.contains(grey))return grey;
+   const strip=body.firstElementChild&&body.firstElementChild.firstElementChild;
+   const h=n.closest('h2');                                     // a Section title still holding its default word
+   if(h&&strip&&h.parentElement===strip&&PH_SEEDS.has(h.textContent.replace(/\s+/g,' ').trim()))return h;
+   return null;}
+ function selectPlaceholder(body){const el=placeholderEl(body);if(el)selectContents(el);}
+ // Recolour a Section card in place -- border, header band, badge, icon, title colour -- from the
+ // title's keywords, WITHOUT touching the title text node. This is what lets a teacher type a
+ // multi-word title (spaces and all) straight into the card: the card re-tints but never re-renders.
+ function restyleSection(body,tok,svg){
+   const c=COLORS[tok],bg=BG[tok],badge=BADGE[tok]||c,ink=BADGE_INK[tok]||'#fff';
+   const cardEl=body.firstElementChild;if(!cardEl)return;
+   cardEl.style.borderTopColor=c;
+   const strip=cardEl.firstElementChild;if(!strip)return;
+   strip.style.background=bg;
+   const span=strip.firstElementChild;                       // the round badge holding the icon
+   if(span){span.style.background=badge;const sv=span.querySelector('svg');
+     if(sv){sv.setAttribute('stroke',ink);sv.innerHTML=SVG[svg]||'';}}
+   const h=strip.querySelector(':scope > h2');if(h)h.style.color=c;}
  canvas.addEventListener('input',e=>{
    const body=e.target.closest('.pgb-body');if(!body)return;
    const el=body.closest('.pgb'),b=find(el.dataset.id);if(!b)return;
    if(EDIT_SNAP!==b.id){snap();EDIT_SNAP=b.id;}   // one undo step per editing session in a block
    if(b.kind==='section'&&b.model){const h=titleH2(body);
-     if(h){const sel=window.getSelection(),off=sel.anchorOffset;
+     if(h){
+       // Typing straight into the title. Keep the teacher's text -- and their caret, and their
+       // spaces -- exactly as typed: only the model, the Settings field and the card's auto
+       // colour/icon follow along, updated IN PLACE so nothing re-renders under the cursor.
+       // (An emptied title is left empty; a CSS ghost shows "Section title" so it stays clickable.)
        b.model.title=h.textContent.replace(/\s+/g,' ').trim();regen(b);
        const inp=el.querySelector('.pgb-form input[data-k="title"]');if(inp)inp.value=b.model.title;
-       // an emptied title stays empty on screen (regen would drop "Section title" under the caret)
-       if(!b.model.title){syncOut();return;}
-       refresh(b);
-       // regen replaced the strip: put the caret back where it was in the new heading
-       const nh=el.querySelector('.pgb-body h2'),tn=nh&&nh.firstChild;
-       if(tn){const r=document.createRange();r.setStart(tn,Math.min(off,tn.length));r.collapse(true);sel.removeAllRanges();sel.addRange(r);}
-       return;}}
+       if(!b.model.title&&h.firstChild){h.textContent='';   // drop the browser's leftover <br> so the "Section title" ghost shows
+         const cr=document.createRange();cr.setStart(h,0);cr.collapse(true);const cs=window.getSelection();cs.removeAllRanges();cs.addRange(cr);}
+       const st=titleStyle(b.model.title||'Section title');restyleSection(body,st[0],st[1]);
+       syncOut();return;}}
+   // Typed over a grey hint? Drop the placeholder colour so the real text isn't left grey.
+   {const s=window.getSelection(),a=s&&s.anchorNode;let g=a&&(a.nodeType===1?a:a.parentElement);
+    g=g&&g.closest&&g.closest('[style*="#9a90a0"]');
+    if(g&&body.contains(g))g.setAttribute('style',(g.getAttribute('style')||'').replace(/color\s*:\s*#9a90a0\s*;?/gi,''));}
    b.html=clean(body.innerHTML);
    if(b.model){b.model=null;if(SEL===b.id)SEL=null;
      const s=el.querySelector('[data-act="edit"]');if(s)s.remove();
      const f=el.querySelector('.pgb-form');if(f)f.remove();
      setLabel(el,b);note('Now edited by hand — Settings are off for this block. Undo brings them back.');}
    syncOut();});
- // Paste into a block as plain text: Word / browser clipboards carry styles Brightspace chokes on.
+ // A teacher can clear a Section title, but the title box itself must never be deleted, nor may the
+ // body ever be merged up into it -- a header with no title (or a title full of body text) and no
+ // slot to click is unrecoverable. Allow deleting title text; block only the deletes that would
+ // dissolve the <h2> or cross the title/body seam.
+ const atContentEnd=(el,node,off)=>{const r=document.createRange();r.selectNodeContents(el);r.setStart(node,off);return r.toString().length===0;};
+ const atContentStart=(el,node,off)=>{const r=document.createRange();r.selectNodeContents(el);r.setEnd(node,off);return el.contains(node)&&r.toString().length===0;};
+ canvas.addEventListener('beforeinput',e=>{
+   if(!/^delete/i.test(e.inputType||''))return;
+   const body=e.target&&e.target.closest&&e.target.closest('.pgb-body');if(!body)return;
+   const cardEl=body.firstElementChild,strip=cardEl&&cardEl.firstElementChild;
+   const h=strip&&strip.querySelector(':scope > h2');if(!h)return;      // only Section-style cards have this title box
+   const s=window.getSelection();if(!s.rangeCount)return;
+   const inH2=n=>{n=n&&(n.nodeType===1?n:n.parentElement);return !!(n&&h.contains(n));};
+   const back=/backward/i.test(e.inputType);
+   const aH=inH2(s.anchorNode),fH=inH2(s.focusNode);
+   if(aH!==fH){e.preventDefault();return;}                             // a selection straddling the seam -> would fuse title + body
+   if(aH){                                                             // deleting inside the title
+     const empty=h.textContent.replace(/\u00a0/g,'').trim()==='';
+     if(empty){e.preventDefault();return;}                            // nothing to delete -> stops the box being removed
+     if(s.isCollapsed&&back&&atContentStart(h,s.anchorNode,s.anchorOffset))e.preventDefault();   // backspace at title start
+     else if(s.isCollapsed&&!back&&atContentEnd(h,s.anchorNode,s.anchorOffset))e.preventDefault(); // forward-delete at title end pulls body up
+     return;}
+   const bodyWrap=strip.nextElementSibling;                            // caret in the body: block a backspace at its very start
+   if(back&&s.isCollapsed&&bodyWrap&&atContentStart(bodyWrap,s.anchorNode,s.anchorOffset))e.preventDefault();});
+ // Click into default / placeholder text and it all gets selected, ready to type over.
+ canvas.addEventListener('mouseup',e=>{const body=e.target.closest('.pgb-body');if(body)selectPlaceholder(body);});
+ // Pasting. Word / browser clipboards carry styles and classes Brightspace chokes on, so we keep
+ // only a safe subset -- links, basic emphasis, paragraphs, lists, line breaks -- and drop every
+ // attribute except a safe href. This preserves links copied between blocks (the old handler
+ // flattened everything to plain text, which silently dropped them). No HTML? Plain text as before.
+ const PASTE_KEEP=new Set(['A','B','STRONG','I','EM','U','P','BR','UL','OL','LI']);
+ function pasteSanitize(html){
+   const d=new DOMParser().parseFromString('<body>'+(html||'')+'</body>','text/html');
+   cleanDoc(d);                                             // strip scripts / on* handlers / javascript: urls
+   [...d.body.querySelectorAll('*')].reverse().forEach(el=>{ // deepest-first: unwrapping a parent never strands a child
+     if(!el.isConnected)return;
+     if(!PASTE_KEEP.has(el.tagName)){unwrap(el);return;}     // unknown tag -> keep its text, drop the tag
+     for(const a of [...el.attributes]){
+       const keepHref=el.tagName==='A'&&a.name.toLowerCase()==='href'&&/^(https?:|mailto:|\/|#)/i.test(a.value.trim());
+       if(!keepHref)el.removeAttribute(a.name);}
+     if(el.tagName==='A'){if(!el.getAttribute('href')){unwrap(el);return;}   // an anchor with no safe href is just text
+       el.setAttribute('target','_blank');el.setAttribute('rel','noopener');}});
+   return d.body.innerHTML;}
  canvas.addEventListener('paste',e=>{const body=e.target.closest('.pgb-body');if(!body)return;
-   e.preventDefault();const t=(e.clipboardData||window.clipboardData).getData('text/plain');
-   document.execCommand('insertText',false,t);});
+   e.preventDefault();const cd=e.clipboardData||window.clipboardData;
+   const html=cd.getData&&cd.getData('text/html');
+   if(html&&html.trim()){const safe=pasteSanitize(html);
+     if(/<(a\s|a>|b>|strong>|i>|em>|u>|p>|br|ul>|ol>|li>)/i.test(safe)){document.execCommand('insertHTML',false,safe);return;}}
+   document.execCommand('insertText',false,cd.getData('text/plain'));});
 
  // Drag to reorder. The block is only draggable while the grip is held, so selecting text
  // inside the editable body still works normally.
@@ -1849,10 +1960,13 @@ ${inner}
    const r=importPage(html);
    if(!r.blocks.length){FLOW.pasteMsg('Nothing to show — that didn’t look like a page. Copy it from the Source Code (</>) view in Brightspace.',true);return false;}
    snap();
-   BLOCKS=r.blocks.map(x=>({id:uid(),kind:'raw',model:null,html:x}));WRAP=r.wrap;SEL=null;LAST=null;
+   let fixes=0;
+   BLOCKS=r.blocks.map(x=>{const rp=repairCard(x);if(rp.fixed)fixes++;return {id:uid(),kind:'raw',model:null,html:rp.html};});
+   WRAP=r.wrap;SEL=null;LAST=null;
    B('pg-paste').value='';renderCanvas();
    FLOW.page('loaded',BLOCKS.length);
-   note(`Loaded ${BLOCKS.length} block${BLOCKS.length===1?'':'s'}. Click a block to delete, move or edit it.`);return true;}
+   const fixMsg=fixes?` Re-added a title to ${fixes} card${fixes===1?'':'s'} that had lost one — click the title to name ${fixes===1?'it':'them'}.`:'';
+   note(`Loaded ${BLOCKS.length} block${BLOCKS.length===1?'':'s'}.${fixMsg} Click a block to delete, move or edit it.`);return true;}
  let pasteT=null;
  B('pg-paste').addEventListener('input',()=>{clearTimeout(pasteT);pasteT=setTimeout(()=>{
    const v=B('pg-paste').value;if(!v.trim()){FLOW.pasteMsg('');return;}
