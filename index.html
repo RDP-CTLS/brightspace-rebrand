@@ -1498,9 +1498,11 @@ const FLOW=(()=>{
    return `<div style="display:flex;gap:.8rem;background:${bg};border-left:4px solid ${c};border-radius:.7rem;padding:.95rem 1.1rem;margin:1.1rem 0;box-sizing:border-box;">${icon}<div style="min-width:0;">${h}<div style="color:#3a4248;">${inner}</div></div></div>`;
  }
  function genSection(m){
-   const title=(m.title||'').trim()||'Section title';
+   const label=(m.title||'').trim();                       // shipped heading text: an emptied title stays empty, never the literal "Section title"
+   const seed=label||'Section title';                       // ...but colour + icon still seed from the placeholder word, matching the on-screen restyle
    const inner=paras(m.body)||'<p style="margin:0;color:#9a90a0;">Your text here.</p>';
-   return card(title,inner);   // engine picks colour + icon from the title keywords
+   const [tok,svg]=titleStyle(seed);
+   return card(label,inner,tok,svg);   // empty label -> an :empty <h2> so the canvas ghost keeps showing on re-render
  }
  const GEN={contacts:genContacts,callout:genCallout,section:genSection};
  const blankPerson=()=>({name:'',role:'',office:'',hours:'',email:'',phone:''});
@@ -1796,7 +1798,7 @@ ${inner}
  function restyleSection(body,tok,svg){
    const c=COLORS[tok],bg=BG[tok],badge=BADGE[tok]||c,ink=BADGE_INK[tok]||'#fff';
    const cardEl=body.firstElementChild;if(!cardEl)return;
-   cardEl.style.borderTopColor=c;
+   cardEl.style.borderTopColor=badge;   // match card(): the border rides the badge colour (BADGE||COLORS), not the darker title colour
    const strip=cardEl.firstElementChild;if(!strip)return;
    strip.style.background=bg;
    const span=strip.firstElementChild;                       // the round badge holding the icon
@@ -1875,7 +1877,9 @@ ${inner}
  canvas.addEventListener('paste',e=>{const body=e.target.closest('.pgb-body');if(!body)return;
    e.preventDefault();const cd=e.clipboardData||window.clipboardData;
    const html=cd.getData&&cd.getData('text/html');
-   if(html&&html.trim()){const safe=pasteSanitize(html);
+   // A Section title is one line of plain text -- never let pasted paragraphs / lists / links turn
+   // it into nested block markup (the title path reads textContent and would fuse it all into one word).
+   if(html&&html.trim()&&!titleH2(body)){const safe=pasteSanitize(html);
      if(/<(a\s|a>|b>|strong>|i>|em>|u>|p>|br|ul>|ol>|li>)/i.test(safe)){document.execCommand('insertHTML',false,safe);return;}}
    document.execCommand('insertText',false,cd.getData('text/plain'));});
 
