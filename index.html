@@ -209,8 +209,9 @@
   .pgb-body:focus{background:#fbf8fc;outline:2px solid var(--plum);outline-offset:-2px;}
   .pgb-body h1,.pgb-body h2,.pgb-body h3,.pgb-body h4{color:revert;font-size:revert;margin:revert;}
   /* a cleared / recovered title keeps its box; this ghost shows where to click and type (canvas only).
-     Targets the h2 in any header band (the pulled-out strip carries a negative margin). */
-  .pgb-body div[style*="margin:-"]>h2:empty::before{content:"Section title";color:#9a90a0;font-weight:400;}
+     Scoped to the Section header band marker() emits (margin:-1.35rem ...), so an unrelated pasted
+     card with a negative margin doesn't get a spurious "Section title" ghost. */
+  .pgb-body div[style*="margin:-1.35rem"]>h2:empty::before{content:"Section title";color:#9a90a0;font-weight:400;}
   .pgb-form{padding:.2rem 1rem 1rem;border-top:1px dashed var(--s-border);background:var(--s-subdued);border-radius:0 0 8px 8px;}
   .pgb-done{margin-top:.9rem;background:var(--plum);color:#fff;border-radius:4px;padding:.45rem 1rem;font-size:.88rem;}
 
@@ -1640,11 +1641,22 @@ ${inner}
  // On the way OUT, drop the grey "Your text here." / "Add office…" hints the generators show for
  // an empty field. They help a teacher while editing on this page, but must never land on a live
  // course page. (Once typed over, real content is no longer grey, so only untouched hints go.)
+ // Only the generators' OWN hints go -- an element must be both the grey we emit AND carry one of
+ // the exact filler phrases. A teacher's real content that happens to use the same grey is kept.
+ const FILLER_TEXT=new Set(['your text here.','add office, hours, email or phone.']);
  function stripFiller(html){const d=new DOMParser().parseFromString('<body>'+(html||'')+'</body>','text/html');
-   d.body.querySelectorAll('[style*="#9a90a0"]').forEach(el=>el.remove());return d.body.innerHTML;}
+   d.body.querySelectorAll('[style*="#9a90a0"]').forEach(el=>{
+     if(FILLER_TEXT.has(el.textContent.replace(/\s+/g,' ').trim().toLowerCase()))el.remove();});
+   return d.body.innerHTML;}
+ // One built part per block, cached on the block by its html. A keystroke only changes the block
+ // being edited, so the other N-1 blocks reuse their cached part instead of re-running DOMParser.
+ const _partCache=new WeakMap();
+ function blockPart(b){const c=_partCache.get(b);if(c&&c.html===b.html)return c.part;
+   const h=stripFiller(b.html);
+   const part=h+((NOPAD.has(rootTag(h))||isBanner(h))?'':'\n<p>&nbsp;</p>');
+   _partCache.set(b,{html:b.html,part});return part;}
  function pageOut(){
-   const parts=BLOCKS.map(b=>{const h=stripFiller(b.html);
-     return h+((NOPAD.has(rootTag(h))||isBanner(h))?'':'\n<p>&nbsp;</p>');});
+   const parts=BLOCKS.map(blockPart);
    let inner=parts.join('\n');
    // WRAP may hold several nested open tags (width wrapper, then a card); close each of them
    if(WRAP)inner=WRAP+'\n'+inner+'\n'+frameTags().map(t=>'</'+t.match(/^<(\w+)/)[1]+'>').reverse().join('');
@@ -1848,8 +1860,8 @@ ${inner}
    const aH=inH2(s.anchorNode),fH=inH2(s.focusNode);
    if(aH!==fH){e.preventDefault();return;}                             // a selection straddling the seam -> would fuse title + body
    if(aH){                                                             // deleting inside the title
-     const empty=h.textContent.replace(/\u00a0/g,'').trim()==='';
-     if(empty){e.preventDefault();return;}                            // nothing to delete -> stops the box being removed
+     const empty=!h.firstChild;                                       // truly empty (same as the :empty ghost) -- an nbsp / whitespace is a node, so it stays deletable
+     if(empty){e.preventDefault();return;}                            // nothing left to delete -> stops the box itself being removed
      if(s.isCollapsed&&back&&atContentStart(h,s.anchorNode,s.anchorOffset))e.preventDefault();   // backspace at title start
      else if(s.isCollapsed&&!back&&atContentEnd(h,s.anchorNode,s.anchorOffset))e.preventDefault(); // forward-delete at title end pulls body up
      return;}
