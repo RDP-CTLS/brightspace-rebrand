@@ -2,7 +2,7 @@
 <html lang="en"><head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Course Template Converter</title>
+<title>Course Template Studio</title>
 <style>
   :root{--egg:#51284F;--forest:#004238;--green:#00AD50;
     /* Slate neutral scale (from DESIGN.md) — the calm ground the RDP accents sit on */
@@ -255,7 +255,7 @@
   .then .arrow{color:var(--muted);}
 </style></head>
 <body><div class="wrap">
-  <div class="top"><div class="brand"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#51284F"></rect><path d="M9 11h14M9 16h14M9 21h9" stroke="#fff" stroke-width="2.4" stroke-linecap="round"></path></svg><h1>Course Template Converter</h1></div><span id="savestate" role="status"></span></div>
+  <div class="top"><div class="brand"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#51284F"></rect><path d="M9 11h14M9 16h14M9 21h9" stroke="#fff" stroke-width="2.4" stroke-linecap="round"></path></svg><h1>Course Template Studio</h1></div><span id="savestate" role="status"></span></div>
 
   <nav class="rail" aria-label="Progress">
     <button type="button" class="rs cur" data-stage="1" aria-current="step"><span class="n">1</span><span class="t">Get it in</span></button>
@@ -408,7 +408,7 @@
 </div>
 <script>
 /* =========================================================================
-   Course Template Converter — fully offline. No external libraries / network.
+   Course Template Studio — fully offline. No external libraries / network.
    Uses native CompressionStream/DecompressionStream + DOMParser.
    ========================================================================= */
 const $=s=>document.querySelector(s);
@@ -436,7 +436,7 @@ const TE=new TextEncoder(), TD=new TextDecoder('utf-8');
 // files — replaces the real counts/sizes/offsets with 0xFFFF/0xFFFFFFFF sentinels and stores the
 // true values in a separate ZIP64 record this code doesn't parse. Reading one as 32-bit would
 // slice garbage and silently corrupt the course, so detect it and stop with a clear message.
-const ZIP64MSG='This course export is too large for the in-browser converter: it uses the ZIP64 format (over 4 GB, or more than 65,535 files). Try exporting the course in smaller pieces — fewer components, or splitting very large media out — or reach out to CTLS for help with a course this size.';
+const ZIP64MSG='This course export is too large for the in-browser tool: it uses the ZIP64 format (over 4 GB, or more than 65,535 files). Try exporting the course in smaller pieces — fewer components, or splitting very large media out — or reach out to CTLS for help with a course this size.';
 function readZip(buf){
   const dv=new DataView(buf), u8=new Uint8Array(buf);
   // find EOCD (0x06054b50), scanning back over optional comment
@@ -1755,7 +1755,7 @@ ${inner}
    }else{
      h=fld('Title','title',m.title,'Introduction')
       +`<label><span>Text</span><textarea data-k="body" placeholder="Write your content. Leave a blank line between paragraphs.">${esc(m.body||'')}</textarea></label>`
-      +`<p class="muted" style="margin:.5rem 0 0;">The colour and icon are chosen automatically from the words in your title — the same way the converter styles a course.</p>`;
+      +`<p class="muted" style="margin:.5rem 0 0;">The colour and icon are chosen automatically from the words in your title — the same way the tool styles a course.</p>`;
    }
    f.innerHTML=h+`<button type="button" class="pgb-done" data-done>Done</button>`;
    f.oninput=e=>{const k=e.target.dataset.k;if(!k)return;const i=e.target.dataset.i;

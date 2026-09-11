@@ -1,4 +1,4 @@
-# Course Template Converter
+# Course Template Studio
 
 Applies the RDP style to a Brightspace (D2L) course. Your wording, links, files and pictures stay
 exactly as they are — it only styles what's already there.
