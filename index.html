@@ -1568,8 +1568,14 @@ const FLOW=(()=>{
      if(!(inner.length>=2||(inner.length===1&&CONT.has(inner[0].tagName))))break;
      const oh=k.cloneNode(false).outerHTML;wrapTags.push(oh.slice(0,oh.lastIndexOf('</')));root=k;}
    const wrap=wrapTags.length?wrapTags.join(''):null;
-   // An attribute-less <div> is only a grouping: open it up so what's inside can move on its own.
-   const plain=el=>el.tagName==='DIV'&&!el.attributes.length&&!hasText(el)&&el.children.length;
+   // A wrapper div is just grouping: open it up so what's inside can move on its own.
+   // Attribute-less divs are always grouping. The RDP page frame (max-width + margin auto) is
+   // too when the single-child descent above didn't enter it (e.g. siblings outside the frame).
+   // Losing the frame from WRAP means the step-2 export won't re-wrap in it, but that's fine:
+   // the export already omits the frame for new-from-scratch pages, and Brightspace's own
+   // content container handles width/centering.
+   const isFrame=el=>/max-width:\s*840px/i.test(el.getAttribute('style')||'')&&/margin:\s*0[^;]*auto/i.test(el.getAttribute('style')||'');
+   const plain=el=>el.tagName==='DIV'&&!hasText(el)&&el.children.length&&(!el.attributes.length||isFrame(el));
    let nodes=[...root.childNodes];
    for(let pass=0;pass<3;pass++){const next=[];let hit=false;
      for(const n of nodes){if(n.nodeType===1&&plain(n)){next.push(...n.childNodes);hit=true;}else next.push(n);}
