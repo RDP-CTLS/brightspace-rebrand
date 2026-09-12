@@ -264,14 +264,14 @@
   <div class="top"><div class="brand"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#51284F"></rect><path d="M9 11h14M9 16h14M9 21h9" stroke="#fff" stroke-width="2.4" stroke-linecap="round"></path></svg><h1>Course Template Studio</h1></div><span id="savestate" role="status"></span></div>
 
   <nav class="rail" aria-label="Progress">
-    <button type="button" class="rs cur" data-stage="1" aria-current="step"><span class="n">1</span><span class="t">Get it in</span></button>
+    <button type="button" class="rs cur" data-stage="1" aria-current="step"><span class="n">1</span><span class="t">Bring it in</span></button>
     <button type="button" class="rs" data-stage="2" disabled><span class="n">2</span><span class="t">Personalize</span></button>
     <button type="button" class="rs" data-stage="3" disabled><span class="n">3</span><span class="t">Put it back</span></button>
   </nav>
 
   <!-- ===== Stage 1: one intake box. The tool works out what you gave it. ===== -->
   <section class="stage cur" id="s1" aria-labelledby="h1s">
-    <div class="sh"><span class="sn" aria-hidden="true">1</span><h2 id="h1s">Get it in</h2><span class="receipt" id="r1"></span>
+    <div class="sh"><span class="sn" aria-hidden="true">1</span><h2 id="h1s">Bring your content in</h2><span class="receipt" id="r1"></span>
       <button type="button" class="linkbtn chg" data-go="1">Change</button></div>
     <div class="sb">
       <div id="drop" role="button" tabindex="0" aria-label="Drop your Brightspace course export here, or press Enter to choose the file">
@@ -282,14 +282,14 @@
       <div id="drop-msg" role="status" aria-live="polite"></div>
 
       <div class="or">or</div>
-      <label for="pg-paste" style="display:block;font-weight:700;color:var(--plum);margin:0 0 .3rem;">Personalize one page that's already in Brightspace
+      <label for="pg-paste" style="display:block;font-weight:700;color:var(--plum);margin:0 0 .3rem;">Edit one page that's already in Brightspace
         <span class="muted" style="font-weight:400;">paste its Source Code here — it loads by itself</span></label>
       <textarea id="pg-paste" spellcheck="false" placeholder="Paste here…"></textarea>
       <div id="paste-msg" role="status" aria-live="polite"></div>
 
       <div class="or">or</div>
-      <div class="newpage"><div><strong>Add a new page to a course</strong><span class="muted">Build it from blocks — contact cards, callouts, sections — then paste it into Brightspace.</span></div>
-        <button type="button" class="btab" id="start-blank">Make a new page</button></div>
+      <div class="newpage"><div><strong>Build a new page for a course</strong><span class="muted">Build it from blocks — contact cards, callouts, sections — then add it to Brightspace.</span></div>
+        <button type="button" class="btab" id="start-blank">Start a new page</button></div>
       <p class="quiet">Nothing leaves your computer: there is no server, it all happens in this tab.</p>
 
       <details class="help" id="howpaste">
@@ -342,13 +342,13 @@
 
   <!-- ===== Stage 2: fix it. Which body shows depends on what arrived in stage 1. ===== -->
   <section class="stage later" id="s2" aria-labelledby="h2s">
-    <div class="sh"><span class="sn" aria-hidden="true">2</span><h2 id="h2s">Personalize it</h2><span class="receipt" id="r2"></span>
+    <div class="sh"><span class="sn" aria-hidden="true">2</span><h2 id="h2s">Make it yours</h2><span class="receipt" id="r2"></span>
       <button type="button" class="linkbtn chg" data-go="2">Open</button></div>
     <div class="sb">
       <p class="muted" id="s2-wait" style="margin:0;">After step 1.</p>
 
       <div id="s2-course" hidden>
-        <div id="pkgnote" class="note hide">📦 <b>Brightspace Package:</b> pages get the RDP style; unit descriptions, quizzes, assignments, discussions and links travel through untouched.</div>
+        <div id="pkgnote" class="note hide"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-.15em;margin-right:.35em;"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg><b>Course package:</b> pages get the RDP template; unit descriptions, quizzes, assignments, discussions, and links pass through unchanged.</div>
         <div id="combinebox" style="margin-top:.4rem;">
           <p style="margin:.2rem 0 .2rem;font-weight:700;">Want fewer pages to click through? <span class="muted" style="font-weight:400;">(optional)</span></p>
           <p class="muted" style="margin:0 0 .4rem;">Tick a module and its short pages (a sentence, a single link) get merged into fuller ones. Untouched modules keep every page as it is.
@@ -363,7 +363,7 @@
             <label><input type="radio" name="mode" value="combine"> Styled + combined only</label>
           </div>
         </details>
-        <div class="act"><span class="muted" id="fname"></span><button id="go" class="pri" disabled>Apply the RDP style</button></div>
+        <div class="act"><span class="muted" id="fname"></span><button id="go" class="pri" disabled>Apply the RDP template</button></div>
         <pre id="log" role="status" aria-live="polite"></pre>
       </div>
 
@@ -383,9 +383,9 @@
     </div>
   </section>
 
-  <!-- ===== Stage 3: put it back into Brightspace ===== -->
+  <!-- ===== Stage 3: put it into Brightspace ===== -->
   <section class="stage later" id="s3" aria-labelledby="h3s">
-    <div class="sh"><span class="sn" aria-hidden="true">3</span><h2 id="h3s">Put it back into Brightspace</h2><span class="receipt" id="r3"></span>
+    <div class="sh"><span class="sn" aria-hidden="true">3</span><h2 id="h3s">Put it into Brightspace</h2><span class="receipt" id="r3"></span>
       <button type="button" class="linkbtn chg" data-go="3">Open</button></div>
     <div class="sb">
       <p class="muted" id="s3-wait" style="margin:0;">After step 2.</p>
@@ -394,7 +394,7 @@
         <div id="downloads"></div>
         <p class="muted" style="margin:.3rem 0 0;"><b>Template Applied</b> is your course restyled. <b>Condensed Content</b> is the same with the ticked modules' short pages merged. If the condensed one looks off, use the plain one.</p>
         <p style="margin:.9rem 0 0;">Then, in Brightspace: <b>Course Admin → Import / Export / Copy Components → Import Components → Start</b>, upload the file, <b>Import All Components</b>.</p>
-        <div class="note" style="background:#f0e8f0;border-color:#d8c4d7;">💡 The import <i>adds</i> the restyled pages as new modules and never overwrites, so delete the old modules afterwards to avoid two copies. Your real course is never touched by this tool.</div>
+        <div class="note" style="background:#f0e8f0;border-color:#d8c4d7;"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-.15em;margin-right:.35em;"><path d="M9 18h6"></path><path d="M10 22h4"></path><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5.76.76 1.23 1.52 1.41 2.5"></path></svg>The import <i>adds</i> the restyled pages as new modules and never overwrites, so delete the old modules afterwards to avoid two copies. Your real course is never touched by this tool.</div>
       </div>
 
       <div id="s3-page" hidden>
@@ -1417,7 +1417,7 @@ const FLOW=(()=>{
    kind:()=>kind,
    boot(){booted=true;},
    // stage 1 outcomes
-   course(name,pages){setKind('course');receipt(1,'Course export received · '+name+(pages?' · '+pages+' pages':''));
+   course(name,pages){setKind('course');receipt(1,'Course loaded · '+name+(pages?' · '+pages+' pages':''));
      receipt(2,'');receipt(3,'');msg('drop-msg','');show(2);},
    page(how,n){setKind('page');
      receipt(1,how==='blank'?('New page'+(n?' · '+n+' block'+(n===1?'':'s'):'')):(how==='restored'?'Your page from last time · ':'Page loaded · ')+n+' block'+(n===1?'':'s'));
@@ -1430,7 +1430,7 @@ const FLOW=(()=>{
      if(cur!==1&&R[1]){if(/^New page/.test(R[1]))receipt(1,'New page'+(n?' · '+n+' block'+(n===1?'':'s'):''));
        else receipt(1,R[1].replace(/\d+ blocks?$/,n+' block'+(n===1?'':'s')));}},
    pageNext(n){receipt(2,n+' block'+(n===1?'':'s')+' ready');show(3);},
-   built(files){receipt(2,'RDP style applied');receipt(3,'');show(3);},
+   built(files){receipt(2,'RDP template applied');receipt(3,'');show(3);},
    // stage 3 outcomes
    copied(){receipt(3,'Copied '+hhmm());paint();},
    downloaded(name){receipt(3,'Downloaded '+hhmm());paint();},
