@@ -1481,7 +1481,7 @@ const FLOW=(()=>{
  }
  // The grey hints the generators show for an empty field, in ONE place so the generators (below) and
  // stripFiller's FILLER_TEXT (further down) can never drift apart -- reword a hint here and both follow.
- const HINT_BODY='Your text here.', HINT_CONTACT='Add office, hours, email or phone.';
+ const HINT_BODY='Your text here.', HINT_CONTACT='Add office, hours, email or phone.', HINT_LINK='Paste a URL here.';
  function contactCard(p,tok){
    const c=BADGE[tok]||COLORS[tok],bg=BG[tok],badge=BADGE[tok]||COLORS[tok],ink=BADGE_INK[tok]||'#fff';
    const raw=(p.name||'').split(/\s+/).filter(Boolean).map(w=>w[0]).slice(0,2).join('').toUpperCase();
@@ -1510,10 +1510,43 @@ const FLOW=(()=>{
    const [tok,svg]=titleStyle(seed);
    return card(label,inner,tok,svg);   // empty label -> an :empty <h2> so the canvas ghost keeps showing on re-render
  }
- const GEN={contacts:genContacts,callout:genCallout,section:genSection};
+ // --- Link / Embed block ---
+ // URL classifiers: extract a video ID for providers we embed as iframes.
+ // Every other URL becomes a styled link card.
+ function ytId(url){
+   const m=url.match(/(?:[/.]youtube\.com\/(?:watch\?(?:[^#&]*&)*v=|embed\/|shorts\/|live\/)|[/.]youtu\.be\/)([A-Za-z0-9_-]{11})/);
+   return m?m[1]:null;}
+ function vimeoId(url){
+   const m=url.match(/[/.]vimeo\.com\/(\d+)(?:\/([A-Za-z0-9]+))?/);
+   return m?{id:m[1],h:m[2]||null}:null;}
+ function embedSrc(url){
+   const yt=ytId(url);if(yt)return 'https://www.youtube-nocookie.com/embed/'+yt;
+   const vm=vimeoId(url);if(vm)return 'https://player.vimeo.com/video/'+vm.id+(vm.h?'?h='+vm.h:'');
+   return null;}
+ function genLink(m){
+   const rawUrl=(m.url||'').trim(),tok=m.theme,c=COLORS[tok],bg=BG[tok];
+   // Normalise: prepend https:// to scheme-less URLs so the href isn't a relative path.
+   const url=rawUrl&&!/^[a-z][a-z0-9+.-]*:/i.test(rawUrl)?'https://'+rawUrl:rawUrl;
+   const src=okUrl(url)?embedSrc(url):null;
+   const title=(m.title||'').trim(),desc=(m.description||'').trim();
+   // --- embeddable video ---
+   if(src){
+     const ttl=title?`<div style="font-weight:700;color:${c};margin-bottom:.45rem;font-size:1rem;">${esc(title)}</div>`:'';
+     const dsc=desc?`<div style="color:#5B6770;font-size:.9rem;margin-bottom:.45rem;">${esc(desc)}</div>`:'';
+     return `<div style="margin:1.1rem 0;box-sizing:border-box;">${ttl}${dsc}<div style="position:relative;width:100%;padding-bottom:56.25%;height:0;border-radius:.7rem;overflow:hidden;background:#1a1a2e;box-sizing:border-box;"><iframe src="${xesc(src)}" width="560" height="315" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy" title="${xesc(title||'Embedded video')}"></iframe></div></div>`;}
+   // --- link card (or empty placeholder) ---
+   if(!rawUrl||!okUrl(url)){
+     return `<div style="display:flex;align-items:center;gap:.8rem;background:${bg};border-left:4px solid ${c};border-radius:.7rem;padding:.95rem 1.1rem;margin:1.1rem 0;color:#9a90a0;box-sizing:border-box;">${iconSvg('link',c,'1.3rem')}<span style="color:#9a90a0;">${HINT_LINK}</span></div>`;}
+   const linkTitle=title||rawUrl;
+   const isMail=url.startsWith('mailto:');
+   const dsc=desc?`<div style="color:#5B6770;font-size:.88rem;margin-top:.2rem;">${esc(desc)}</div>`:'';
+   return `<div style="display:flex;align-items:flex-start;gap:.8rem;background:${bg};border-left:4px solid ${c};border-radius:.7rem;padding:.95rem 1.1rem;margin:1.1rem 0;box-sizing:border-box;"><div style="flex-shrink:0;margin-top:.1rem;">${iconSvg('link',c,'1.3rem')}</div><div style="min-width:0;"><a href="${xesc(url)}"${isMail?'':' target="_blank" rel="noopener"'} style="font-weight:700;color:${c};text-decoration:underline;text-underline-offset:2px;font-size:1rem;word-break:break-word;">${esc(linkTitle)}</a>${dsc}</div></div>`;}
+
+ const GEN={contacts:genContacts,callout:genCallout,section:genSection,link:genLink};
  const blankPerson=()=>({name:'',role:'',office:'',hours:'',email:'',phone:''});
  function newModel(kind){return kind==='contacts'?{heading:'',theme:'forest',people:[blankPerson()]}
-   :kind==='callout'?{heading:'',body:'',theme:'forest',icon:'alert'}:{title:'Introduction',body:''};}
+   :kind==='callout'?{heading:'',body:'',theme:'forest',icon:'alert'}
+   :kind==='link'?{url:'',title:'',description:'',theme:'forest'}:{title:'Introduction',body:''};}
  function regen(b){if(b.model)b.html=GEN[b.kind](b.model);}
 
  /* ---------- importing a page pasted out of Brightspace ---------- */
@@ -1619,10 +1652,14 @@ const FLOW=(()=>{
    h2.setAttribute('style','margin:0;font-weight:700;font-size:1.08rem;letter-spacing:.04em;text-transform:uppercase;line-height:1.2;color:'+c+';');
    strip.appendChild(h2);
    return {html:d.body.innerHTML,fixed:true};}
- const KIND_LABEL={contacts:'Contact cards',callout:'Callout',section:'Section'};
+ const KIND_LABEL={contacts:'Contact cards',callout:'Callout',section:'Section',link:'Link / Embed'};
  // Bar label: the block's kind, plus (for pasted content) the first few words of its text so
  // a teacher can tell which "Block" is the stuck one. An empty shell says so outright.
  function label(b){
+   if(b.kind==='link'){if(!b.model)return ['Link / Embed','edited by hand'];
+     const lu=(b.model.url||''),nu=lu&&!/^[a-z][a-z0-9+.-]*:/i.test(lu)?'https://'+lu:lu;
+     const em=okUrl(nu)&&embedSrc(nu);let sn=(b.model.title||lu||'').trim();
+     if(sn.length>48)sn=sn.slice(0,46).replace(/\s+\S*$/,'')+'...';return [em?'Video':'Link / Embed',sn];}
    if(b.kind!=='raw')return [KIND_LABEL[b.kind],b.model?'':'edited by hand'];
    const t=rootTag(b.html);
    let kind=RAW_LABEL[t]||'Block';
@@ -1656,7 +1693,7 @@ ${inner}
  // the exact filler phrases. A teacher's real content that happens to use the same grey is kept.
  // Built from the same HINT_* constants the generators emit, normalised the way the lookup below is.
  const fillerKey=s=>s.replace(/\s+/g,' ').trim().toLowerCase();
- const FILLER_TEXT=new Set([HINT_BODY,HINT_CONTACT].map(fillerKey));
+ const FILLER_TEXT=new Set([HINT_BODY,HINT_CONTACT,HINT_LINK].map(fillerKey));
  function stripFiller(html){const d=new DOMParser().parseFromString('<body>'+(html||'')+'</body>','text/html');
    d.body.querySelectorAll('[style*="#9a90a0"]').forEach(el=>{
      if(FILLER_TEXT.has(fillerKey(el.textContent)))el.remove();});
@@ -1665,6 +1702,8 @@ ${inner}
  // being edited, so the other N-1 blocks reuse their cached part instead of re-running DOMParser.
  const _partCache=new WeakMap();
  function blockPart(b){const c=_partCache.get(b);if(c&&c.html===b.html)return c.part;
+   // A link block with no valid URL is a placeholder — export nothing.
+   if(b.kind==='link'&&b.model&&!okUrl((b.model.url||'').trim())){_partCache.set(b,{html:b.html,part:''});return '';}
    const h=stripFiller(b.html);
    const part=h+((NOPAD.has(rootTag(h))||isBanner(h))?'':'\n<p>&nbsp;</p>');
    _partCache.set(b,{html:b.html,part});return part;}
@@ -1722,9 +1761,9 @@ ${inner}
  };
  // The insert palette: one chip per block kind (icon + short name), reusing the engine's own icons.
  // `at` is the array index the new block lands at; omit it to fall back to "after the block in hand".
- const CHIP_LABEL={contacts:'People / contacts',callout:'Callout',section:'Section'};
- const CHIP_ICON={contacts:'users',callout:'alert',section:'book'};
- const chips=at=>`<div class="chips">${['contacts','callout','section'].map(k=>
+ const CHIP_LABEL={contacts:'People / contacts',callout:'Callout',section:'Section',link:'Link / Embed'};
+ const CHIP_ICON={contacts:'users',callout:'alert',section:'book',link:'link'};
+ const chips=at=>`<div class="chips">${['contacts','callout','section','link'].map(k=>
    `<button type="button" class="chip" data-add="${k}"${at===undefined?'':` data-at="${at}"`}>${iconSvg(CHIP_ICON[k],'currentColor','1rem')}${CHIP_LABEL[k]}</button>`).join('')}</div>`;
  // One block is "selected": its controls show, the others' stay tucked away (still keyboard-reachable).
  function select(id){LAST=id;canvas.querySelectorAll('.pgb').forEach(x=>x.classList.toggle('sel',x.dataset.id===id));}
@@ -1953,6 +1992,15 @@ ${inner}
      h=fld('Heading (optional)','heading',m.heading,'Good to know')
       +`<label><span>Text</span><textarea data-k="body" placeholder="Write your note. Leave a blank line between paragraphs.">${esc(m.body||'')}</textarea></label>`
       +swatches(m.theme)+icons(m.icon);
+   }else if(b.kind==='link'){
+     const normUrl=m.url&&!/^[a-z][a-z0-9+.-]*:/i.test(m.url)?'https://'+m.url:m.url;
+     const isEmbed=okUrl(normUrl)&&embedSrc(normUrl);
+     h=`<label><span>URL</span><input type="url" data-k="url" value="${xesc(m.url||'')}" placeholder="https://www.youtube.com/watch?v=..."></label>`
+      +(m.url&&!okUrl(m.url)?`<p class="muted" style="color:#b44;margin:.25rem 0 .4rem;">That doesn’t look like a web address. Paste an https:// URL.</p>`:'')
+      +(isEmbed?`<p class="muted" style="margin:.25rem 0 .4rem;">This will embed as a video player.</p>`:'')
+      +fld('Title'+(isEmbed?' (optional)':''),'title',m.title,isEmbed?'Video title':'Link title')
+      +fld('Description (optional)','description',m.description,'A short note about this link')
+      +swatches(m.theme);
    }else{
      h=fld('Title','title',m.title,'Introduction')
       +`<label><span>Text</span><textarea data-k="body" placeholder="Write your content. Leave a blank line between paragraphs.">${esc(m.body||'')}</textarea></label>`
