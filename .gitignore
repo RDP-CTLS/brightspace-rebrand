@@ -1,0 +1,6 @@
+# Working notes / handoffs — kept locally, never published
+HANDOFF-*.md
+PLAN-*.md
+
+# Local Claude Code state
+.claude/

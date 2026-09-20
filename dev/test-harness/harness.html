@@ -1,0 +1,13 @@
+<!doctype html><meta charset="utf-8"><title>harness</title>
+<iframe id="f" src="/index.html" style="width:1300px;height:900px"></iframe><pre id="out">PENDING</pre>
+<script>
+const out=document.getElementById('out'),f=document.getElementById('f');
+f.onload=async()=>{const w=f.contentWindow;
+  try{const name=new URLSearchParams(location.search).get('t')||'tests.js';
+    const code=await (await fetch('/'+name+'?'+Date.now())).text();
+    w.confirm=()=>true; w.__errs=[]; w.addEventListener('error',e=>w.__errs.push(String(e.message)));
+    w.addEventListener('unhandledrejection',e=>w.__errs.push('rej:'+String(e.reason)));
+    const res=await w.eval('(async()=>{'+code+'\n})()');
+    out.textContent='RESULT';await fetch('/result',{method:'POST',body:JSON.stringify(res,null,1)});
+  }catch(e){await fetch('/result',{method:'POST',body:'ERROR '+(e&&e.stack||e)});}};
+</script>
