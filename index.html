@@ -1319,11 +1319,38 @@ function tagBalance(html){
  }
  if(stack.length)errs.push(`unclosed <${stack.join('>, <')}>`);
  return errs;}
+// Security belt: the constructs that must never reach Brightspace through a tool-generated page or a
+// manifest description. Brightspace renders imported HTML same-origin with no CSP/sandbox (proven
+// 2026-09-20), cleanBody/cleanDoc are the only guard, and buildRestyle's edited-page branch bypasses
+// re-cleaning — so verify() scans the actual output bytes as a final gate. Returns the labels found.
+// checkUrl=true on tool-rewritten PAGES (cleanBody strips bad schemes, so a bad one is a real miss);
+// false on manifest DESCRIPTIONS, where an UNEDITED intro passes through untouched and a benign
+// non-http scheme (tel:/sms:/relative) would otherwise block the whole export — while an edited
+// description is already cleanDoc-allowlisted, so script/on* are the signals that matter there.
+function scanDanger(html,checkUrl=true){
+ const b=new DOMParser().parseFromString('<body>'+(html||'')+'</body>','text/html').body,hits=[];
+ if(b.querySelector('script'))hits.push('script');            // finds an <svg><script> too
+ // NB not a blanket object/embed check: cleanBody legitimately keeps a PDF <object data="https://…">
+ // (neutralising only a bad data/src). A DANGEROUS object/embed is caught by the url scan below.
+ let onAttr=false,badUrl=false;
+ b.querySelectorAll('*').forEach(el=>{const tag=el.tagName.toLowerCase();
+   for(const a of el.attributes){const nm=a.name.toLowerCase();
+     if(/^on/.test(nm)){onAttr=true;continue;}
+     if(nm==='href'||nm==='src'||nm==='data'||nm==='xlink:href'||nm==='poster'){
+       const v=a.value.trim();if(!v||/^blob:/i.test(v))continue;     // blob: has its own lint below
+       if(((tag==='img'&&nm==='src')||nm==='poster')&&okImg(v))continue;   // inert image (incl. data:image/*)
+       if(checkUrl){if(!okUrl(v))badUrl=true;}                       // PAGES: strict http/https/mailto allowlist
+       else{let p='';try{p=new URL(v,'https://x.invalid/').protocol;}catch(e){}   // DESCRIPTIONS: only the schemes
+         if(p==='javascript:'||p==='vbscript:'||p==='data:')badUrl=true;}}}});    // that execute (tel:/sms:/relative pass)
+ if(onAttr)hits.push('event-handler');
+ if(badUrl)hits.push('unsafe-link');
+ return hits;
+}
 async function verify(blob){
  const zip=readZip(await blob.arrayBuffer());
  const names=new Set(zip.entries.map(e=>e.name));
  const man=await zip.text('imsmanifest.xml');let ok=true,issues=[];
- let doc;try{doc=parseManifest(man);if(doc.querySelector('parsererror'))throw 0;}catch(e){log('  manifest parse FAIL','err');return false;}
+ let doc;try{doc=parseManifest(man);if(doc.querySelector('parsererror'))throw 0;}catch(e){log('  manifest parse FAIL','err');return {ok:false,danger:0};}
  const resIds=new Set([...doc.querySelectorAll('resource')].map(r=>r.getAttribute('identifier')));
  const dangI=[...doc.querySelectorAll('item')].filter(it=>it.getAttribute('identifierref')&&!resIds.has(it.getAttribute('identifierref'))).length;
  const dangD=[...doc.querySelectorAll('dependency')].filter(d=>!resIds.has(d.getAttribute('identifierref'))).length;
@@ -1333,6 +1360,7 @@ async function verify(blob){
  let miss=0;doc.querySelectorAll('resource file').forEach(f=>{const h=f.getAttribute('href');if(h&&!zhas(h))miss++;});
  // in-page refs
  let checked=0,broken=0,unbal=0,styledN=0,blank=0,blobs=/(?:src|href)=(?:"|&quot;)blob:/i.test(man)?1:0;const unbalNotes=[],blankNotes=[];
+ let danger=0;const dangerNotes=[];   // security belt: dangerous constructs in OUR output (see scanDanger)
  const decNames=new Set([...names].map(dec));   // zip may store encoded names; compare decoded too
  for(const e of zip.entries){if(!e.name.toLowerCase().endsWith('.html'))continue;
    // root-level pages have NO folder — slice(0,-1) used to chop the filename's last char
@@ -1349,6 +1377,9 @@ async function verify(blob){
    // Old hand-written pages riding along in course files are passed through byte-identical,
    // and their legacy tag soup is not ours to warn about.
    if(raw.includes("font-family:'Inter','Aribau Grotesk'")){styledN++;
+     // Only pages THIS TOOL emitted carry the font stack; a legacy page riding along untouched is
+     // not ours to gate (it was already in the source course). Scan ours for dangerous constructs.
+     {const dh=scanDanger(raw);if(dh.length){danger++;if(dangerNotes.length<6)dangerNotes.push(`${e.name.split('/').pop()}: ${dh.join(', ')}`);}}
      const errs=tagBalance(raw);
      if(errs.length){unbal++;if(unbalNotes.length<4)unbalNotes.push(`${e.name.split('/').pop()}: ${errs[0]}`);}
      // A scrubbed icon (<svg> without viewBox / <path> without d) renders as an empty box. It is the
@@ -1357,6 +1388,9 @@ async function verify(blob){
        if([...sd.querySelectorAll('svg')].some(v=>!v.getAttribute('viewBox')||[...v.querySelectorAll('path')].some(q=>!q.getAttribute('d')))){
          blank++;if(blankNotes.length<4)blankNotes.push(e.name.split('/').pop());}}}}
  let vids=0;for(const e of zip.entries){if(e.name.toLowerCase().endsWith('.html')){const r=await zip.text(e.name);vids+=(r.match(/<iframe[^>]+src="https?:\/\//g)||[]).length;}}
+ // Module intros / link descriptions live in the manifest (getAttribute un-escapes the stored HTML).
+ for(const it of doc.querySelectorAll('item')){const desc=it.getAttribute('description');if(!desc)continue;
+   const dh=scanDanger(desc,false);if(dh.length){danger++;if(dangerNotes.length<6)dangerNotes.push(`outline description "${(titleOf(it)||'').slice(0,40)}": ${dh.join(', ')}`);}}
  log(`  manifest parses · dangling item→res:${dangI} dep→res:${dangD} · missing files:${miss}`);
  log(`  in-page refs ${checked} checked, ${broken} broken · live videos:${vids}`);
  log(`  tag balance (${styledN} styled page${styledN===1?'':'s'}): ${unbal?unbal+' with mismatched tags':'every page closes what it opens'}`,unbal?'err':undefined);
@@ -1364,9 +1398,11 @@ async function verify(blob){
  if(blank){log(`  icons: ${blank} styled page${blank===1?' has':'s have'} an icon that lost its drawing (it would show as an empty box)`,'err');
    blankNotes.forEach(n=>log('    '+n,'err'));}
  if(blobs)log(`  images: ${blobs} file${blobs===1?' points':'s point'} at a temporary in-browser image address that won't exist in Brightspace`,'err');
- ok=!dangI&&!dangD&&!miss&&!broken&&!unbal&&!blank&&!blobs;
+ if(danger){log(`  SECURITY: ${danger} generated item${danger===1?'':'s'} carry something that must never reach Brightspace (script / event handler / disallowed link) — this download is being withheld`,'err');
+   dangerNotes.forEach(n=>log('    '+n,'err'));}
+ ok=!dangI&&!dangD&&!miss&&!broken&&!unbal&&!blank&&!blobs&&!danger;
  log('  RESULT: '+(ok?'PASS':'CHECK WARNINGS'),ok?'pass':'warn');
- return ok;
+ return {ok,danger};
 }
 function normPath(p){const parts=[];for(const s of p.split('/')){if(s==='.'||s==='')continue;if(s==='..')parts.pop();else parts.push(s);}return parts.join('/');}
 
@@ -1603,6 +1639,16 @@ function dlButton(blob,name,safe){const url=URL.createObjectURL(blob);dlUrls.pus
  a.href=url;a.download=name;a.className='dl'+(safe?' safe':'');
  a.innerHTML='<span aria-hidden="true">⬇ </span>'+esc(name);a.addEventListener('click',()=>FLOW.downloaded(name));$('#downloads').appendChild(a);}
 
+// One export build finished: verify it, then OFFER the download only when the security belt is clean.
+// A dangerous construct in our OWN output is a bug — nothing unsanitized should reach Brightspace — so
+// the download is withheld rather than shipped. Cosmetic warnings (blob / tag balance / icons) still
+// download exactly as before; only a security danger blocks.
+async function checkAndOffer(b,name,safe){
+ log('Double-checking it:');
+ const {danger}=await verify(b);
+ if(danger){log('  This download was WITHHELD: the checks found unsafe content in the output above, and nothing unsafe should ever reach Brightspace. Nothing was saved. Please report this.','err');log('');return false;}
+ dlButton(b,name,safe);log('');return true;
+}
 $('#go').addEventListener('click',async()=>{
  if(!FILE||!MODEL)return;
  if(typeof CompressionStream==='undefined'){log('Your browser is too old — please use a recent Chrome or Edge.','err');return;}
@@ -1642,23 +1688,23 @@ $('#go').addEventListener('click',async()=>{
      if(mode==='restyle'||mode==='both'){
        let b=await buildRestyle(zip,man,m,false,edits);
        b=await repairRefs(b);
-       log('Double-checking it:');await verify(b);dlButton(b,`${base} - Template Applied.zip`,true);log('');
+       await checkAndOffer(b,`${base} - Template Applied.zip`,true);
      }
      if(mode==='combine'||mode==='both'){
        log('Applying the style, and combining short pages …');let b=await buildCombineD2L(zip,man,m,keep);
        b=await repairRefs(b);
-       log('Double-checking it:');await verify(b);dlButton(b,`${base} - Template Applied (Condensed Content).zip`,false);log('');
+       await checkAndOffer(b,`${base} - Template Applied (Condensed Content).zip`,false);
      }
    }else{
    if(mode==='restyle'||mode==='both'){
      log('Applying the style …');let b=await buildRestyle(zip,man,m,true,edits);
      b=await repairRefs(b);
-     log('Double-checking it:');await verify(b);dlButton(b,`${base} - Template Applied.imscc`,true);log('');
+     await checkAndOffer(b,`${base} - Template Applied.imscc`,true);
    }
    if(mode==='combine'||mode==='both'){
      log('Applying the style, and combining short pages …');let b=await buildCombine(zip,man,m,keep,true);
      b=await repairRefs(b);
-     log('Double-checking it:');await verify(b);dlButton(b,`${base} - Template Applied (Condensed Content).imscc`,false);log('');
+     await checkAndOffer(b,`${base} - Template Applied (Condensed Content).imscc`,false);
    }
    }
    log('All done!','pass');FLOW.built();
@@ -1870,17 +1916,29 @@ const FLOW=(()=>{
  // sibling projects, and localStorage makes anything that slipped through persistent.)
  function cleanDoc(root){
    root.querySelectorAll('script,style,link,meta,title,noscript,base,object,embed').forEach(n=>n.remove());
-   root.querySelectorAll('*').forEach(el=>{
+   // An <iframe> is kept only when its src is an allowed scheme; a data:/javascript:/exotic-scheme
+   // iframe is dropped whole (Brightspace renders imported HTML same-origin with no CSP/sandbox, so a
+   // bare srcless iframe is the safe outcome). Mirrors cleanBody's iframe rule.
+   root.querySelectorAll('iframe').forEach(f=>{let s=(f.getAttribute('src')||'').trim();
+     if(s.startsWith('http://')){s='https://'+s.slice(7);f.setAttribute('src',s);}
+     if(!okUrl(s))f.remove();});
+   root.querySelectorAll('*').forEach(el=>{if(!el.isConnected)return;
+     const tag=el.tagName.toLowerCase();
      for(const a of [...el.attributes]){
        const nm=a.name.toLowerCase();
        if(/^on/.test(nm)||nm==='srcdoc'||nm==='action'||nm==='formaction'){el.removeAttribute(a.name);continue;}
        if(nm==='href'||nm==='src'||nm==='data'||nm==='xlink:href'||nm==='poster'){
-         const v=a.value.replace(/[\s\u0000-\u001f]/g,'').toLowerCase();
-         if(/^(javascript|vbscript|data:text\/html)/.test(v))el.removeAttribute(a.name);
+         const raw=a.value.trim();
          // a blob: URL is only ever the canvas's stand-in for a course image (see ASSET_BACK): put the
          // real src back; one we don't know is meaningless outside this tab, so it goes.
-         else if(/^blob:/.test(v)){const back=ASSET_BACK.get(a.value.trim());
-           if(back!==undefined)el.setAttribute(a.name,back);else el.removeAttribute(a.name);}}}});}
+         if(/^blob:/i.test(raw)){const back=ASSET_BACK.get(raw);
+           if(back!==undefined)el.setAttribute(a.name,back);else el.removeAttribute(a.name);continue;}
+         // Allowlist (mirrors cleanBody, replacing an older scheme blocklist that missed
+         // data:application/xhtml+xml, data:text/xml, data:image/svg+xml, ...): an image src/poster may
+         // also be an inert data:image/*; every other url attribute must be http/https/mailto. okUrl's
+         // new URL() also defeats tab/newline scheme-obfuscation. Anything else is dropped.
+         const good=((tag==='img'&&nm==='src')||nm==='poster')?okImg(raw):okUrl(raw);
+         if(!good)el.removeAttribute(a.name);}}});}
  function clean(html){const d=new DOMParser().parseFromString('<body>'+(html||'')+'</body>','text/html');cleanDoc(d);return d.body.innerHTML;}
  const hasText=el=>[...el.childNodes].some(n=>n.nodeType===3&&n.textContent.trim());
  // A page wrapper is a single outer <div> that (a) the converter or this tool made -- inline
@@ -2496,7 +2554,9 @@ ${inner}
      if(COURSE&&CUR_ENTRY)consider(CUR_ENTRY,ctxSnap());   // the live page isn't parked in PAGES yet
      return out;},
    hasCourseEdits(){for(const[e,ctx]of PAGES)if(sigOf(ctx.BLOCKS)!==ctx.base)return true;
-     return !!(COURSE&&CUR_ENTRY&&pageDirty());}
+     return !!(COURSE&&CUR_ENTRY&&pageDirty());},
+   // The paste/import sanitizer, exposed for the security tests (pure function, no side effects).
+   clean(html){return clean(html);}
  };
 
  /* ---------- init ---------- */

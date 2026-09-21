@@ -31,7 +31,7 @@ async function course(url,label){
 R.first=await course('/original.zip','original'); R.second=await course('/sandbox.zip','sandbox');
 // the lint really fires: force a blob: into a page and into the manifest
 const bad=await buildRestyle(MODEL.zip,MODEL.man,MODEL.m,false,{[Object.keys(MODEL.m.titleByHref).map(h=>MODEL.m.entryFor(h)).find(e=>e&&/\.html$/i.test(e))]:'<p><img src="blob:http://x/1"></p>'});
-document.getElementById('log').textContent=''; R.lintCatchesPageBlob=(await verify(bad))===false&&/temporary in-browser image/.test(document.getElementById('log').textContent);
+document.getElementById('log').textContent=''; R.lintCatchesPageBlob=(await verify(bad)).ok===false&&/temporary in-browser image/.test(document.getElementById('log').textContent);
 // loading another file revokes everything
 EDITOR.resetCourse(); await setFile(new File([await (await fetch('/original.zip')).blob()],'again.zip')); R.assetsAfterNewFile=ASSET_BACK.size+ASSET_URLS.size;
 R.errs=__errs; return R;
