@@ -776,7 +776,7 @@ function iconImg(key,col,size){if(!SVG[key])return '';
  return `<img src="${ICON_BASE}/${key}-${tok}.svg" alt="" aria-hidden="true" style="width:${size};height:${size};flex-shrink:0;display:block;">`;}
 
 function marker(label,tok,svg){const c=COLORS[tok],bg=BG[tok],badge=BADGE[tok]||c,ink=BADGE_INK[tok]||'#fff';
- return `<div style="display:flex;align-items:center;gap:.75rem;margin:-1.35rem -1.4rem 1.2rem;padding:.9rem 1.4rem;background:${bg};border-bottom:1px solid rgba(0,0,0,.07);box-sizing:border-box;">${NO_SVG?iconImg(svg,tok,'1.5rem'):`<span style="display:flex;align-items:center;justify-content:center;width:2.85rem;height:2.85rem;flex-shrink:0;background:${badge};border-radius:50%;box-shadow:0 3px 8px rgba(16,40,34,.18);box-sizing:border-box;"><svg aria-hidden="true" fill="none" height="1.6rem" stroke="${ink}" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="width:1.6rem;height:1.6rem;display:block;" viewBox="0 0 24 24" width="1.6rem">${SVG[svg]}</svg></span>`}<h2 style="margin:0;font-weight:700;font-size:1.08rem;letter-spacing:.04em;text-transform:uppercase;line-height:1.2;color:${c};">${esc(label)}</h2></div>`;}
+ return `<div style="display:flex;align-items:center;gap:.75rem;margin:-1.35rem -1.4rem 1.2rem;padding:.9rem 1.4rem;background:${bg};border-bottom:1px solid rgba(0,0,0,.07);box-sizing:border-box;">${NO_SVG?`<span style="display:flex;align-items:center;justify-content:center;width:2.85rem;height:2.85rem;flex-shrink:0;background:${c};border-radius:50%;box-shadow:0 3px 8px rgba(16,40,34,.18);box-sizing:border-box;">${iconImg(svg,'white','1.6rem')}</span>`:`<span style="display:flex;align-items:center;justify-content:center;width:2.85rem;height:2.85rem;flex-shrink:0;background:${badge};border-radius:50%;box-shadow:0 3px 8px rgba(16,40,34,.18);box-sizing:border-box;"><svg aria-hidden="true" fill="none" height="1.6rem" stroke="${ink}" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="width:1.6rem;height:1.6rem;display:block;" viewBox="0 0 24 24" width="1.6rem">${SVG[svg]}</svg></span>`}<h2 style="margin:0;font-weight:700;font-size:1.08rem;letter-spacing:.04em;text-transform:uppercase;line-height:1.2;color:${c};">${esc(label)}</h2></div>`;}
 // Parsed with DOMParser, not innerHTML: an inert document doesn't fetch the src of a course's
 // <img>, so a booby-trapped export can't fire onerror at us just by being inspected.
 function markersIn(bodyHtml){const d=new DOMParser().parseFromString('<body>'+(bodyHtml||'')+'</body>','text/html');const out=[];
@@ -810,7 +810,7 @@ function fieldLabel(name,tok,svgkey){const c=COLORS[tok]||COLORS.forest;
  // Spacing lives on the CHIP (margin-right), not a flex gap, so it holds even when the source wrapped
  // the marker icon + its label together in a <strong>/<em> (then the whole thing is one flex item and a
  // gap would do nothing). vertical-align keeps the chip centred in that inline case too.
- const chip=`<span style="display:inline-flex;align-items:center;justify-content:center;width:1.6rem;height:1.6rem;flex-shrink:0;background:${c};border-radius:.4rem;margin-right:.65rem;vertical-align:middle;box-sizing:border-box;">${glyph}</span>`;
+ const chip=`<span style="display:inline-flex;align-items:center;justify-content:center;width:1.6rem;height:1.6rem;flex-shrink:0;background:${c};border-radius:.5rem;margin-right:.65rem;vertical-align:middle;box-sizing:border-box;">${glyph}</span>`;
  return `<h3 style="display:flex;align-items:center;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:${c};margin:1.3rem 0 .55rem;">${chip}${esc(t)}</h3>`;}
 // Alt text reduced to its marker essence: "Read icon.", "READ button", "read.png" -> "read".
 // Descriptive alts ("Read the following chapters") do NOT reduce to a marker name and stay safe.
@@ -866,8 +866,8 @@ function okUrl(v){v=(v||'').trim();if(!v)return false;
 // only image/* data URIs — inert in an <img>/background context, never script-bearing.
 function okImg(v){v=(v||'').trim();return okUrl(v)||/^data:image\/[a-z0-9.+-]+[;,]/i.test(v);}
 
-function cleanBody(htmlStr){
- htmlStr=htmlStr||'';
+function cleanBody(htmlStr,linkTok){
+ htmlStr=htmlStr||'';const LINKC=linkTok||'#003129';   // body links inherit the card's colour; default neutral forest
  htmlStr=htmlStr.replace(/<!--([\s\S]*?)-->/g,(m,inner)=>/<iframe[^>]+src=/i.test(inner)?inner:'');
  const doc=new DOMParser().parseFromString('<body>'+htmlStr+'</body>','text/html');
  const body=doc.body;
@@ -910,7 +910,7 @@ function cleanBody(htmlStr){
      if(la)el.setAttribute('src',el.getAttribute(la));
      else{const ss=(el.getAttribute('srcset')||'').trim();if(ss)el.setAttribute('src',ss.split(',')[0].trim().split(' ')[0]);}}
    [...el.attributes].forEach(at=>{if(!(keep&&keep.has(at.name)))el.removeAttribute(at.name);});
-   const st=layout.has(el)?LAYOUT_TD:INLINE_STYLE[name];if(st)el.setAttribute('style',st);
+   const st=layout.has(el)?LAYOUT_TD:(name==='a'?`color:${LINKC};text-decoration:underline;text-underline-offset:2px;`:INLINE_STYLE[name]);if(st)el.setAttribute('style',st);
    if(name==='img'){const s=(el.getAttribute('src')||'').trim();
      // Blackboard player chrome ships as imgs labelled display.* (display.closePlayerControls)
      if(/^display\./i.test((el.getAttribute('alt')||'').trim())){el.remove();return;}
@@ -941,7 +941,7 @@ function cleanBody(htmlStr){
  return body.innerHTML;
 }
 const NO_CONTENT='<p style="margin:0 0 .85rem;color:#5B6770;font-style:italic;">(No page content — see linked file.)</p>';
-function renderStandalone(title,body){const[tok,svg]=cardTheme(title,body);let inner=cleanBody(body);
+function renderStandalone(title,body){const[tok,svg]=cardTheme(title,body);let inner=cleanBody(body,COLORS[tok]);
  if(!inner.trim())inner=NO_CONTENT;
  return pageHtml(title,card(title,inner,tok,svg));}
 // A page this tool ALREADY styled (a course coming back for a second pass): the RDP frame holding one
@@ -972,7 +972,7 @@ const isTemplated=body=>templatedInner(body)!==null;
 // buttons become dot-labelled subheads. Recognised again on a second pass by that banner inside a
 // border-radius card — svg optional, whitespace-tolerant (Brightspace re-spaces styles on save).
 function restyleIntro(title,desc){const[tok,svg]=cardTheme(title,desc);
- NO_SVG=true;try{const inner=cleanBody(desc);if(!inner.trim())return '';return card(title,inner,tok,svg);}finally{NO_SVG=false;}}
+ NO_SVG=true;try{const inner=cleanBody(desc,COLORS[tok]);if(!inner.trim())return '';return card(title,inner,tok,svg);}finally{NO_SVG=false;}}
 function isTemplatedIntro(desc){desc=desc||'';if(!/margin:\s*-/i.test(desc)||!/border-radius/i.test(desc))return false;
  const d=new DOMParser().parseFromString('<body>'+desc+'</body>','text/html');
  return [...d.body.children].some(el=>{if(el.tagName!=='DIV'||!/border-radius/i.test(el.getAttribute('style')||''))return false;
@@ -991,7 +991,7 @@ function autoIntroEdits(m,skip){const out={};
 function renderCombined(groupTitle,members){let cards='';
  for(const[t,b]of members){
    const done=templatedInner(b);if(done!==null){cards+=done;continue;}   // already a card: reuse it, never re-clean
-   const[tok,svg]=cardTheme(t,b);let inner=cleanBody(b);
+   const[tok,svg]=cardTheme(t,b);let inner=cleanBody(b,COLORS[tok]);
    if(!inner.trim())inner=NO_CONTENT;
    cards+=card(t,inner,tok,svg);}
  return pageHtml(groupTitle,cards);}
