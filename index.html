@@ -772,8 +772,8 @@ for(const k in BADGE)TOK_BY_HEX[BADGE[k].toLowerCase()]=k;
 // Hosted marker icon for a description. `col` may be a colour token ('teal') or a hex ('#0f766e').
 // '' when the icon isn't in the set, so callers keep their existing empty/dot fallback.
 function iconImg(key,col,size){if(!SVG[key])return '';
- const tok=COLORS[col]?col:(TOK_BY_HEX[(col||'').toLowerCase()]||'forest');
- return `<img src="${ICON_BASE}/${key}-${tok}.svg" alt="" aria-hidden="true" style="width:${size};height:${size};flex-shrink:0;display:inline-block;vertical-align:middle;">`;}
+ const tok=(col==='white'||COLORS[col])?col:(TOK_BY_HEX[(col||'').toLowerCase()]||'forest');
+ return `<img src="${ICON_BASE}/${key}-${tok}.svg" alt="" aria-hidden="true" style="width:${size};height:${size};flex-shrink:0;display:block;">`;}
 
 function marker(label,tok,svg){const c=COLORS[tok],bg=BG[tok],badge=BADGE[tok]||c,ink=BADGE_INK[tok]||'#fff';
  return `<div style="display:flex;align-items:center;gap:.75rem;margin:-1.35rem -1.4rem 1.2rem;padding:.9rem 1.4rem;background:${bg};border-bottom:1px solid rgba(0,0,0,.07);box-sizing:border-box;">${NO_SVG?iconImg(svg,tok,'1.5rem'):`<span style="display:flex;align-items:center;justify-content:center;width:2.85rem;height:2.85rem;flex-shrink:0;background:${badge};border-radius:50%;box-shadow:0 3px 8px rgba(16,40,34,.18);box-sizing:border-box;"><svg aria-hidden="true" fill="none" height="1.6rem" stroke="${ink}" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="width:1.6rem;height:1.6rem;display:block;" viewBox="0 0 24 24" width="1.6rem">${SVG[svg]}</svg></span>`}<h2 style="margin:0;font-weight:700;font-size:1.08rem;letter-spacing:.04em;text-transform:uppercase;line-height:1.2;color:${c};">${esc(label)}</h2></div>`;}
@@ -799,14 +799,19 @@ function pageHtml(title,body){
  return `<!DOCTYPE html>\n<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>${esc(title)}</title></head><body><div style="font-family:'Inter','Aribau Grotesk',Arial,Helvetica,sans-serif;color:#3a4248;line-height:1.65;font-size:1rem;max-width:840px;margin:0 auto;padding:.5rem;box-sizing:border-box;">${body}</div></body></html>\n`;}
 function fieldLabel(name,tok,svgkey){const c=COLORS[tok]||COLORS.forest;
  const t=name.replace(/\b\w/g,m=>m.toUpperCase());
- // Marker subhead inside an existing page card: RDP iconography + label, but NOT a nested
- // badge/sub-card. Coloured icon glyph beside the label; fall back to a dot if no icon.
+ // Marker subhead: the RDP icon sits in a small coloured chip (white glyph) to draw the eye, then the
+ // label with breathing room. In a description the glyph is a hosted white <img> (Brightspace strips
+ // inline svg); on a page it's an inline white <svg>.
  const glyph=(svgkey&&SVG[svgkey])
-   ? (NO_SVG   // a description — Brightspace strips inline svg; ship the branded icon as a hosted <img>
-       ? iconImg(svgkey,tok,'1.2rem')
-       : `<svg aria-hidden="true" fill="none" stroke="${c}" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" style="width:1.2rem;height:1.2rem;flex-shrink:0;display:block;">${SVG[svgkey]}</svg>`)
-   : `<span style="width:.5rem;height:.5rem;border-radius:50%;background:${c};flex-shrink:0;display:inline-block;"></span>`;
- return `<h3 style="display:flex;align-items:center;gap:.5rem;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:${c};margin:1.3rem 0 .55rem;">${glyph}${esc(t)}</h3>`;}
+   ? (NO_SVG
+       ? iconImg(svgkey,'white','1rem')
+       : `<svg aria-hidden="true" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" style="width:1rem;height:1rem;display:block;">${SVG[svgkey]}</svg>`)
+   : `<span style="width:.45rem;height:.45rem;border-radius:50%;background:#fff;flex-shrink:0;display:inline-block;"></span>`;
+ // Spacing lives on the CHIP (margin-right), not a flex gap, so it holds even when the source wrapped
+ // the marker icon + its label together in a <strong>/<em> (then the whole thing is one flex item and a
+ // gap would do nothing). vertical-align keeps the chip centred in that inline case too.
+ const chip=`<span style="display:inline-flex;align-items:center;justify-content:center;width:1.6rem;height:1.6rem;flex-shrink:0;background:${c};border-radius:.4rem;margin-right:.65rem;vertical-align:middle;box-sizing:border-box;">${glyph}</span>`;
+ return `<h3 style="display:flex;align-items:center;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:${c};margin:1.3rem 0 .55rem;">${chip}${esc(t)}</h3>`;}
 // Alt text reduced to its marker essence: "Read icon.", "READ button", "read.png" -> "read".
 // Descriptive alts ("Read the following chapters") do NOT reduce to a marker name and stay safe.
 function normAlt(a){a=(a||'').trim().toLowerCase().replace(/\.(png|jpe?g|gif|svg)\s*$/,'');

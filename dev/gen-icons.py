@@ -75,6 +75,10 @@ for icon in CALLOUT + ["pin", "clock", "mail", "phone", "link", "book", "circle"
 # fallback safety: any marker/title icon can fall back to slate or forest — cover both
 for icon in {MARKER_SVG.get(m, "book") for m in set(MARKER_SVG) | set(MARKER_COLOR)} | {i for _, i in TITLE}:
     add(icon, "slate"); add(icon, "forest")
+# white variant of every used icon — for the white glyph inside a solid coloured chip/badge
+COLORS = {**COLORS, "white": "#ffffff"}
+for icon in {i for i, _ in pairs}:
+    pairs.add((icon, "white"))
 
 # --- write files ---
 OUT.mkdir(parents=True, exist_ok=True)
