@@ -4,6 +4,11 @@ const addCallout=()=>[...c.querySelectorAll('.pgb-end button')].find(x=>/callout
 const open=async b=>{EDITOR.openCoursePage(b.dataset.entry,b.dataset.title,await courseRawBody(b.dataset.entry));};
 const runGo=async()=>{document.getElementById('go').click(); for(let i=0;i<200;i++){await new Promise(r=>setTimeout(r,100)); if(document.querySelectorAll('#downloads a').length&&!document.getElementById('go').disabled)break;}
   return {zip:readZip(await (await fetch(document.querySelector('#downloads a').href)).arrayBuffer()), log:document.getElementById('log').textContent.split('\n').map(l=>l.trim()).filter(l=>/edited|restyled|updated|already|intro|RESULT|manifest parses/.test(l)).map(l=>l.slice(0,170)), downloads:[...document.querySelectorAll('#downloads a')].length};};
+// every module intro now gets the RDP card automatically, so the manifest differs in MORE than the two edited
+// descriptions — but ONLY in description attributes. blankAll wipes every description; changedDescs counts them.
+const blankAll=s=>s.replace(/(\sdescription=")[^"]*(")/g,'$1@$2');
+const changedDescs=(a,b)=>{const da=parseManifest(a),db=parseManifest(b);const ma={};da.querySelectorAll('item').forEach(it=>ma[it.getAttribute('identifier')]=it.getAttribute('description')||'');
+  let n=0;db.querySelectorAll('item').forEach(it=>{if((it.getAttribute('description')||'')!==(ma[it.getAttribute('identifier')]||''))n++;});return n;};
 async function scenario(url,label){
   EDITOR.resetCourse(); await setFile(new File([await (await fetch(url)).blob()],label+'.zip'));
   const base=readZip(await (await repairRefs(await buildRestyle(MODEL.zip,MODEL.man,MODEL.m,false,{}))).arrayBuffer());
@@ -22,7 +27,7 @@ async function scenario(url,label){
   let otherDiff=[]; for(const e of out.entries){ if(e.name==='imsmanifest.xml'||e.name===page.dataset.entry||!/\.(html|xml)$/i.test(e.name))continue; if((await out.text(e.name))!==(await base.text(e.name)))otherDiff.push(e.name.slice(0,40)); }
   const pg=await out.text(page.dataset.entry);
   return {label, editedKeys:Object.keys(ed).map(k=>k.slice(0,14)+':'+(typeof ed[k]==='object'?Object.keys(ed[k])[0]:'inner')), editKeptOnSwitch:kept, downloads:g.downloads, log:g.log,
-    manifestChanged:newMan!==MODEL.man, manifestSameExceptTheTwo:blank(newMan,ids)===blank(MODEL.man,ids), bomOut:await out.hasBom('imsmanifest.xml'), bomIn:await MODEL.zip.hasBom('imsmanifest.xml'),
+    manifestChanged:newMan!==MODEL.man, manifestSameExceptTheTwo:blank(newMan,ids)===blank(MODEL.man,ids), manifestSameExceptDescriptions:blankAll(newMan)===blankAll(MODEL.man), descriptionsChanged:changedDescs(MODEL.man,newMan), bomOut:await out.hasBom('imsmanifest.xml'), bomIn:await MODEL.zip.hasBom('imsmanifest.xml'),
     readBack:ids.map(id=>{const v=byId[id].getAttribute('description'); return {id, equalsPayload:v.replace(/\r\n?/g,'\n')===ed['desc:'+id].intro.replace(/\r\n?/g,'\n'), hasSvgViewBox:/viewBox/.test(v), len:v.length};}),
     pageEdited:pg!==(await base.text(page.dataset.entry)), pageCards:(pg.match(/border-top:\s*4px\s+solid/g)||[]).length, otherTextFilesChanged:otherDiff, entries:[out.entries.length,base.entries.length]};}
 R.first=await scenario('/original.zip','original');
@@ -31,5 +36,7 @@ R.second=await scenario('/sandbox.zip','sandbox-templated');
 const bad=applyIntroEdits(MODEL.man,{'desc:NOPE-404':{intro:'<p>x</p>'}}); R.refusal={failed:!!bad.failed,unchanged:bad.man===MODEL.man};
 // no-intro-edit run keeps the manifest byte-identical (copied, not rewritten)
 EDITOR.resetCourse(); const z0=readZip(await (await buildRestyle(MODEL.zip,MODEL.man,MODEL.m,false,{})).arrayBuffer()); const a=z0.byName['imsmanifest.xml'],b0=MODEL.zip.byName['imsmanifest.xml'];
-R.noEditManifestBytesIdentical=a.comp.length===b0.comp.length&&a.comp.every((v,i)=>v===b0.comp[i]);
+R.noEditManifestBytesIdentical=a.comp.length===b0.comp.length&&a.comp.every((v,i)=>v===b0.comp[i]);   // false by design since auto intro restyle
+const nm0=await z0.text('imsmanifest.xml'); R.noEditManifestSameExceptDescriptions=blankAll(nm0)===blankAll(MODEL.man); R.noEditDescriptionsChanged=changedDescs(MODEL.man,nm0);
+R.noEditModuleIntrosCarded=(()=>{const d=parseManifest(nm0);let n=0;d.querySelectorAll('item').forEach(it=>{if(isTemplatedIntro(it.getAttribute('description')||''))n++;});return n;})();
 R.errs=__errs; return R;

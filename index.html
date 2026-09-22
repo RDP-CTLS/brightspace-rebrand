@@ -700,7 +700,7 @@ const MARKER_COLOR={introduction:'teal','course learning outcomes':'plum','learn
  'learning activity':'violet',read:'teal',watch:'teal','additional resources':'orange',references:'slate',
  conclusion:'forest','time commitment':'violet','catch up':'green','concepts of the week':'green',bring:'slate',do:'green',overview:'orange',assessment:'plum',
  // Blackboard-era button set (HET trades courses): outcome family stays on plum like 'learning outcomes'
- outcome:'plum',objectives:'plum','practice quiz':'green','supervised test':'orange',feedback:'violet',
+ outcome:'plum',outcomes:'plum',objectives:'plum','practice quiz':'green','supervised test':'orange',feedback:'violet',
  // --- activity vocabulary (Sep 2026): one colour per category ---
  // Information Acquisition (passive) -> teal
  listen:'teal',review:'teal',skim:'teal',analyze:'teal',study:'teal',observe:'teal',inspect:'teal',view:'teal',examine:'teal',discover:'teal',hear:'teal',browse:'teal',recap:'teal',digest:'teal',
@@ -722,7 +722,7 @@ const MARKER_COLOR={introduction:'teal','course learning outcomes':'plum','learn
 const MARKER_SVG={introduction:'flag','course learning outcomes':'outcomes','learning outcomes':'outcomes',topics:'topics',
  'learning activity':'activity',read:'read',watch:'watch','additional resources':'resources',references:'book',
  conclusion:'conclude','time commitment':'clock','catch up':'refresh','concepts of the week':'book',bring:'check',do:'check',overview:'book',assessment:'assess',
- outcome:'outcomes',objectives:'outcomes','practice quiz':'assess','supervised test':'assess',feedback:'check',
+ outcome:'outcomes',outcomes:'outcomes',objectives:'outcomes','practice quiz':'assess','supervised test':'assess',feedback:'check',
  // --- activity vocabulary icons (Sep 2026); established icons kept, overlap where no distinct icon fits ---
  listen:'headphones',review:'eye',skim:'book',analyze:'barchart',study:'book',observe:'eye',inspect:'search',view:'eye',examine:'search',discover:'compass',hear:'headphones',browse:'globe',recap:'refresh',digest:'book',
  practice:'repeat',try:'play',drill:'outcomes',solve:'resources',simulate:'repeat',execute:'zap',calculate:'calculator',apply:'tool',experiment:'flask',test:'assess',compute:'calculator',demonstrate:'monitor',operate:'settings',train:'trendingup',rehearse:'repeat',master:'award',
@@ -761,9 +761,22 @@ const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 // import sanitizer strips inline <svg> from DESCRIPTIONS (it keeps them on content pages), so in that
 // context the icon generators emit no svg -- the coloured box/banner + heading carry the callout.
 let NO_SVG=false;
+// Descriptions strip inline <svg> but KEEP a real-URL <img> (proven 2026-09-20, HANDOFF-desc-test-v3.md).
+// So in a description the branded marker icons ship as a hosted <img> with the colour BAKED INTO the file
+// (an <img>-loaded SVG can't inherit colour from the host page). Absolute URL so it resolves INSIDE
+// Brightspace, not from the tool's own origin; /v1/ so an icon redesign can ship as v2 without breaking
+// courses already importing v1 URLs. The files are generated from this same SVG map by dev/gen-icons.py.
+const ICON_BASE='https://rdp-ctls.github.io/brightspace-rebrand/icons/v1';
+const TOK_BY_HEX={};for(const k in COLORS)TOK_BY_HEX[COLORS[k].toLowerCase()]=k;
+for(const k in BADGE)TOK_BY_HEX[BADGE[k].toLowerCase()]=k;
+// Hosted marker icon for a description. `col` may be a colour token ('teal') or a hex ('#0f766e').
+// '' when the icon isn't in the set, so callers keep their existing empty/dot fallback.
+function iconImg(key,col,size){if(!SVG[key])return '';
+ const tok=COLORS[col]?col:(TOK_BY_HEX[(col||'').toLowerCase()]||'forest');
+ return `<img src="${ICON_BASE}/${key}-${tok}.svg" alt="" aria-hidden="true" style="width:${size};height:${size};flex-shrink:0;display:inline-block;vertical-align:middle;">`;}
 
 function marker(label,tok,svg){const c=COLORS[tok],bg=BG[tok],badge=BADGE[tok]||c,ink=BADGE_INK[tok]||'#fff';
- return `<div style="display:flex;align-items:center;gap:.75rem;margin:-1.35rem -1.4rem 1.2rem;padding:.9rem 1.4rem;background:${bg};border-bottom:1px solid rgba(0,0,0,.07);box-sizing:border-box;">${NO_SVG?'':`<span style="display:flex;align-items:center;justify-content:center;width:2.85rem;height:2.85rem;flex-shrink:0;background:${badge};border-radius:50%;box-shadow:0 3px 8px rgba(16,40,34,.18);box-sizing:border-box;"><svg aria-hidden="true" fill="none" height="1.6rem" stroke="${ink}" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="width:1.6rem;height:1.6rem;display:block;" viewBox="0 0 24 24" width="1.6rem">${SVG[svg]}</svg></span>`}<h2 style="margin:0;font-weight:700;font-size:1.08rem;letter-spacing:.04em;text-transform:uppercase;line-height:1.2;color:${c};">${esc(label)}</h2></div>`;}
+ return `<div style="display:flex;align-items:center;gap:.75rem;margin:-1.35rem -1.4rem 1.2rem;padding:.9rem 1.4rem;background:${bg};border-bottom:1px solid rgba(0,0,0,.07);box-sizing:border-box;">${NO_SVG?iconImg(svg,tok,'1.5rem'):`<span style="display:flex;align-items:center;justify-content:center;width:2.85rem;height:2.85rem;flex-shrink:0;background:${badge};border-radius:50%;box-shadow:0 3px 8px rgba(16,40,34,.18);box-sizing:border-box;"><svg aria-hidden="true" fill="none" height="1.6rem" stroke="${ink}" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="width:1.6rem;height:1.6rem;display:block;" viewBox="0 0 24 24" width="1.6rem">${SVG[svg]}</svg></span>`}<h2 style="margin:0;font-weight:700;font-size:1.08rem;letter-spacing:.04em;text-transform:uppercase;line-height:1.2;color:${c};">${esc(label)}</h2></div>`;}
 // Parsed with DOMParser, not innerHTML: an inert document doesn't fetch the src of a course's
 // <img>, so a booby-trapped export can't fire onerror at us just by being inspected.
 function markersIn(bodyHtml){const d=new DOMParser().parseFromString('<body>'+(bodyHtml||'')+'</body>','text/html');const out=[];
@@ -789,7 +802,9 @@ function fieldLabel(name,tok,svgkey){const c=COLORS[tok]||COLORS.forest;
  // Marker subhead inside an existing page card: RDP iconography + label, but NOT a nested
  // badge/sub-card. Coloured icon glyph beside the label; fall back to a dot if no icon.
  const glyph=(svgkey&&SVG[svgkey])
-   ? `<svg aria-hidden="true" fill="none" stroke="${c}" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" style="width:1.2rem;height:1.2rem;flex-shrink:0;display:block;">${SVG[svgkey]}</svg>`
+   ? (NO_SVG   // a description — Brightspace strips inline svg; ship the branded icon as a hosted <img>
+       ? iconImg(svgkey,tok,'1.2rem')
+       : `<svg aria-hidden="true" fill="none" stroke="${c}" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" style="width:1.2rem;height:1.2rem;flex-shrink:0;display:block;">${SVG[svgkey]}</svg>`)
    : `<span style="width:.5rem;height:.5rem;border-radius:50%;background:${c};flex-shrink:0;display:inline-block;"></span>`;
  return `<h3 style="display:flex;align-items:center;gap:.5rem;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:${c};margin:1.3rem 0 .55rem;">${glyph}${esc(t)}</h3>`;}
 // Alt text reduced to its marker essence: "Read icon.", "READ button", "read.png" -> "read".
@@ -809,10 +824,16 @@ function markerName(src,alt){src=src||'';
  // Without this, those variants ship as raw (broken) icons.
  let s=src.replace(/%2F/ig,'/').replace(/_2F/g,'/').replace(/%20/ig,' ').replace(/_20/g,' ').split('#')[0].split('?')[0].replace(/_data-ally[^/]*$/,'');
  const m=s.match(/([^/]+?)(?:\(\d+\))?\.(png|jpe?g|gif)\s*$/i);
- const f=m?m[1].trim().toLowerCase():'';
+ let f=m?m[1].trim().toLowerCase():'';
+ // Brightspace stamps uploaded files with a 5-character prefix ("uklpx_Introduction.png"): peel it
+ // when what's left is a marker name, so a button uploaded straight into a module still converts
+ // (the alt-agreement rule below still guards a real picture that merely shares the name).
+ const pf=f.match(/^[a-z0-9]{5}_(.+)$/);if(pf&&!MARKER_COLOR[f]&&MARKER_COLOR[pf[1].replace(/_/g,' ').replace(/\s+/g,' ').trim()])f=pf[1];
  // Folder may carry a copy-suffix ("Blackboard Icons(1)/") — a Blackboard-era export quirk
  const inIconFolder=/blackboard[ +]icons(?:\(\d+\))?\//i.test(s)||/\/new[ +]icons(?:\(\d+\))?\//i.test(s);
- if(!(inIconFolder||MARKER_COLOR[f]))return null;
+ // "Time_Commitment.png" outside an icon folder: test the map on the space form too, not just the raw name
+ const fl=f.replace(/_/g,' ').replace(/\s+/g,' ').trim();
+ if(!(inIconFolder||MARKER_COLOR[f]||MARKER_COLOR[fl]))return null;
  // strip the D2L id suffix first, THEN turn filename underscores into the map's spaces
  // ("Time_Commitment.png" -> "time commitment")
  let label=f.replace(/\s*_\d+_.*$/,'').replace(/\(\d+\)/,'').replace(/_/g,' ').replace(/\s+/g,' ').trim();label=label||normAlt(alt)||null;
@@ -888,7 +909,13 @@ function cleanBody(htmlStr){
    if(name==='img'){const s=(el.getAttribute('src')||'').trim();
      // Blackboard player chrome ships as imgs labelled display.* (display.closePlayerControls)
      if(/^display\./i.test((el.getAttribute('alt')||'').trim())){el.remove();return;}
-     if(!s||!okImg(s)){el.remove();return;}el.removeAttribute('width');el.removeAttribute('height');el.setAttribute('loading','lazy');el.setAttribute('decoding','async');}
+     if(!s||!okImg(s)){el.remove();return;}
+     // keep the author's display width (a 150×45 button must not come back at its natural pixel
+     // size); max-width:100% still caps it, height:auto keeps the aspect
+     const wa=(el.getAttribute('width')||'').trim();let sz='';
+     if(/^\d+(\.\d+)?%$/.test(wa))sz='width:'+wa+';';else if(/^\d+(\.\d+)?(px)?$/i.test(wa)&&parseFloat(wa)>0)sz='width:'+parseFloat(wa)+'px;';
+     if(sz)el.setAttribute('style',(el.getAttribute('style')||'')+sz);
+     el.removeAttribute('width');el.removeAttribute('height');el.setAttribute('loading','lazy');el.setAttribute('decoding','async');}
    if(name==='iframe'){let s=(el.getAttribute('src')||'').trim();if(s.startsWith('http://')){s='https://'+s.slice(7);el.setAttribute('src',s);}if(!okUrl(s)){el.remove();return;}el.setAttribute('loading','lazy');}
    if(name==='video'||name==='audio'||name==='source'||name==='track'||name==='embed'){const s=(el.getAttribute('src')||'').trim();if(s&&!okUrl(s))el.removeAttribute('src');}
    if(name==='source'){const ss=(el.getAttribute('srcset')||'').trim();
@@ -933,6 +960,29 @@ function templatedInner(body){
  const root=frame||d.body;
  return [...root.children].some(isCardEl)?root.innerHTML:null;}
 const isTemplated=body=>templatedInner(body)!==null;
+/* ---------- module intros (the description="…" a teacher wrote ON a module) ---------- */
+// Some courses (HET trades) carry every lesson in module intros and have no pages at all. An intro
+// gets the same RDP card as a page, minus the page frame, built with NO_SVG set: Brightspace strips
+// <svg> from descriptions on import, so the banner is the coloured strip + heading only and marker
+// buttons become dot-labelled subheads. Recognised again on a second pass by that banner inside a
+// border-radius card — svg optional, whitespace-tolerant (Brightspace re-spaces styles on save).
+function restyleIntro(title,desc){const[tok,svg]=cardTheme(title,desc);
+ NO_SVG=true;try{const inner=cleanBody(desc);if(!inner.trim())return '';return card(title,inner,tok,svg);}finally{NO_SVG=false;}}
+function isTemplatedIntro(desc){desc=desc||'';if(!/margin:\s*-/i.test(desc)||!/border-radius/i.test(desc))return false;
+ const d=new DOMParser().parseFromString('<body>'+desc+'</body>','text/html');
+ return [...d.body.children].some(el=>{if(el.tagName!=='DIV'||!/border-radius/i.test(el.getAttribute('style')||''))return false;
+   const b=el.firstElementChild;return !!b&&b.tagName==='DIV'&&/margin:\s*-/i.test(b.getAttribute('style')||'')&&!!b.querySelector('h1,h2,h3,h4,h5,h6');});}
+// Every MODULE intro not yet in the template, as { "desc:<item id>": {intro} } — the shape the explorer
+// hands back, so applyIntroEdits does the byte surgery + read-back proof. Link/topic descriptions (the
+// blurb under a quiz or web link) are left alone: a full title banner there reads heavy. `skip` = the
+// teacher's own explorer edits (those win).
+function autoIntroEdits(m,skip){const out={};
+ for(const it of m.doc.querySelectorAll('item')){const id=it.getAttribute('identifier')||'',desc=(it.getAttribute('description')||'').trim();
+   if(!id||!desc||m.htmlEntry(it))continue;
+   const kind=m.resType[it.getAttribute('identifierref')||'']||'',isMod=[...it.children].some(c=>c.tagName==='item')||kind==='contentmodule';
+   if(!isMod||(skip&&skip[INTRO_KEY+id]!==undefined)||isTemplatedIntro(desc))continue;
+   const html=restyleIntro(titleOf(it),desc);if(html)out[INTRO_KEY+id]={intro:html};}
+ return out;}
 function renderCombined(groupTitle,members){let cards='';
  for(const[t,b]of members){
    const done=templatedInner(b);if(done!==null){cards+=done;continue;}   // already a card: reuse it, never re-clean
@@ -1067,6 +1117,8 @@ async function buildRestyle(zip,man,m,reorder,edits){
  let outMan=man;if(reorder){const r=reorderManifest(m,man);outMan=r.man;r.logs.forEach(l=>log(l));}
  const intro=applyIntroEdits(outMan,edits);outMan=intro.man;
  if(intro.failed)log('  Your module-intro edits could not be written back safely, so the intros were left as they were. Your page edits are still included.','err');
+ const auto=applyIntroEdits(outMan,autoIntroEdits(m,edits));outMan=auto.man;
+ if(auto.failed)log('  The module intros could not be restyled safely, so they were left exactly as they were.','err');
  const bom=outMan!==man&&(await zip.hasBom('imsmanifest.xml'))?'\uFEFF':'';   // text() eats the BOM; a rewritten manifest puts it back
  const w=makeZipWriter();let re=0,cp=0,ed=0,kept=0;
  for(const e of zip.entries){
@@ -1093,6 +1145,7 @@ async function buildRestyle(zip,man,m,reorder,edits){
  }
  log(`  restyled ${re} pages${ed?`, applied your edits to ${ed}`:''}, copied ${cp} files`);
  if(intro.n)log(`  updated ${intro.n} module intro${intro.n===1?'':'s'} / description${intro.n===1?'':'s'} in the course outline file`);
+ if(auto.n)log(`  restyled ${auto.n} module intro${auto.n===1?'':'s'} (the text shown at the top of a module) in the course outline file`);
  if(kept)log(`  ${kept} page${kept===1?' already has':'s already have'} the RDP template — left exactly as ${kept===1?'it was':'they were'}`);
  return w.finish();
 }
@@ -1282,6 +1335,8 @@ async function buildCombineD2L(zip,man,m,keepSep){
    nm=nm.slice(0,om.index)+nm.slice(end);}
  for(const rid of resRm){nm=nm.replace(new RegExp('<resource\\b[^>]*\\sidentifier="'+esc4(rid)+'"[^>]*/>\\s*'),'');
    nm=nm.replace(new RegExp('<resource\\b[^>]*\\sidentifier="'+esc4(rid)+'"[^>]*>[\\s\\S]*?</resource>\\s*'),'');}
+ const auto=applyIntroEdits(nm,autoIntroEdits(m,null));nm=auto.man;   // module intros get the card here too
+ if(auto.failed)log('  The module intros could not be restyled safely, so they were left exactly as they were.','err');
  const bom=(await zip.hasBom('imsmanifest.xml'))?'\uFEFF':'';
 
  // mirror buildRestyle: only Content topics get the style; old/loose pages pass through as-is
@@ -1296,6 +1351,7 @@ async function buildCombineD2L(zip,man,m,keepSep){
      await w.addText(e.name,renderStandalone(topics[e.name]||m.restyleTitle(e.name),body));re++;continue;}
    w.copy(e);cp++;}
  log(`  ${groups.length} merge groups, ${itemRm.size} pages folded in · combined ${co}, restyled ${re}, copied ${cp}, dropped ${dr} folded page file(s)`);
+ if(auto.n)log(`  restyled ${auto.n} module intro${auto.n===1?'':'s'} (the text shown at the top of a module) in the course outline file`);
  return w.finish();
 }
 
@@ -1357,7 +1413,12 @@ async function verify(blob){
  const dec=s=>{try{return decodeURIComponent(s)}catch(e){return s}};
  // anchored at '/' (and decoded on both sides) so a missing "1.html" can't be satisfied by "11.html"
  const zhas=h=>{h=dec(h);if(names.has(h))return true;for(const n of names){const d=dec(n);if(d===h||d.endsWith('/'+h))return true;}return false;};
- let miss=0;doc.querySelectorAll('resource file').forEach(f=>{const h=f.getAttribute('href');if(h&&!zhas(h))miss++;});
+ const missing=new Set();doc.querySelectorAll('resource file').forEach(f=>{const h=f.getAttribute('href');if(h&&!zhas(h))missing.add(h);});
+ // D2L packages put the file on the <resource href> itself (backslash paths); a local one absent
+ // from the zip is the "Include course files" box left unticked — say so instead of PASS
+ doc.querySelectorAll('resource[href]').forEach(r=>{const h=(r.getAttribute('href')||'').replace(/\\/g,'/');
+   if(h&&!/^([a-z][a-z0-9+.-]*:|\/|#)/i.test(h)&&!zhas(h))missing.add(h);});
+ const miss=missing.size;
  // in-page refs
  let checked=0,broken=0,unbal=0,styledN=0,blank=0,blobs=/(?:src|href)=(?:"|&quot;)blob:/i.test(man)?1:0;const unbalNotes=[],blankNotes=[];
  let danger=0;const dangerNotes=[];   // security belt: dangerous constructs in OUR output (see scanDanger)
@@ -1521,7 +1582,7 @@ function courseNodes(items){return [...items].filter(x=>x.tagName==='item').map(
   const entry=MODEL.m.htmlEntry(it), ir=it.getAttribute('identifierref')||'', id=it.getAttribute('identifier')||'';
   const desc=(it.getAttribute('description')||'').trim(), kind=MODEL.m.resType[ir]||'';
   const hasIntro=!!desc&&!!id&&!entry;       // a page's own description isn't shown in Brightspace Content
-  if(hasIntro)MODEL.intros[INTRO_KEY+id]=desc;
+  if(hasIntro){MODEL.intros[INTRO_KEY+id]=desc;MODEL.introIsModule[INTRO_KEY+id]=kids.length>0||kind==='contentmodule';}   // only MODULE intros get the card
   return {title:titleOf(it)||'(untitled)',entry,kind,isPage:!!entry,introKey:hasIntro?INTRO_KEY+id:'',
     isModule:kids.length>0||kind==='contentmodule',children:courseNodes(kids)};});}
 function treeHtml(nodes){
@@ -1541,7 +1602,7 @@ function treeHtml(nodes){
  }).join('')+`</ul>`;}
 function renderCourseTree(){
  if(!MODEL){$('#explorer').hidden=true;return;}
- MODEL.intros={};
+ MODEL.intros={};MODEL.introIsModule={};
  const nodes=courseNodes(topModules(MODEL.m.org));
  const pages=[];(function count(ns){ns.forEach(n=>{if(n.isPage||n.introKey)pages.push(n);count(n.children);});})(nodes);
  $('#expl-list').innerHTML=pages.length?treeHtml(nodes):'<p class="cpass" style="padding:.9rem;">No editable pages found in this course.</p>';
@@ -1667,6 +1728,8 @@ $('#go').addEventListener('click',async()=>{
  try{
    const htmlN=Object.keys(m.titleByHref).filter(h=>{const e=m.entryFor(h);return e&&e.toLowerCase().endsWith('.html');}).length;
    log(`Your course: ${zip.entries.length} files, ${htmlN} pages.\n`);
+   if(MODEL.isD2L&&!htmlN){const nI=Object.keys(MODEL.intros||{}).length;
+     log(`Heads-up: this export has NO content pages to style${nI?` — only ${nI} module intro${nI===1?'':'s'} / description${nI===1?'':'s'} (the module intros get the template)`:''}. If you expected pages, the file that opens each topic isn't in the zip: re-export with "Include course files in the export package" ticked.\n`,'warn');}
    if(nEdit){const nI=Object.keys(edits).filter(isIntroKey).length,nP=nEdit-nI;
      const what=[nP?`${nP} page${nP===1?'':'s'}`:'',nI?`${nI} module intro${nI===1?'':'s'}`:''].filter(Boolean).join(' and ');
      log(`You edited ${what} in the explorer — those edits will be written in. Combining short pages is off while there are edits.\n`,'warn');}
@@ -1820,8 +1883,9 @@ const FLOW=(()=>{
  const idx=id=>BLOCKS.findIndex(b=>b.id===id);
 
  /* ---------- generators (model -> inline-styled, paste-ready HTML) ---------- */
- function iconSvg(key,color,size){return (!NO_SVG&&SVG[key])
-   ?`<svg aria-hidden="true" fill="none" stroke="${color}" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" style="width:${size};height:${size};flex-shrink:0;display:block;">${SVG[key]}</svg>`:'';}
+ function iconSvg(key,color,size){if(!SVG[key])return '';
+   return NO_SVG?iconImg(key,color,size)   // description: hosted <img>; page: inline <svg>
+   :`<svg aria-hidden="true" fill="none" stroke="${color}" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" style="width:${size};height:${size};flex-shrink:0;display:block;">${SVG[key]}</svg>`;}
  function paras(txt){return (txt||'').split(/\n{2,}/).map(s=>s.trim()).filter(Boolean)
    .map(s=>`<p style="margin:0 0 .7rem;line-height:1.65;">${esc(s).replace(/\n/g,'<br>')}</p>`).join('');}
 
@@ -1851,7 +1915,7 @@ const FLOW=(()=>{
  }
  function genCallout(m){
    const tok=m.theme,c=COLORS[tok],bg=BG[tok],heading=(m.heading||'').trim();
-   const icon=(!NO_SVG&&m.icon&&SVG[m.icon])?`<div style="flex-shrink:0;margin-top:.1rem;">${iconSvg(m.icon,c,'1.3rem')}</div>`:'';
+   const icon=(m.icon&&SVG[m.icon])?`<div style="flex-shrink:0;margin-top:.1rem;">${iconSvg(m.icon,c,'1.3rem')}</div>`:'';
    const h=heading?`<div style="font-weight:700;color:${c};margin-bottom:.25rem;font-size:1rem;">${esc(heading)}</div>`:'';
    const inner=paras(m.body)||`<span style="color:#9a90a0;">${HINT_BODY}</span>`;
    return `<div style="display:flex;gap:.8rem;background:${bg};border-left:4px solid ${c};border-radius:.7rem;padding:.95rem 1.1rem;margin:1.1rem 0;box-sizing:border-box;">${icon}<div style="min-width:0;">${h}<div style="color:#3a4248;">${inner}</div></div></div>`;
@@ -1893,7 +1957,7 @@ const FLOW=(()=>{
    const linkTitle=title||rawUrl;
    const isMail=url.startsWith('mailto:');
    const dsc=desc?`<div style="color:#5B6770;font-size:.88rem;margin-top:.2rem;">${esc(desc)}</div>`:'';
-   return `<div style="display:flex;align-items:flex-start;gap:.8rem;background:${bg};border-left:4px solid ${c};border-radius:.7rem;padding:.95rem 1.1rem;margin:1.1rem 0;box-sizing:border-box;">${NO_SVG?'':`<div style="flex-shrink:0;margin-top:.1rem;">${iconSvg('link',c,'1.3rem')}</div>`}<div style="min-width:0;"><a href="${xesc(url)}"${isMail?'':' target="_blank" rel="noopener"'} style="font-weight:700;color:${c};text-decoration:underline;text-underline-offset:2px;font-size:1rem;word-break:break-word;">${esc(linkTitle)}</a>${dsc}</div></div>`;}
+   return `<div style="display:flex;align-items:flex-start;gap:.8rem;background:${bg};border-left:4px solid ${c};border-radius:.7rem;padding:.95rem 1.1rem;margin:1.1rem 0;box-sizing:border-box;"><div style="flex-shrink:0;margin-top:.1rem;">${iconSvg('link',c,'1.3rem')}</div><div style="min-width:0;"><a href="${xesc(url)}"${isMail?'':' target="_blank" rel="noopener"'} style="font-weight:700;color:${c};text-decoration:underline;text-underline-offset:2px;font-size:1rem;word-break:break-word;">${esc(linkTitle)}</a>${dsc}</div></div>`;}
 
  const GEN={contacts:genContacts,callout:genCallout,section:genSection,link:genLink};
  const blankPerson=()=>({name:'',role:'',office:'',hours:'',email:'',phone:''});
@@ -1999,6 +2063,7 @@ const FLOW=(()=>{
  // The restyle engine's title strip at the top of a card: a flex row pulled out to the card's
  // edges with negative margins, holding an icon and the page title.
  const isBanner=h=>/^\s*<div[^>]*style="[^"]*margin:-/i.test(h)&&/<svg/i.test(h)&&/<h[1-6]/i.test(h);
+ const isBannerBare=h=>/^\s*<div[^>]*style="[^"]*margin:\s*-/i.test(h)&&/<h[1-6]/i.test(h);   // an intro's banner: no svg
  // Auto-recovery: a card whose header band has the icon badge but NO title <h2> is one whose title
  // was deleted (the old editor could dissolve it -- see the beforeinput guard). Re-insert an empty,
  // colour-matched title <h2> so the teacher can click and name it again (a CSS ghost shows where).
@@ -2497,9 +2562,16 @@ ${inner}
  // module heading, so it gets no card and no banner — just its content as blocks, inside whatever
  // wrapper it arrived in.
  function loadCourseRaw(title,raw,bare){
-   if(bare){const r=importPage(raw),tags=tagsOf(r.wrap);
-     CUR_SHELL={bare:true,open:tags.join(''),banner:'',close:tags.map(t=>'</'+t.match(/^<(\w+)/)[1]+'>').reverse().join('')};
-     BLOCKS=r.blocks.map(h=>({id:uid(),kind:'raw',model:null,html:clean(h)}));
+   if(bare){
+     // A module intro opens in the same RDP card the export writes for it (unless it already wears one),
+     // so an edited intro leaves styled too. Its banner has no svg (descriptions lose it on import).
+     const isMod=!!(MODEL&&MODEL.introIsModule&&MODEL.introIsModule[CUR_ENTRY]);   // a link/quiz blurb stays bare, as the export leaves it
+     const src=!isMod||isTemplatedIntro(raw)?raw:(restyleIntro(title,raw)||raw);
+     const r=importPage(src),tags=tagsOf(r.wrap);let parts=r.blocks;
+     const inCard=tags.length&&/border-radius/i.test(tags[tags.length-1])&&parts.length&&isBannerBare(parts[0]);
+     CUR_SHELL={bare:true,open:tags.join(''),banner:inCard?parts[0]:'',close:tags.map(t=>'</'+t.match(/^<(\w+)/)[1]+'>').reverse().join('')};
+     if(inCard)parts=parts.slice(1);
+     BLOCKS=parts.map(h=>({id:uid(),kind:'raw',model:null,html:clean(h)}));
      WRAP=null;HIST=[];REDO=[];SEL=null;LAST=null;EDIT_SNAP=null;CUR_BASE=pageSig();return;}
    const tpl=isTemplated(raw);
    const r=importPage(tpl?raw:renderStandalone(title,raw));
