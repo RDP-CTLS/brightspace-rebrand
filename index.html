@@ -147,9 +147,21 @@
   #log{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;background:#0f1b18;color:#cfe9da;
        border-radius:.7rem;padding:.9rem 1rem;white-space:pre-wrap;max-height:260px;overflow:auto;margin-top:1rem;display:none;}
   .pass{color:#7ee0a6;font-weight:700;} .warn{color:#ffd27d;font-weight:700;} .err{color:#ff9b9b;font-weight:700;}
-  .dl{display:inline-block;background:var(--forest);color:#fff;text-decoration:none;border-radius:.6rem;
-      padding:.7rem 1.1rem;margin:.35rem .5rem .35rem 0;font-weight:700;font-size:.95rem;}
-  .dl.safe{background:var(--done);}
+  #downloads{display:flex;flex-wrap:wrap;gap:.6rem;align-items:stretch;margin:.2rem 0 0;}
+  .dl{display:flex;flex-direction:column;justify-content:center;background:var(--plum);color:#fff;text-decoration:none;border-radius:.6rem;
+      padding:.65rem 1.1rem;font-weight:700;font-size:1rem;border:1.5px solid var(--plum);max-width:100%;min-width:0;}
+  .dl[hidden]{display:none;}
+  .dl .dl-t{display:block;}
+  .dl .dl-s{display:block;font-weight:500;font-size:.8rem;opacity:.9;margin-top:.1rem;}
+  .dl .dl-f{display:block;font-weight:400;font-size:.72rem;opacity:.75;margin-top:.15rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:26rem;}
+  .dl.sec{background:#fff;color:var(--forest);border-color:var(--s-border);}
+  .dl.sec:hover{background:var(--s-subdued);}
+  .s3-check{margin:0 0 .8rem;font-size:.92rem;color:var(--forest);font-weight:600;}
+  .s3-check:empty{display:none;}
+  .s3-check.warn{color:#8a5a00;}
+  .s3-then{margin:1rem 0 0;font-weight:700;}
+  .copymsg{margin:.6rem 0 0;font-size:.92rem;min-height:1.3em;color:var(--forest);font-weight:600;}
+  .copymsg.err{color:var(--danger);}
 
   /* ---- Stage 2, course: the explorer (Brightspace-familiar outline + inline page editor) ---- */
   /* When a course is loaded the working column breaks wider so the outline + edit pane both fit. */
@@ -447,9 +459,9 @@
         <details class="s2-more">
           <summary class="muted" style="cursor:pointer;">More choices (you can skip these)</summary>
           <div class="opts">
-            <label><input type="radio" name="mode" value="both" checked> Make both versions (recommended)</label>
+            <label><input type="radio" name="mode" value="both" checked> Both versions (recommended)</label>
             <label><input type="radio" name="mode" value="restyle"> Styled only</label>
-            <label><input type="radio" name="mode" value="combine"> Styled + combined only</label>
+            <label><input type="radio" name="mode" value="combine"> Merged only</label>
           </div>
         </details>
         <pre id="log" role="status" aria-live="polite"></pre>
@@ -504,17 +516,27 @@
       <p class="muted" id="s3-wait" style="margin:0;">After step 2.</p>
 
       <div id="s3-course" hidden>
+        <p class="s3-check" id="s3-check" role="status"></p>
         <div id="downloads"></div>
-        <p class="muted" style="margin:.3rem 0 0;"><b>Template Applied</b> is your course restyled. <b>Condensed Content</b> is the same with the ticked modules' back-to-back pages merged into one. If the condensed one looks off, use the plain one.</p>
-        <p style="margin:.9rem 0 0;">Then, in Brightspace: <b>Course Admin → Import / Export / Copy Components → Import Components → Start</b>, upload the file, <b>Import All Components</b>.</p>
-        <div class="note" style="background:#f0e8f0;border-color:#d8c4d7;"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-.15em;margin-right:.35em;"><path d="M9 18h6"></path><path d="M10 22h4"></path><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5.76.76 1.23 1.52 1.41 2.5"></path></svg>The import <i>adds</i> the restyled pages as new modules and never overwrites, so delete the old modules afterwards to avoid two copies. Your real course is never touched by this tool.</div>
+        <p class="s3-then">Then, in Brightspace:</p>
+        <ol class="steps">
+          <li>Go to <b>Course Admin → Import / Export / Copy Components</b>.</li>
+          <li>Choose <b>Import Components → Start</b>, upload the file, then <b>Import All Components</b>.</li>
+          <li>Open <b>Content</b> and look it over. If a module now shows up twice, delete the older copy.</li>
+        </ol>
+        <p class="muted" style="margin:.7rem 0 0;font-size:.88rem;">Your real course isn't changed by this tool — only by the import you run in Brightspace.</p>
       </div>
 
       <div id="s3-page" hidden>
         <div class="act" style="margin-top:0;justify-content:flex-start;"><button class="pri" type="button" id="pg-copy" aria-describedby="pg-copyhint">Copy page</button>
           <span id="pg-copyhint" class="muted">add a block or load a page first</span></div>
-        <div class="then">Then in Brightspace, open the page for editing: <b>Source Code</b> <span class="ext">&lt;/&gt;</span> <span class="arrow">→</span> <b>select all</b> <span class="arrow">→</span> <b>paste</b> <span class="arrow">→</span> <b>Save.</b>
-          <span class="muted">It pastes over everything that was there.</span></div>
+        <p class="copymsg" id="pg-copymsg" role="status" aria-live="polite"></p>
+        <p class="s3-then">Then, in Brightspace:</p>
+        <ol class="steps">
+          <li>Open the page for editing and click <b>Source Code</b> <span class="ext">&lt;/&gt;</span>.</li>
+          <li><b>Select all</b>, then <b>paste</b> — it replaces everything that was there.</li>
+          <li><b>Save.</b></li>
+        </ol>
         <p class="muted" id="newpage-hint" style="margin:.5rem 0 0;">Adding a new page? In your course go to <b>Content</b>, open the module, <b>Upload / Create → Create a File</b>, give it a title, then <b>Source Code</b> and paste.</p>
         <details style="margin-top:.9rem;">
           <summary class="muted" style="cursor:pointer;">View the code</summary>
@@ -1880,25 +1902,52 @@ window.addEventListener('beforeunload',e=>{if(EDITOR&&EDITOR.hasCourseEdits()){e
 // leaking them. Revoking only happens when downloads are replaced, so an in-flight download
 // (which already holds its own reference to the blob) is unaffected.
 let dlUrls=[];
-function clearDownloads(){dlUrls.forEach(u=>URL.revokeObjectURL(u));dlUrls=[];$('#downloads').innerHTML='';}
+function clearDownloads(){dlUrls.forEach(u=>URL.revokeObjectURL(u));dlUrls=[];$('#downloads').innerHTML='';$('#s3-check').textContent='';}
+// Short label on the button, the real filename underneath. safe = the plain styled build; otherwise the merged one.
 function dlButton(blob,name,safe){const url=URL.createObjectURL(blob);dlUrls.push(url);const a=document.createElement('a');
- a.href=url;a.download=name;a.className='dl'+(safe?' safe':'');
- a.innerHTML='<span aria-hidden="true">⬇ </span>'+esc(name);a.addEventListener('click',()=>FLOW.downloaded(name));$('#downloads').appendChild(a);}
+ a.href=url;a.download=name;a.className='dl';a.dataset.kind=safe?'plain':'merged';
+ a.innerHTML=`<span class="dl-t"><span aria-hidden="true">⬇ </span>${safe?'Template applied':'Pages merged'}</span><span class="dl-s"></span><span class="dl-f">${esc(name)}</span>`;
+ a.addEventListener('click',()=>FLOW.downloaded(name));$('#downloads').appendChild(a);}
 
 // One export build finished: verify it, then OFFER the download only when the security belt is clean.
 // A dangerous construct in our OWN output is a bug — nothing unsanitized should reach Brightspace — so
 // the download is withheld rather than shipped. Cosmetic warnings (blob / tag balance / icons) still
 // download exactly as before; only a security danger blocks.
+let CHECKS=[];   // one {ok,withheld} per build this run, for Step 3's one-line result
 async function checkAndOffer(b,name,safe){
  log('Double-checking it:');
- const {danger}=await verify(b);
+ const {ok,danger}=await verify(b);CHECKS.push({ok,withheld:!!danger});
  if(danger){log('  This download was WITHHELD: the checks found unsafe content in the output above, and nothing unsafe should ever reach Brightspace. Nothing was saved. Please report this.','err');log('');return false;}
  dlButton(b,name,safe);log('');return true;
 }
+// How many pages a merge folds in (same grouping the export used), for Step 3's labels.
+async function mergeCount(keep){const M=MODEL;let groups;
+ if(M.isD2L){if(M.side===undefined)M.side=await d2lSidecars(M.zip);groups=combineGroupsD2L(M.man,M.m,keep,M.side).groups;}
+ else groups=combineGroups(M.m,keep);
+ return {folded:groups.reduce((a,g)=>a+g.members.length-1,0),groups:groups.length};}
+// Step 3: one main download (the merged one when Merge did something), the other as the fallback,
+// and one line saying what was built and whether the checks passed.
+async function presentStep3(mc,edits){
+ const plain=$('#downloads a[data-kind="plain"]'),merged=$('#downloads a[data-kind="merged"]'),folded=mc?mc.folded:0;
+ if(merged&&plain&&!folded){merged.hidden=true;}                          // nothing merged: the two files are identical
+ const main=merged&&folded?merged:(plain||merged),back=main===merged?plain:null;
+ [plain,merged].forEach(a=>{if(a)a.classList.toggle('sec',a!==main);});
+ if(main===merged&&folded)merged.querySelector('.dl-s').textContent=`${folded} fewer page${folded===1?'':'s'}, as you chose`;
+ if(back)back.querySelector('.dl-s').textContent='No merging — use this if the merged one looks off';
+ if(main)main.style.order='-1';   // shown first; DOM order (and so the build order) stays as built
+ const m=MODEL.m,nPages=Object.keys(m.titleByHref).filter(h=>{const e=m.entryFor(h);return e&&e.toLowerCase().endsWith('.html');}).length;
+ const nIntros=Object.values(MODEL.introIsModule||{}).filter(Boolean).length,nEdit=Object.keys(edits||{}).length;
+ const what=[nPages?`${nPages} page${nPages===1?'':'s'}`:'',nIntros?`${nIntros} module intro${nIntros===1?'':'s'}`:''].filter(Boolean).join(' and ');
+ const parts=[what?`${what} restyled`:'Built'];
+ if(nEdit)parts.push(`your ${nEdit} edit${nEdit===1?'':'s'} included`);
+ if(folded)parts.push(`${folded} page${folded===1?'':'s'} merged into ${mc.groups}`);
+ const withheld=CHECKS.some(c=>c.withheld),warned=CHECKS.some(c=>!c.ok);
+ parts.push(withheld?'a download was withheld for safety — open Step 2 to see why':warned?'the checks flagged something — open Step 2 to see the details':'all checks passed');
+ const el=$('#s3-check');el.textContent=(warned?'⚠ ':'✓ ')+parts.join(' · ');el.classList.toggle('warn',warned);}
 $('#go').addEventListener('click',async()=>{
  if(!FILE||!MODEL)return;
  if(typeof CompressionStream==='undefined'){log('Your browser is too old — please use a recent Chrome or Edge.','err');return;}
- $('#go').disabled=true;$('#log').textContent='';$('#log').style.display='block';clearDownloads();
+ $('#go').disabled=true;$('#log').textContent='';$('#log').style.display='block';clearDownloads();CHECKS=[];
  // Edits made in the explorer. When there are any, we export the styled ("Template Applied") build
  // only — merging pages is turned off, because the combine path re-reads the raw bodies and
  // wouldn't pick up the edits (and merging an edited page in raises the double-card trap).
@@ -1955,7 +2004,9 @@ $('#go').addEventListener('click',async()=>{
      await checkAndOffer(b,`${base} - Template Applied (Condensed Content).imscc`,false);
    }
    }
-   log('All done!','pass');FLOW.built();
+   log('All done!','pass');
+   await presentStep3(mode==='restyle'?0:await mergeCount(keep),edits);
+   FLOW.built();
  }catch(err){log('Something went wrong: '+err.message,'err');console.error(err);}
  $('#go').disabled=false;
 });
@@ -2694,6 +2745,7 @@ ${inner}
    FLOW.page('blank',0);note('');});
  B('pg-next').addEventListener('click',()=>{
    if(!BLOCKS.length){note('Add a block first, or paste a page in step 1.');return;}
+   B('pg-copymsg').textContent='';
    FLOW.pageNext(BLOCKS.length);});
  B('pg-frame-rm').addEventListener('click',()=>{snap();WRAP=frameTags().filter(t=>!styledTag(t)).join('')||null;renderCanvas();
    note('Frame removed — the blocks now sit straight on the page.',true);});
@@ -2713,8 +2765,10 @@ ${inner}
      const d=t.closest('details'),was=d&&d.open;try{if(d)d.open=true;t.select();ok=document.execCommand('copy');}catch(_){}finally{if(d&&!was)d.open=false;window.getSelection().removeAllRanges();}}
    btn.textContent=ok?'Copied ✓':'Copy page';btn.classList.toggle('ok',ok);
    if(ok)FLOW.copied();
-   note(ok?'Copied. Now in Brightspace: Source Code (</>), select all, paste, Save.'
-          :'Copying didn’t work here — open "View the code" below, select it all, and copy by hand.');
+   // Said in Step 3 itself (Step 2's note is hidden by now); on failure, open the code for a by-hand copy.
+   const cm=B('pg-copymsg');cm.classList.toggle('err',!ok);
+   cm.textContent=ok?'Copied ✓ — now follow the steps below.':'Copying didn’t work here — the code is open below: click in it, select all, and copy by hand.';
+   if(!ok){const d=t.closest('details');if(d)d.open=true;}
    setTimeout(()=>{btn.textContent='Copy page';btn.classList.remove('ok');},1600);});
 
  /* ---------- course-explorer editing: drive this canvas from an imported course page ---------- */
