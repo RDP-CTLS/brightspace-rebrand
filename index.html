@@ -160,7 +160,7 @@
   .expl-tree-head .ctools{display:flex;align-items:center;gap:.35rem;margin-top:.3rem;font-weight:500;font-size:.8rem;color:var(--s-muted);flex-wrap:wrap;}
   .expl-tree-head .ctools .linkbtn{font-size:.8rem;}
   .expl-tree-head .cmergenote{margin:.25rem 0 0;font-weight:500;font-size:.74rem;line-height:1.35;color:var(--s-muted);}
-  /* Top-level modules: a fold toggle + the "Merge" tick for combining short pages. */
+  /* Top-level modules: a fold toggle + the "Merge" tick for combining back-to-back pages. */
   .cgroup{border-top:1px solid var(--s-active);}
   .cgroup:first-child{border-top:0;}
   .cmodhead{display:flex;align-items:center;gap:.3rem;padding:.25rem .6rem .25rem .35rem;}
@@ -442,7 +442,7 @@
           <div class="expl">
             <aside class="expl-tree"><div class="expl-tree-head"><div class="ctitle">Course outline<span class="cfold"><button type="button" class="iconbtn" id="fold-open" title="Expand all modules" aria-label="Expand all modules"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 15l5 5 5-5"></path><path d="M7 9l5-5 5 5"></path></svg></button><button type="button" class="iconbtn" id="fold-shut" title="Collapse all modules" aria-label="Collapse all modules"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 20l5-5 5 5"></path><path d="M7 4l5 5 5-5"></path></svg></button></span></div>
               <div class="cfilter"><input type="search" id="cx-filter" placeholder="Find a page…" aria-label="Find a page in the outline" autocomplete="off" spellcheck="false"></div>
-              <div class="ctools"><span title="Tick Merge on a module to fold its back-to-back pages into fewer, longer ones. The outline shows what would merge.">Merge short pages:</span> <button type="button" class="linkbtn" id="merge-all">All</button> &middot; <button type="button" class="linkbtn" id="merge-none">None</button></div>
+              <div class="ctools"><span title="Tick Merge on a module to fold each run of back-to-back pages into one. The outline shows what would merge.">Merge pages:</span> <button type="button" class="linkbtn" id="merge-all">All</button> &middot; <button type="button" class="linkbtn" id="merge-none">None</button></div>
               <p class="cmergenote" id="merge-note"></p></div><div id="expl-list" aria-label="Course outline"></div><p class="cpass" id="cx-nomatch" hidden style="padding:.9rem;">No pages match.</p></aside>
             <div class="expl-edit">
               <div id="cx-empty" class="expl-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6"></path><path d="M4 6h16M4 10h16M4 14h10"></path></svg>
@@ -495,7 +495,7 @@
 
       <div id="s3-course" hidden>
         <div id="downloads"></div>
-        <p class="muted" style="margin:.3rem 0 0;"><b>Template Applied</b> is your course restyled. <b>Condensed Content</b> is the same with the ticked modules' short pages merged. If the condensed one looks off, use the plain one.</p>
+        <p class="muted" style="margin:.3rem 0 0;"><b>Template Applied</b> is your course restyled. <b>Condensed Content</b> is the same with the ticked modules' back-to-back pages merged into one. If the condensed one looks off, use the plain one.</p>
         <p style="margin:.9rem 0 0;">Then, in Brightspace: <b>Course Admin → Import / Export / Copy Components → Import Components → Start</b>, upload the file, <b>Import All Components</b>.</p>
         <div class="note" style="background:#f0e8f0;border-color:#d8c4d7;"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-.15em;margin-right:.35em;"><path d="M9 18h6"></path><path d="M10 22h4"></path><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5.76.76 1.23 1.52 1.41 2.5"></path></svg>The import <i>adds</i> the restyled pages as new modules and never overwrites, so delete the old modules afterwards to avoid two copies. Your real course is never touched by this tool.</div>
       </div>
@@ -1663,7 +1663,7 @@ function groupsHtml(nodes){
    return `<li class="cgroup"><div class="cmodhead">`
      +`<button type="button" class="ctoggle" aria-expanded="true"${empty?' disabled':` aria-controls="cg-${i}"`}>${empty?CHEV.replace('class="cchev"','class="cchev" style="visibility:hidden"'):CHEV}<span class="cmodtitle">${esc(n.title)}</span>`
      +`<span class="ccount" title="${k} page${k===1?'':'s'} to edit">${k}</span><span class="cdot" data-editdot hidden title="Has edits"></span></button>`
-     +`<label class="cmerge" title="Merge this module's short pages into fuller ones">${chk} aria-label="Merge short pages in ${xesc(n.title)}">Merge</label></div>`
+     +`<label class="cmerge" title="Fold each run of back-to-back pages in this module into one">${chk} aria-label="Merge pages in ${xesc(n.title)}">Merge</label></div>`
      +inner.replace(/^<ul class="ctree">/,`<ul class="ctree" id="cg-${i}">`)+`</li>`;
  }).join('')+`</ul>`;}
 function foldGroup(g,open){const t=g&&g.querySelector(':scope>.cmodhead>.ctoggle');if(!t)return;
@@ -1883,7 +1883,7 @@ $('#go').addEventListener('click',async()=>{
  if(typeof CompressionStream==='undefined'){log('Your browser is too old — please use a recent Chrome or Edge.','err');return;}
  $('#go').disabled=true;$('#log').textContent='';$('#log').style.display='block';clearDownloads();
  // Edits made in the explorer. When there are any, we export the styled ("Template Applied") build
- // only — combining short pages is turned off, because the combine path re-reads the raw bodies and
+ // only — merging pages is turned off, because the combine path re-reads the raw bodies and
  // wouldn't pick up the edits (and merging an edited page in raises the double-card trap).
  const edits=EDITOR?EDITOR.courseEdits():{};const nEdit=Object.keys(edits).length;
  const mode=nEdit?'restyle':document.querySelector('input[name=mode]:checked').value;
@@ -1900,7 +1900,7 @@ $('#go').addEventListener('click',async()=>{
      log(`Heads-up: this export has NO content pages to style${nI?` — only ${nI} module intro${nI===1?'':'s'} / description${nI===1?'':'s'} (the module intros get the template)`:''}. If you expected pages, the file that opens each topic isn't in the zip: re-export with "Include course files in the export package" ticked.\n`,'warn');}
    if(nEdit){const nI=Object.keys(edits).filter(isIntroKey).length,nP=nEdit-nI;
      const what=[nP?`${nP} page${nP===1?'':'s'}`:'',nI?`${nI} module intro${nI===1?'':'s'}`:''].filter(Boolean).join(' and ');
-     log(`You edited ${what} in the explorer — those edits will be written in. Combining short pages is off while there are edits.\n`,'warn');}
+     log(`You edited ${what} in the explorer — those edits will be written in. Merging pages is off while there are edits.\n`,'warn');}
    // Items that arrived with NO content and NO children were emptied by Brightspace's OWN
    // export (it leaves out web links, quizzes, hidden topics, ...). Say so up front —
    // otherwise the conversion gets blamed for content this file never contained.
@@ -1922,7 +1922,7 @@ $('#go').addEventListener('click',async()=>{
        await checkAndOffer(b,`${base} - Template Applied.zip`,true);
      }
      if(mode==='combine'||mode==='both'){
-       log('Applying the style, and combining short pages …');let b=await buildCombineD2L(zip,man,m,keep);
+       log('Applying the style, and merging pages …');let b=await buildCombineD2L(zip,man,m,keep);
        b=await repairRefs(b);
        await checkAndOffer(b,`${base} - Template Applied (Condensed Content).zip`,false);
      }
@@ -1933,7 +1933,7 @@ $('#go').addEventListener('click',async()=>{
      await checkAndOffer(b,`${base} - Template Applied.imscc`,true);
    }
    if(mode==='combine'||mode==='both'){
-     log('Applying the style, and combining short pages …');let b=await buildCombine(zip,man,m,keep,true);
+     log('Applying the style, and merging pages …');let b=await buildCombine(zip,man,m,keep,true);
      b=await repairRefs(b);
      await checkAndOffer(b,`${base} - Template Applied (Condensed Content).imscc`,false);
    }
