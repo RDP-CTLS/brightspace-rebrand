@@ -137,10 +137,6 @@
   /* ---- Stage 2, course ---- */
   .opts{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;margin-top:.6rem;font-size:.92rem;}
   .opts label{display:flex;align-items:center;gap:.4rem;}
-  #modlist{margin-top:.3rem;}
-  .modrow{display:flex;align-items:center;gap:.55rem;padding:.4rem .2rem;border-top:1px solid var(--border);font-size:.95rem;cursor:pointer;}
-  .modrow:first-child{border-top:0;}
-  .modrow input{width:1.1rem;height:1.1rem;flex-shrink:0;}
   #log{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;background:#0f1b18;color:#cfe9da;
        border-radius:.7rem;padding:.9rem 1rem;white-space:pre-wrap;max-height:260px;overflow:auto;margin-top:1rem;display:none;}
   .pass{color:#7ee0a6;font-weight:700;} .warn{color:#ffd27d;font-weight:700;} .err{color:#ff9b9b;font-weight:700;}
@@ -151,18 +147,43 @@
   /* ---- Stage 2, course: the explorer (Brightspace-familiar outline + inline page editor) ---- */
   /* When a course is loaded the working column breaks wider so the outline + edit pane both fit. */
   .wrap.wide{max-width:1180px;}
-  .expl{display:grid;grid-template-columns:280px minmax(0,1fr);gap:1.1rem;margin:.2rem 0 1.1rem;align-items:start;}
+  .expl{display:grid;grid-template-columns:300px minmax(0,1fr);gap:1.1rem;margin:.2rem 0 1.1rem;align-items:start;}
   @media (max-width:820px){.expl{grid-template-columns:1fr;}}
   .expl-tree{border:1px solid var(--s-border);border-radius:.8rem;background:var(--s-surface);box-shadow:var(--el1);
         position:sticky;top:4.3rem;max-height:calc(100vh - 5.6rem);overflow:auto;}
   @media (max-width:820px){.expl-tree{position:static;max-height:320px;}}
   .expl-tree-head{font-weight:700;color:var(--plum);font-size:.85rem;padding:.7rem .9rem;border-bottom:1px solid var(--s-border);
         background:var(--s-subdued);position:sticky;top:0;z-index:1;}
+  .expl-tree-head .ctitle{display:flex;align-items:center;gap:.5rem;}
+  .expl-tree-head .cfold{margin-left:auto;display:flex;gap:.2rem;}
+  .expl-tree-head .cfold .iconbtn{width:1.6rem;height:1.6rem;}
+  .expl-tree-head .ctools{display:flex;align-items:center;gap:.35rem;margin-top:.3rem;font-weight:500;font-size:.8rem;color:var(--s-muted);flex-wrap:wrap;}
+  .expl-tree-head .ctools .linkbtn{font-size:.8rem;}
+  .expl-tree-head .cmergenote{margin:.25rem 0 0;font-weight:500;font-size:.74rem;line-height:1.35;color:var(--s-muted);}
+  /* Top-level modules: a fold toggle + the "Merge" tick for combining short pages. */
+  .cgroup{border-top:1px solid var(--s-active);}
+  .cgroup:first-child{border-top:0;}
+  .cmodhead{display:flex;align-items:center;gap:.3rem;padding:.25rem .6rem .25rem .35rem;}
+  .ctoggle{display:flex;align-items:center;gap:.35rem;flex:1;min-width:0;background:none;border:0;padding:.4rem .3rem;
+        font:inherit;font-weight:700;font-size:.84rem;line-height:1.3;color:var(--s-text);
+        text-align:left;cursor:pointer;border-radius:.4rem;}
+  .ctoggle:hover{background:var(--s-subdued);}
+  .ctoggle .cchev{width:.9rem;height:.9rem;flex-shrink:0;color:var(--s-muted);transition:transform .15s;}
+  .ctoggle[aria-expanded="false"] .cchev{transform:rotate(-90deg);}
+  .ctoggle .cmodtitle{min-width:0;}
+  .ccount{flex-shrink:0;font-size:.68rem;font-weight:700;color:var(--s-muted);background:var(--s-subdued);border-radius:999px;padding:.05rem .4rem;letter-spacing:0;}
+  .cdot{flex-shrink:0;width:.45rem;height:.45rem;border-radius:50%;background:var(--plum);}
+  .cmerge{display:flex;align-items:center;gap:.3rem;flex-shrink:0;font-size:.74rem;font-weight:600;color:var(--s-muted);cursor:pointer;
+        padding:.2rem .4rem;border-radius:.4rem;border:1px solid transparent;}
+  .cmerge:hover{background:var(--s-subdued);}
+  .cmerge input{width:.95rem;height:.95rem;margin:0;accent-color:var(--plum);}
+  .cmerge:has(input:checked){color:var(--plum);background:var(--plum-tint);border-color:#e0cfe0;}
+  .expl-tree.nomerge .cmerge{opacity:.45;pointer-events:none;}
+  .cgroup > .ctree{padding-top:0;}
   .ctree{list-style:none;margin:0;padding:.3rem 0 .5rem;}
   .ctree .ctree{padding:0 0 0 .7rem;margin-left:.35rem;border-left:1px solid var(--s-active);}
   .ctree li{margin:0;}
-  .cmodule{font-weight:700;color:var(--s-text);font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;
-        padding:.6rem .9rem .25rem;}
+  .cmodule{font-weight:700;color:var(--s-muted);font-size:.8rem;line-height:1.3;padding:.6rem .9rem .25rem;}
   .ctopic{display:flex;align-items:center;gap:.5rem;width:100%;text-align:left;background:none;border:0;
         padding:.4rem .9rem;font:inherit;font-weight:500;font-size:.88rem;color:var(--forest);cursor:pointer;border-radius:0;}
   .ctopic:hover{background:var(--s-subdued);}
@@ -394,9 +415,11 @@
              block editor (same move/delete/undo experience as the single-page tool). Edits are kept in
              memory and written into the course on export. -->
         <div id="explorer" hidden>
-          <p class="muted" style="margin:.2rem 0 .7rem;">Explore your course below and open any page or module intro to tweak it — move, delete, or add blocks, just like editing a single page. What you change is applied when you export. Anything you don't open is handled exactly as before.</p>
+          <p class="muted" style="margin:.2rem 0 .7rem;">Explore your course below and open any page or module intro to tweak it — move, delete, or add blocks, just like editing a single page. What you change is applied when you export. Anything you don't open is handled exactly as before. Want fewer pages to click through? Tick <b>Merge</b> on a module.</p>
           <div class="expl">
-            <aside class="expl-tree"><div class="expl-tree-head">Course outline</div><div id="expl-list" aria-label="Course outline"></div></aside>
+            <aside class="expl-tree"><div class="expl-tree-head"><div class="ctitle">Course outline<span class="cfold"><button type="button" class="iconbtn" id="fold-open" title="Expand all modules" aria-label="Expand all modules"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 15l5 5 5-5"></path><path d="M7 9l5-5 5 5"></path></svg></button><button type="button" class="iconbtn" id="fold-shut" title="Collapse all modules" aria-label="Collapse all modules"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 20l5-5 5 5"></path><path d="M7 4l5 5 5-5"></path></svg></button></span></div>
+              <div class="ctools">Merge short pages: <button type="button" class="linkbtn" id="merge-all">All</button> &middot; <button type="button" class="linkbtn" id="merge-none">None</button></div>
+              <p class="cmergenote" id="merge-note"></p></div><div id="expl-list" aria-label="Course outline"></div></aside>
             <div class="expl-edit">
               <div id="cx-empty" class="expl-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6"></path><path d="M4 6h16M4 10h16M4 14h10"></path></svg><p style="margin:0;">Pick a page from the outline to preview and edit it here.</p></div>
               <div id="cx-pane" hidden>
@@ -407,12 +430,6 @@
           </div>
         </div>
 
-        <div id="combinebox" style="margin-top:.4rem;">
-          <p style="margin:.2rem 0 .2rem;font-weight:700;">Want fewer pages to click through? <span class="muted" style="font-weight:400;">(optional)</span></p>
-          <p class="muted" style="margin:0 0 .4rem;">Tick a module and its short pages (a sentence, a single link) get merged into fuller ones. Untouched modules keep every page as it is.
-            &nbsp;<button type="button" id="ticktoggle" class="linkbtn">Tick all</button></p>
-          <div id="modlist" aria-live="polite"></div>
-        </div>
         <details style="margin-top:.8rem;">
           <summary class="muted" style="cursor:pointer;">More choices (you can skip these)</summary>
           <div class="opts">
@@ -1544,8 +1561,6 @@ async function setFile(f){
    const isD2L=/desire2learn\.com\/xsd\/d2lcp/i.test(man);
    MODEL={zip,man,m,isD2L};
    $('#pkgnote').classList.toggle('hide',!isD2L);
-   $('#ticktoggle').textContent='Tick all';
-   renderModules(m);
    renderCourseTree();
    $('#go').disabled=false;
    const pages=Object.keys(m.titleByHref).filter(hh=>{const e=m.entryFor(hh);return e&&e.toLowerCase().endsWith('.html');}).length;
@@ -1558,16 +1573,6 @@ function topModules(org){
  while(kids.length===1 && !titleOf(kids[0]).trim() && [...kids[0].children].some(c=>c.tagName==='item'))
    kids=[...kids[0].children].filter(c=>c.tagName==='item');
  return kids;
-}
-function renderModules(m){
- const tops=topModules(m.org);
- if(!tops.length){$('#modlist').innerHTML='<span class="muted">No modules found in this course.</span>';return;}
- // Default: nothing ticked — the user picks which sections to combine (opt-in).
- $('#modlist').innerHTML=tops.map((it,i)=>{
-   const t=titleOf(it)||('(untitled section '+(i+1)+')');
-   const id=it.getAttribute('identifier')||'';
-   return `<label class="modrow"><input type="checkbox" class="modchk" data-id="${xesc(id)}" data-title="${xesc(t)}"><span>${esc(t)}</span></label>`;
- }).join('');
 }
 /* ---------- Course explorer: a Brightspace-familiar outline; click a page to edit it in place ---------- */
 // Non-page items (quizzes, links, assignments…) show a "passes through" chip instead of being clickable.
@@ -1590,29 +1595,58 @@ function courseNodes(items){return [...items].filter(x=>x.tagName==='item').map(
   const desc=(it.getAttribute('description')||'').trim(), kind=MODEL.m.resType[ir]||'';
   const hasIntro=!!desc&&!!id&&!entry;       // a page's own description isn't shown in Brightspace Content
   if(hasIntro){MODEL.intros[INTRO_KEY+id]=desc;MODEL.introIsModule[INTRO_KEY+id]=kids.length>0||kind==='contentmodule';}   // only MODULE intros get the card
-  return {title:titleOf(it)||'(untitled)',entry,kind,isPage:!!entry,introKey:hasIntro?INTRO_KEY+id:'',
+  return {id,title:titleOf(it)||'(untitled)',entry,kind,isPage:!!entry,introKey:hasIntro?INTRO_KEY+id:'',
     isModule:kids.length>0||kind==='contentmodule',children:courseNodes(kids)};});}
 function treeHtml(nodes){
  const edited=`<span class="cedited" data-edited hidden>Edited</span>`;
  return `<ul class="ctree">`+nodes.map(n=>{
    let row,intro='';
-   if(n.isPage) row=`<button type="button" class="ctopic" data-entry="${xesc(n.entry)}" data-title="${xesc(n.title)}">`
+   if(n.isPage) row=`<button type="button" class="ctopic" data-entry="${xesc(n.entry)}" data-title="${xesc(n.title)}" title="${xesc(n.title)}">`
        +PAGE_ICON+`<span class="clabel">${esc(n.title)}</span>${edited}</button>`;
    else if(n.isModule&&(n.children.length||n.introKey)){row=`<div class="cmodule">${esc(n.title)}</div>`;
      if(n.introKey)intro=`<li><button type="button" class="ctopic cintro" data-entry="${xesc(n.introKey)}" data-title="${xesc(n.title)}" data-kicker="Editing module intro">`
        +INTRO_ICON+`<span class="clabel">Module intro</span>${edited}</button></li>`;}
-   else if(n.introKey) row=`<button type="button" class="ctopic cintro" data-entry="${xesc(n.introKey)}" data-title="${xesc(n.title)}" data-kicker="Editing description">`
+   else if(n.introKey) row=`<button type="button" class="ctopic cintro" data-entry="${xesc(n.introKey)}" data-title="${xesc(n.title)}" title="${xesc(n.title)}" data-kicker="Editing description">`
        +INTRO_ICON+`<span class="clabel">${esc(n.title)}</span>${edited}<span class="chip-pass">${esc(passLabel(n.kind))} · description</span></button>`;
-   else row=`<div class="cpass"><span class="clabel">${esc(n.title)}</span><span class="chip-pass">${esc(passLabel(n.kind))}</span></div>`;
+   else row=`<div class="cpass" title="${xesc(n.title)}"><span class="clabel">${esc(n.title)}</span><span class="chip-pass">${esc(passLabel(n.kind))}</span></div>`;
    const sub=intro||n.children.length?`<ul class="ctree">${intro}${n.children.length?treeHtml(n.children).replace(/^<ul class="ctree">|<\/ul>$/g,''):''}</ul>`:'';
    return `<li>${row}${sub}</li>`;
  }).join('')+`</ul>`;}
+// Each top-level module is a foldable group whose header carries the "Merge" tick. Those .modchk boxes
+// are what the export reads (unticked = kept as-is), so EVERY top-level item gets one, even if it isn't
+// a module — otherwise a missing box would read as "merge it".
+const CHEV='<svg class="cchev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>';
+function editableCount(n){return (n.isPage||n.introKey?1:0)+n.children.reduce((a,c)=>a+editableCount(c),0);}
+function groupsHtml(nodes){
+ return `<ul class="ctree">`+nodes.map((n,i)=>{
+   const chk=`<input type="checkbox" class="modchk" data-id="${xesc(n.id)}" data-title="${xesc(n.title)}"`;
+   if(!n.isModule)return `<li class="cgroup">${treeHtml([n]).replace(/^<ul class="ctree"><li>|<\/li><\/ul>$/g,'')}${chk} hidden></li>`;
+   const k=editableCount(n),empty=!n.children.length&&!n.introKey;   // treeHtml draws an empty module as a plain row
+   const inner=empty?'':treeHtml([n]).replace(/^<ul class="ctree"><li><div class="cmodule">.*?<\/div>|<\/li><\/ul>$/g,'');
+   return `<li class="cgroup"><div class="cmodhead">`
+     +`<button type="button" class="ctoggle" aria-expanded="true"${empty?' disabled':` aria-controls="cg-${i}"`}>${empty?CHEV.replace('class="cchev"','class="cchev" style="visibility:hidden"'):CHEV}<span class="cmodtitle">${esc(n.title)}</span>`
+     +`<span class="ccount" title="${k} page${k===1?'':'s'} to edit">${k}</span><span class="cdot" data-editdot hidden title="Has edits"></span></button>`
+     +`<label class="cmerge" title="Merge this module's short pages into fuller ones">${chk} aria-label="Merge short pages in ${xesc(n.title)}">Merge</label></div>`
+     +inner.replace(/^<ul class="ctree">/,`<ul class="ctree" id="cg-${i}">`)+`</li>`;
+ }).join('')+`</ul>`;}
+function foldGroup(g,open){const t=g&&g.querySelector(':scope>.cmodhead>.ctoggle');if(!t)return;
+ t.setAttribute('aria-expanded',open);const u=g.querySelector(':scope>.ctree');if(u)u.hidden=!open;}
+// Merging is skipped when "Styled only" is chosen or once there are explorer edits (see #go) — say so.
+function refreshMerge(){const tree=$('.expl-tree');if(!tree)return;
+ const edits=EDITOR&&EDITOR.hasCourseEdits(),mode=(document.querySelector('input[name=mode]:checked')||{}).value;
+ const off=edits?'Merging is off while you have edits — the export keeps every page.':mode==='restyle'?'Merging is off: you chose <b>Styled only</b> under More choices.':'';
+ tree.classList.toggle('nomerge',!!off);
+ tree.querySelectorAll('.modchk').forEach(b=>b.disabled=!!off);
+ $('#merge-note').innerHTML=off||'Optional: tick <b>Merge</b> to fold a module\'s short pages (a sentence, a single link) into fuller ones.';}
 function renderCourseTree(){
  if(!MODEL){$('#explorer').hidden=true;return;}
  MODEL.intros={};MODEL.introIsModule={};
  const nodes=courseNodes(topModules(MODEL.m.org));
  const pages=[];(function count(ns){ns.forEach(n=>{if(n.isPage||n.introKey)pages.push(n);count(n.children);});})(nodes);
- $('#expl-list').innerHTML=pages.length?treeHtml(nodes):'<p class="cpass" style="padding:.9rem;">No editable pages found in this course.</p>';
+ $('#expl-list').innerHTML=(nodes.length?groupsHtml(nodes):'')+(pages.length?'':'<p class="cpass" style="padding:.9rem;">No editable pages found in this course.</p>');
+ // Start folded except the first module, so the whole course fits on screen.
+ $('#expl-list').querySelectorAll('.cgroup').forEach((g,i)=>foldGroup(g,i===0));
+ refreshMerge();
  $('#cx-pane').hidden=true; $('#cx-empty').hidden=false; $('#explorer').hidden=false;
 }
 async function courseRawBody(entry){
@@ -1664,9 +1698,14 @@ async function courseAssetUrl(entry,src){
  return url;}
 // Reflect which pages carry explorer edits (the "Edited" badge in the outline).
 function markEdited(entry,on){const b=$('#expl-list')&&$('#expl-list').querySelector(`.ctopic[data-entry="${window.CSS&&CSS.escape?CSS.escape(entry):entry}"]`);
- if(b){const badge=b.querySelector('[data-edited]');if(badge)badge.hidden=!on;}}
+ if(b){const badge=b.querySelector('[data-edited]');if(badge)badge.hidden=!on;
+   const g=b.closest('.cgroup'),dot=g&&g.querySelector('[data-editdot]');
+   if(dot)dot.hidden=!g.querySelector('[data-edited]:not([hidden])');}
+ refreshMerge();}
 let OPEN_SEQ=0;
 $('#expl-list').addEventListener('click',async e=>{
+ const tog=e.target.closest('.ctoggle');
+ if(tog){foldGroup(tog.closest('.cgroup'),tog.getAttribute('aria-expanded')!=='true');return;}
  const btn=e.target.closest('.ctopic');if(!btn||!MODEL||!EDITOR)return;
  const entry=btn.dataset.entry,title=btn.dataset.title,seq=++OPEN_SEQ;
  $('#expl-list').querySelectorAll('.ctopic').forEach(x=>x.classList.toggle('sel',x===btn));
@@ -1684,11 +1723,11 @@ function closeCoursePane(){if(EDITOR)EDITOR.exitCourse();
  $('#expl-list').querySelectorAll('.ctopic.sel').forEach(x=>x.classList.remove('sel'));}
 $('#cx-close').addEventListener('click',closeCoursePane);
 
-$('#ticktoggle').addEventListener('click',e=>{e.preventDefault();
- const boxes=[...document.querySelectorAll('.modchk')];if(!boxes.length)return;
- const turnOn=boxes.some(b=>!b.checked);          // if any are off, tick all; else untick all
- boxes.forEach(b=>b.checked=turnOn);
- $('#ticktoggle').textContent=turnOn?'Untick all':'Tick all';});
+$('#merge-all').addEventListener('click',()=>document.querySelectorAll('.modchk').forEach(b=>b.checked=true));
+$('#merge-none').addEventListener('click',()=>document.querySelectorAll('.modchk').forEach(b=>b.checked=false));
+$('#fold-open').addEventListener('click',()=>$('#expl-list').querySelectorAll('.cgroup').forEach(g=>foldGroup(g,true)));
+$('#fold-shut').addEventListener('click',()=>$('#expl-list').querySelectorAll('.cgroup').forEach(g=>foldGroup(g,false)));
+document.querySelectorAll('input[name=mode]').forEach(r=>r.addEventListener('change',refreshMerge));
 $('#file').addEventListener('change',e=>setFile(e.target.files[0]));
 $('#drop').addEventListener('click',()=>$('#file').click());
 $('#drop').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('#file').click();}});
