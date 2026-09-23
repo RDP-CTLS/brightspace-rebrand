@@ -204,7 +204,30 @@
   .cx-head{display:flex;align-items:baseline;gap:.7rem;margin:0 0 .3rem;flex-wrap:wrap;}
   .cx-head #cx-title{font-weight:700;color:var(--plum);font-size:1.08rem;min-width:0;}
   .cx-head .cx-kicker{font-size:.75rem;color:var(--s-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
-  .cx-head .linkbtn{margin-left:auto;}
+  .cx-head{align-items:center;}
+  .cx-nav{margin-left:auto;display:flex;align-items:center;gap:.35rem;}
+  .cx-pos{font-size:.8rem;color:var(--s-muted);font-variant-numeric:tabular-nums;min-width:4.5em;text-align:center;}
+  #cx-pane{scroll-margin-top:5rem;}
+  .cx-foot{display:flex;gap:.8rem;justify-content:space-between;margin-top:1rem;padding-top:.9rem;border-top:1px solid var(--s-border);}
+  .cx-step{background:var(--s-surface);border:1px solid var(--s-border);color:var(--forest);font-weight:600;font-size:.9rem;
+        padding:.55rem .9rem;border-radius:.6rem;max-width:48%;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .cx-step:hover{background:var(--s-subdued);}
+  .cx-step[hidden]{display:none;}
+  .cx-step-next{margin-left:auto;text-align:right;}
+  .cx-step small{display:block;font-size:.72rem;font-weight:600;color:var(--s-muted);text-transform:uppercase;letter-spacing:.04em;}
+  .cx-sum{margin:0;font-weight:700;color:var(--s-text);font-size:1.02rem;}
+  .cx-sum2{margin:.3rem 0 1rem;font-size:.9rem;min-height:1.2em;}
+  #cx-sum2:not(:empty)+#cx-sum3:not(:empty)::before{content:" · ";}
+  /* Merge preview: the page that receives a run gets "+N", the pages folded into it read "merged". */
+  .cfold-tag{flex-shrink:0;font-size:.64rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;border-radius:999px;padding:.06rem .45rem;
+        background:var(--plum-tint);color:var(--plum);border:1px solid #e0cfe0;}
+  .ctopic.cfolds .clabel{color:var(--s-muted);}
+  .ctopic.cfolds .cfold-tag{background:var(--s-subdued);color:var(--s-muted);border-color:var(--s-border);}
+  .expl-tree-head .cfilter{margin-top:.45rem;}
+  .expl-tree-head .cfilter input{width:100%;box-sizing:border-box;font:inherit;font-weight:500;font-size:.85rem;padding:.4rem .6rem;
+        border:1px solid var(--s-border);border-radius:.45rem;background:var(--s-surface);color:var(--s-text);}
+  .expl-tree-head .cfilter input:focus-visible{outline:2px solid var(--plum);outline-offset:1px;}
+  #expl-list li[hidden],#expl-list .cgroup[hidden]{display:none;}
   #explorer .combine-h{font-weight:700;margin:.2rem 0 .4rem;padding-top:.9rem;border-top:1px solid var(--s-border);}
 
   /* ---- Stage 2, page: the canvas ---- */
@@ -418,13 +441,18 @@
           <p class="muted" style="margin:.2rem 0 .7rem;">Explore your course below and open any page or module intro to tweak it — move, delete, or add blocks, just like editing a single page. What you change is applied when you export. Anything you don't open is handled exactly as before. Want fewer pages to click through? Tick <b>Merge</b> on a module.</p>
           <div class="expl">
             <aside class="expl-tree"><div class="expl-tree-head"><div class="ctitle">Course outline<span class="cfold"><button type="button" class="iconbtn" id="fold-open" title="Expand all modules" aria-label="Expand all modules"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 15l5 5 5-5"></path><path d="M7 9l5-5 5 5"></path></svg></button><button type="button" class="iconbtn" id="fold-shut" title="Collapse all modules" aria-label="Collapse all modules"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 20l5-5 5 5"></path><path d="M7 4l5 5 5-5"></path></svg></button></span></div>
-              <div class="ctools">Merge short pages: <button type="button" class="linkbtn" id="merge-all">All</button> &middot; <button type="button" class="linkbtn" id="merge-none">None</button></div>
-              <p class="cmergenote" id="merge-note"></p></div><div id="expl-list" aria-label="Course outline"></div></aside>
+              <div class="cfilter"><input type="search" id="cx-filter" placeholder="Find a page…" aria-label="Find a page in the outline" autocomplete="off" spellcheck="false"></div>
+              <div class="ctools"><span title="Tick Merge on a module to fold its back-to-back pages into fewer, longer ones. The outline shows what would merge.">Merge short pages:</span> <button type="button" class="linkbtn" id="merge-all">All</button> &middot; <button type="button" class="linkbtn" id="merge-none">None</button></div>
+              <p class="cmergenote" id="merge-note"></p></div><div id="expl-list" aria-label="Course outline"></div><p class="cpass" id="cx-nomatch" hidden style="padding:.9rem;">No pages match.</p></aside>
             <div class="expl-edit">
-              <div id="cx-empty" class="expl-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6"></path><path d="M4 6h16M4 10h16M4 14h10"></path></svg><p style="margin:0;">Pick a page from the outline to preview and edit it here.</p></div>
+              <div id="cx-empty" class="expl-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6"></path><path d="M4 6h16M4 10h16M4 14h10"></path></svg>
+                <p class="cx-sum" id="cx-sum"></p><p class="cx-sum2"><span id="cx-sum2"></span><span id="cx-sum3"></span></p>
+                <button type="button" class="pri" id="cx-start">Open the first page</button>
+                <p class="muted" style="margin:.6rem 0 0;font-size:.88rem;">or pick any page from the outline.</p></div>
               <div id="cx-pane" hidden>
-                <div class="cx-head"><span class="cx-kicker" id="cx-kicker">Editing page</span><span id="cx-title"></span><button type="button" class="linkbtn" id="cx-close">Close</button></div>
+                <div class="cx-head"><span class="cx-kicker" id="cx-kicker">Editing page</span><span id="cx-title"></span><span class="cx-nav"><button type="button" class="iconbtn" id="cx-prev" title="Previous page" aria-label="Previous page"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg></button><span id="cx-pos" class="cx-pos"></span><button type="button" class="iconbtn" id="cx-next" title="Next page" aria-label="Next page"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg></button></span><button type="button" class="linkbtn" id="cx-close">Close</button></div>
                 <div id="cx-mount"></div>
+                <div class="cx-foot"><button type="button" class="cx-step" id="cx-prev2" data-dir="-1"></button><button type="button" class="cx-step cx-step-next" id="cx-next2" data-dir="1"></button></div>
               </div>
             </div>
           </div>
@@ -1177,7 +1205,10 @@ async function buildRestyle(zip,man,m,reorder,edits){
 /* ===================== BUILD: combine ===================== */
 const INSTR=t=>/instructor info|instructor information/i.test(t);
 function xesc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-async function buildCombine(zip,man,m,keepSep,reorder){
+// Which pages a combine folds together: each run of 2+ back-to-back plain pages in a module that is
+// NOT in keepSep becomes one group, hosted by its first page. Shared by the export and the outline's
+// "folds into…" preview so the two can never disagree.
+function combineGroups(m,keepSep){
  const groups=[];
  const visit=it=>{let run=[];
    const flush=()=>{if(run.length>=2)groups.push({sub:titleOf(it),members:run.slice()});run=[];};
@@ -1194,6 +1225,9 @@ async function buildCombine(zip,man,m,keepSep,reorder){
      else{flush();if(hasKids)visit(c);}}
    flush();};
  [...m.org.children].filter(x=>x.tagName==='item').forEach(top=>{if(!keepSep.has(top.getAttribute('identifier')))visit(top);});
+ return groups;}
+async function buildCombine(zip,man,m,keepSep,reorder){
+ const groups=combineGroups(m,keepSep);
 
  const itemRm=new Set(),resRm=new Set(),hostExtra={},hostCombined={},relocate={},skip=new Set(),foldHtml=new Map();
  const fold=e=>e.includes('/')?e.slice(0,e.lastIndexOf('/')):'';
@@ -1299,11 +1333,11 @@ function esc4(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
    etc. are resources of their own. So: the manifest is edited in place (never re-serialised —
    that would also drop its BOM), only LEAF content topics are ever folded, nothing is
    relocated or re-declared, and a topic that any d2l sidecar mentions is left alone. */
-async function buildCombineD2L(zip,man,m,keepSep){
+// every d2l sidecar (quiz, grades, dropbox, …) as one haystack: a topic something else points
+// at — by resource id, resource code or file name — must not disappear from under it
+async function d2lSidecars(zip){let side='';for(const e of zip.entries)if(e.name!=='imsmanifest.xml'&&/\.xml$/i.test(e.name))side+=(await zip.text(e.name))+'\n';return side;}
+function combineGroupsD2L(man,m,keepSep,side){
  const rt=m.resType;
- // every d2l sidecar (quiz, grades, dropbox, …) as one haystack: a topic something else points
- // at — by resource id, resource code or file name — must not disappear from under it
- let side='';for(const e of zip.entries)if(e.name!=='imsmanifest.xml'&&/\.xml$/i.test(e.name))side+=(await zip.text(e.name))+'\n';
  const rawTag=iid=>{const om=man.match(new RegExp('<item\\b[^>]*\\bidentifier="'+esc4(iid)+'"[^>]*>'));return om?om[0]:'';};
  const referenced=it=>{const ir=it.getAttribute('identifierref')||'',base=(m.htmlEntry(it)||'').split('/').pop();
    const code=(rawTag(it.getAttribute('identifier')).match(/resource_code="([^"]+)"/)||[])[1];
@@ -1321,6 +1355,9 @@ async function buildCombineD2L(zip,man,m,keepSep){
      else{flush();if(hasKids(c))visit(c);}}
    flush();};
  [...m.org.children].filter(x=>x.tagName==='item').forEach(top=>{if(!keepSep.has(top.getAttribute('identifier')))visit(top);});
+ return {groups,guarded};}
+async function buildCombineD2L(zip,man,m,keepSep){
+ const {groups,guarded}=combineGroupsD2L(man,m,keepSep,await d2lSidecars(zip));
  if(guarded)log(`  ${guarded} page(s) are referenced by a quiz/grade/link file — kept standalone`);
 
  const fold=e=>e.includes('/')?e.slice(0,e.lastIndexOf('/')):'';
@@ -1637,7 +1674,8 @@ function refreshMerge(){const tree=$('.expl-tree');if(!tree)return;
  const off=edits?'Merging is off while you have edits — the export keeps every page.':mode==='restyle'?'Merging is off: you chose <b>Styled only</b> under More choices.':'';
  tree.classList.toggle('nomerge',!!off);
  tree.querySelectorAll('.modchk').forEach(b=>b.disabled=!!off);
- $('#merge-note').innerHTML=off||'Optional: tick <b>Merge</b> to fold a module\'s short pages (a sentence, a single link) into fuller ones.';}
+ $('#merge-note').innerHTML=off;$('#merge-note').hidden=!off;
+ updateSummary();}
 function renderCourseTree(){
  if(!MODEL){$('#explorer').hidden=true;return;}
  MODEL.intros={};MODEL.introIsModule={};
@@ -1646,6 +1684,7 @@ function renderCourseTree(){
  $('#expl-list').innerHTML=(nodes.length?groupsHtml(nodes):'')+(pages.length?'':'<p class="cpass" style="padding:.9rem;">No editable pages found in this course.</p>');
  // Start folded except the first module, so the whole course fits on screen.
  $('#expl-list').querySelectorAll('.cgroup').forEach((g,i)=>foldGroup(g,i===0));
+ $('#cx-filter').value='';FOLD_SAVED=null;$('#cx-nomatch').hidden=true;
  refreshMerge();
  $('#cx-pane').hidden=true; $('#cx-empty').hidden=false; $('#explorer').hidden=false;
 }
@@ -1709,6 +1748,8 @@ $('#expl-list').addEventListener('click',async e=>{
  const btn=e.target.closest('.ctopic');if(!btn||!MODEL||!EDITOR)return;
  const entry=btn.dataset.entry,title=btn.dataset.title,seq=++OPEN_SEQ;
  $('#expl-list').querySelectorAll('.ctopic').forEach(x=>x.classList.toggle('sel',x===btn));
+ foldGroup(btn.closest('.cgroup'),true);keepInView(btn);updateNav();
+ const toTop=NAV_TOP;NAV_TOP=false;
  $('#cx-empty').hidden=true;$('#cx-pane').hidden=false;$('#cx-title').textContent=title;
  $('#cx-kicker').textContent=btn.dataset.kicker||'Editing page';
  const raw=await courseRawBody(entry);
@@ -1716,15 +1757,96 @@ $('#expl-list').addEventListener('click',async e=>{
  // pasted a page into Stage 1 while this zip read was pending) — otherwise we'd blank the paste.
  if(seq!==OPEN_SEQ||FLOW.kind()!=='course')return;
  EDITOR.openCoursePage(entry,title,raw);
- $('#cx-pane').scrollIntoView({behavior:'smooth',block:'nearest'});
+ $('#cx-pane').scrollIntoView({behavior:'smooth',block:toTop?'start':'nearest'});
 });
 function closeCoursePane(){if(EDITOR)EDITOR.exitCourse();
  $('#cx-pane').hidden=true;$('#cx-empty').hidden=false;
- $('#expl-list').querySelectorAll('.ctopic.sel').forEach(x=>x.classList.remove('sel'));}
+ $('#expl-list').querySelectorAll('.ctopic.sel').forEach(x=>x.classList.remove('sel'));updateSummary();}
 $('#cx-close').addEventListener('click',closeCoursePane);
+/* ---- Moving around the outline: Prev/Next, arrow keys, find-a-page, and the empty-state summary ---- */
+let NAV_TOP=false;
+// Pages in course order; while a search is typed, only the matches (so Next walks the results).
+const navList=()=>[...document.querySelectorAll('#expl-list .ctopic')].filter(b=>!b.closest('li[hidden]'));
+// Scroll the outline (not the page) so a row is visible below the sticky outline header.
+function keepInView(el){const tree=$('.expl-tree');if(!tree||!el)return;
+ const tr=tree.getBoundingClientRect(),er=el.getBoundingClientRect(),top=tr.top+$('.expl-tree-head').offsetHeight;
+ if(er.top<top)tree.scrollTop-=top-er.top+8;else if(er.bottom>tr.bottom)tree.scrollTop+=er.bottom-tr.bottom+8;}
+const rowName=b=>b.classList.contains('cintro')&&b.dataset.kicker==='Editing module intro'?b.dataset.title+' — intro':b.dataset.title;
+function updateNav(){const list=navList(),i=list.findIndex(b=>b.classList.contains('sel')),q=$('#cx-filter').value.trim();
+ $('#cx-pos').textContent=i<0?'':`${i+1} of ${list.length}${q?' found':''}`;
+ const lost=i<0&&list.length>0;   // the open page is hidden by the search: Prev/Next jump into the results
+ $('#cx-prev').disabled=!lost&&i<=0;$('#cx-next').disabled=!lost&&(i<0||i>=list.length-1);
+ [['#cx-prev2',list[i-1],'Previous'],['#cx-next2',list[i+1],'Next']].forEach(([id,b,lab])=>{const el=$(id);el.hidden=i<0||!b;
+   if(b){el.innerHTML=`<small>${lab}</small>${esc(rowName(b))}`;el.title=rowName(b);}});}
+function goRel(d,toTop){const list=navList(),i=list.findIndex(b=>b.classList.contains('sel')),b=list[i<0?(d>0?0:list.length-1):i+d];
+ if(b){NAV_TOP=!!toTop;b.click();}}
+$('#cx-prev').addEventListener('click',()=>goRel(-1));$('#cx-next').addEventListener('click',()=>goRel(1));
+$('#cx-prev2').addEventListener('click',()=>goRel(-1,true));$('#cx-next2').addEventListener('click',()=>goRel(1,true));
+// ↑/↓ move focus through the visible rows (module headers + pages); ←/→ fold/unfold a module.
+$('#expl-list').addEventListener('keydown',e=>{
+ const rows=[...document.querySelectorAll('#expl-list .ctoggle:not(:disabled),#expl-list .ctopic')].filter(r=>r.offsetParent!==null);
+ const cur=document.activeElement,i=rows.indexOf(cur);if(i<0)return;
+ const go=j=>{e.preventDefault();const r=rows[Math.max(0,Math.min(rows.length-1,j))];r.focus();keepInView(r);};
+ if(e.key==='ArrowDown')go(i+1);else if(e.key==='ArrowUp')go(i-1);
+ else if(e.key==='Home')go(0);else if(e.key==='End')go(rows.length-1);
+ else if(cur.classList.contains('ctoggle')&&(e.key==='ArrowRight'||e.key==='ArrowLeft')){e.preventDefault();
+   const open=cur.getAttribute('aria-expanded')==='true';
+   if(e.key==='ArrowRight'&&!open)foldGroup(cur.closest('.cgroup'),true);else if(e.key==='ArrowLeft'&&open)foldGroup(cur.closest('.cgroup'),false);}
+ else if(e.key==='ArrowLeft'&&cur.classList.contains('ctopic')){const t=cur.closest('.cgroup')?.querySelector('.ctoggle');if(t){e.preventDefault();t.focus();keepInView(t);}}});
+// Find a page: typing unfolds everything and hides non-matches; clearing restores the folds as they were.
+let FOLD_SAVED=null;
+function applyFilter(){const q=$('#cx-filter').value.trim().toLowerCase(),list=$('#expl-list'),groups=[...list.querySelectorAll('.cgroup')];
+ if(q&&!FOLD_SAVED)FOLD_SAVED=groups.map(g=>g.querySelector(':scope>.cmodhead>.ctoggle')?.getAttribute('aria-expanded')==='true');
+ list.querySelectorAll('li[hidden]').forEach(li=>li.hidden=false);
+ if(q){groups.forEach(g=>{const head=g.querySelector(':scope>.cmodhead');
+     const inTitle=!!head&&head.textContent.toLowerCase().includes(q);   // a matching module shows all its pages
+     g.querySelectorAll('.ctopic,.cpass').forEach(r=>{const li=r.parentElement;
+       if(li!==g&&!inTitle)li.hidden=!((r.textContent+' '+(r.dataset.title||'')).toLowerCase().includes(q));});
+     g.querySelectorAll('li').forEach(li=>{if(li.querySelector(':scope>.cmodule'))li.hidden=!li.querySelector('.ctopic:not(li[hidden] *),.cpass:not(li[hidden] *)');});
+     const any=inTitle||!!g.querySelector('li:not([hidden]) > .ctopic,li:not([hidden]) > .cpass')||(!head&&!g.hidden&&(g.textContent.toLowerCase().includes(q)));
+     g.hidden=!any;if(any)foldGroup(g,true);});}
+ else{groups.forEach((g,i)=>{g.hidden=false;if(FOLD_SAVED)foldGroup(g,FOLD_SAVED[i]);});FOLD_SAVED=null;
+   const sel=list.querySelector('.ctopic.sel');if(sel){foldGroup(sel.closest('.cgroup'),true);keepInView(sel);}}
+ $('#cx-nomatch').hidden=!q||groups.some(g=>!g.hidden);
+ updateNav();}
+$('#cx-filter').addEventListener('input',applyFilter);
+$('#cx-filter').addEventListener('keydown',e=>{
+ if(e.key==='Escape'&&e.target.value){e.preventDefault();e.target.value='';applyFilter();}
+ else if(e.key==='Enter'){e.preventDefault();const b=navList()[0];if(b)b.click();}
+ else if(e.key==='ArrowDown'){const b=navList()[0];if(b){e.preventDefault();b.focus();}}});
+// The empty edit pane doubles as a course summary with a way in.
+function updateSummary(){if(!MODEL)return;
+ const groups=document.querySelectorAll('#expl-list .cgroup .ctoggle').length,pages=document.querySelectorAll('#expl-list .ctopic').length;
+ const edited=document.querySelectorAll('#expl-list [data-edited]:not([hidden])').length;
+ const merging=document.querySelector('.expl-tree.nomerge')?0:[...document.querySelectorAll('.modchk')].filter(b=>b.checked).length;
+ $('#cx-sum').textContent=`${groups} module${groups===1?'':'s'} · ${pages} page${pages===1?'':'s'} and intros you can edit`;
+ $('#cx-sum2').textContent=[edited?`${edited} edited`:'',merging?`${merging} module${merging===1?'':'s'} set to merge`:''].filter(Boolean).join(' · ');
+ $('#cx-start').hidden=!pages;
+ updateMergePreview();}
+// Tag the outline with what Merge would do, using the export's own grouping (combineGroups / D2L).
+let PREVIEW_SEQ=0;
+async function updateMergePreview(){const M=MODEL,seq=++PREVIEW_SEQ,list=$('#expl-list');if(!M)return;
+ const boxes=[...document.querySelectorAll('.modchk')],keep=new Set(boxes.filter(c=>!c.checked).map(c=>c.dataset.id));
+ const on=!$('.expl-tree').classList.contains('nomerge')&&keep.size<boxes.length;
+ let groups=[];
+ if(on){if(M.isD2L){if(M.side===undefined)M.side=await d2lSidecars(M.zip);groups=combineGroupsD2L(M.man,M.m,keep,M.side).groups;}
+   else groups=combineGroups(M.m,keep);}
+ if(seq!==PREVIEW_SEQ||MODEL!==M)return;   // a newer tick (or another course) won the race
+ list.querySelectorAll('.cfold-tag').forEach(t=>t.remove());
+ list.querySelectorAll('.ctopic.cfolds,.ctopic.chost').forEach(x=>x.classList.remove('cfolds','chost'));
+ let folded=0;
+ groups.forEach(g=>{const hostTitle=titleOf(g.members[0]),n=g.members.length-1;
+   g.members.forEach((it,k)=>{const e=M.m.htmlEntry(it),row=e&&list.querySelector(`.ctopic[data-entry="${window.CSS&&CSS.escape?CSS.escape(e):e}"]`);if(!row)return;
+     const tag=document.createElement('span');tag.className='cfold-tag';
+     tag.textContent=k?'merged':`+${n}`;
+     tag.title=k?`Merges into “${hostTitle}”`:`The next ${n} page${n===1?'':'s'} merge into this one`;
+     row.insertBefore(tag,row.querySelector('[data-edited]'));row.classList.add(k?'cfolds':'chost');if(k)folded++;});});
+ $('#cx-sum3').textContent=folded?`${folded} fewer page${folded===1?'':'s'} after merging`:'';}
+$('#cx-start').addEventListener('click',()=>{const b=navList()[0]||document.querySelector('#expl-list .ctopic');if(b){NAV_TOP=true;b.click();}});
+$('#expl-list').addEventListener('change',e=>{if(e.target.classList.contains('modchk'))updateSummary();});
 
-$('#merge-all').addEventListener('click',()=>document.querySelectorAll('.modchk').forEach(b=>b.checked=true));
-$('#merge-none').addEventListener('click',()=>document.querySelectorAll('.modchk').forEach(b=>b.checked=false));
+$('#merge-all').addEventListener('click',()=>{document.querySelectorAll('.modchk').forEach(b=>b.checked=true);updateSummary();});
+$('#merge-none').addEventListener('click',()=>{document.querySelectorAll('.modchk').forEach(b=>b.checked=false);updateSummary();});
 $('#fold-open').addEventListener('click',()=>$('#expl-list').querySelectorAll('.cgroup').forEach(g=>foldGroup(g,true)));
 $('#fold-shut').addEventListener('click',()=>$('#expl-list').querySelectorAll('.cgroup').forEach(g=>foldGroup(g,false)));
 document.querySelectorAll('input[name=mode]').forEach(r=>r.addEventListener('change',refreshMerge));
