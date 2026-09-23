@@ -73,8 +73,8 @@
   .sh-act{margin-left:auto;}
   .sh-act .pri{padding:.6rem 1.2rem;min-height:40px;font-size:.98rem;}
   .stage:not(.cur) .sh-act{display:none;}
-  /* Course mode: Step 2's header (with Apply) sticks under the step rail, so Apply is always one click away. */
-  .wrap.wide #s2.cur > .sh{position:sticky;top:var(--railh,3.7rem);z-index:4;background:#fff;
+  /* Step 2's header (with Apply / Continue) sticks under the step rail, so the next step is always one click away. */
+  #s2.cur > .sh{position:sticky;top:var(--railh,3.7rem);z-index:4;background:#fff;
         margin:-1.2rem -1.4rem 0;padding:.75rem 1.4rem;border-bottom:1px solid var(--s-active);border-radius:1rem 1rem 0 0;}
   .s2-more{margin:0 0 .8rem;}
   .stage.later .chg{display:none;}
@@ -438,6 +438,7 @@
   <section class="stage later" id="s2" aria-labelledby="h2s">
     <div class="sh"><span class="sn" aria-hidden="true">2</span><h2 id="h2s">Make it yours</h2><span class="receipt" id="r2"></span>
       <span class="sh-act" id="s2-act" hidden><button id="go" class="pri" disabled>Apply the RDP template</button></span>
+      <span class="sh-act" id="s2-pact" hidden><button type="button" class="pri" id="pg-next">Continue to Put it back</button></span>
       <button type="button" class="linkbtn chg" data-go="2">Open</button></div>
     <div class="sb">
       <p class="muted" id="s2-wait" style="margin:0;">After step 1.</p>
@@ -490,8 +491,7 @@
           <button type="button" class="linkbtn" id="pg-frame-rm">Remove the frame</button></p>
         <div id="pg-canvas"></div>
         <div class="act"><span class="links">
-            <button type="button" class="linkbtn" id="pg-clear" disabled>Start over</button></span>
-          <button type="button" class="pri" id="pg-next">Continue to Put it back</button></div>
+            <button type="button" class="linkbtn" id="pg-clear" disabled>Start over</button></span></div>
       </div>
     </div>
   </section>
@@ -1985,7 +1985,8 @@ const FLOW=(()=>{
    // Leaving course mode: hand the reparented editor nodes back to the single-page section first.
    if(kind==='course'&&k!=='course'&&EDITOR)EDITOR.exitCourse();
    kind=k;
-   document.getElementById('s2-act').hidden=k!=='course';   // Apply lives in the step-2 header, course mode only
+   document.getElementById('s2-act').hidden=k!=='course';   // the step-2 header carries the next action:
+   document.getElementById('s2-pact').hidden=k!=='page';    // Apply (course) or Continue (single page)
    for(const n of [2,3]){document.getElementById('s'+n+'-course').hidden=k!=='course';
      document.getElementById('s'+n+'-page').hidden=k!=='page';document.getElementById('s'+n+'-wait').hidden=!!k;}
    // The explorer needs a wider working column than the 780px single-page flow.
