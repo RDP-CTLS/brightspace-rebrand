@@ -70,6 +70,13 @@
   .stage.later .sb,.stage.done .sb{display:none;}
   .stage.cur .chg{display:none;}
   .chg{font-size:.85rem;margin-left:auto;}
+  .sh-act{margin-left:auto;}
+  .sh-act .pri{padding:.6rem 1.2rem;min-height:40px;font-size:.98rem;}
+  .stage:not(.cur) .sh-act{display:none;}
+  /* Course mode: Step 2's header (with Apply) sticks under the step rail, so Apply is always one click away. */
+  .wrap.wide #s2.cur > .sh{position:sticky;top:var(--railh,3.7rem);z-index:4;background:#fff;
+        margin:-1.2rem -1.4rem 0;padding:.75rem 1.4rem;border-bottom:1px solid var(--s-active);border-radius:1rem 1rem 0 0;}
+  .s2-more{margin:0 0 .8rem;}
   .stage.later .chg{display:none;}
   .stage.later{box-shadow:none;background:var(--s-subdued);}
   .act{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-top:1.1rem;}
@@ -150,7 +157,7 @@
   .expl{display:grid;grid-template-columns:300px minmax(0,1fr);gap:1.1rem;margin:.2rem 0 1.1rem;align-items:start;}
   @media (max-width:820px){.expl{grid-template-columns:1fr;}}
   .expl-tree{border:1px solid var(--s-border);border-radius:.8rem;background:var(--s-surface);box-shadow:var(--el1);
-        position:sticky;top:4.3rem;max-height:calc(100vh - 5.6rem);overflow:auto;}
+        position:sticky;top:calc(var(--railh,3.7rem) + var(--s2h,4rem) + .6rem);max-height:calc(100vh - var(--railh,3.7rem) - var(--s2h,4rem) - 1.4rem);overflow:auto;}
   @media (max-width:820px){.expl-tree{position:static;max-height:320px;}}
   .expl-tree-head{font-weight:700;color:var(--plum);font-size:.85rem;padding:.7rem .9rem;border-bottom:1px solid var(--s-border);
         background:var(--s-subdued);position:sticky;top:0;z-index:1;}
@@ -207,7 +214,7 @@
   .cx-head{align-items:center;}
   .cx-nav{margin-left:auto;display:flex;align-items:center;gap:.35rem;}
   .cx-pos{font-size:.8rem;color:var(--s-muted);font-variant-numeric:tabular-nums;min-width:4.5em;text-align:center;}
-  #cx-pane{scroll-margin-top:5rem;}
+  #cx-pane{scroll-margin-top:calc(var(--railh,3.7rem) + var(--s2h,4rem) + .6rem);}
   .cx-foot{display:flex;gap:.8rem;justify-content:space-between;margin-top:1rem;padding-top:.9rem;border-top:1px solid var(--s-border);}
   .cx-step{background:var(--s-surface);border:1px solid var(--s-border);color:var(--forest);font-weight:600;font-size:.9rem;
         padding:.55rem .9rem;border-radius:.6rem;max-width:48%;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -216,6 +223,9 @@
   .cx-step-next{margin-left:auto;text-align:right;}
   .cx-step small{display:block;font-size:.72rem;font-weight:600;color:var(--s-muted);text-transform:uppercase;letter-spacing:.04em;}
   .cx-sum{margin:0;font-weight:700;color:var(--s-text);font-size:1.02rem;}
+  .cx-what{margin:.45rem auto 0;max-width:34rem;font-size:.9rem;color:var(--s-muted);}
+  .cx-opt{margin:1.1rem auto .5rem;max-width:34rem;font-size:.9rem;color:var(--s-muted);padding-top:1rem;border-top:1px solid var(--s-active);}
+  #cx-start{font-size:.92rem;}
   .cx-sum2{margin:.3rem 0 1rem;font-size:.9rem;min-height:1.2em;}
   #cx-sum2:not(:empty)+#cx-sum3:not(:empty)::before{content:" · ";}
   /* Merge preview: the page that receives a run gets "+N", the pages folded into it read "merged". */
@@ -427,18 +437,26 @@
   <!-- ===== Stage 2: fix it. Which body shows depends on what arrived in stage 1. ===== -->
   <section class="stage later" id="s2" aria-labelledby="h2s">
     <div class="sh"><span class="sn" aria-hidden="true">2</span><h2 id="h2s">Make it yours</h2><span class="receipt" id="r2"></span>
+      <span class="sh-act" id="s2-act" hidden><button id="go" class="pri" disabled>Apply the RDP template</button></span>
       <button type="button" class="linkbtn chg" data-go="2">Open</button></div>
     <div class="sb">
       <p class="muted" id="s2-wait" style="margin:0;">After step 1.</p>
 
       <div id="s2-course" hidden>
-        <div id="pkgnote" class="note hide"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-.15em;margin-right:.35em;"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg><b>Course package:</b> pages get the RDP template; quizzes, assignments, discussions, and links pass through unchanged — and so do module intros, unless you edit one below.</div>
+        <details class="s2-more">
+          <summary class="muted" style="cursor:pointer;">More choices (you can skip these)</summary>
+          <div class="opts">
+            <label><input type="radio" name="mode" value="both" checked> Make both versions (recommended)</label>
+            <label><input type="radio" name="mode" value="restyle"> Styled only</label>
+            <label><input type="radio" name="mode" value="combine"> Styled + combined only</label>
+          </div>
+        </details>
+        <pre id="log" role="status" aria-live="polite"></pre>
 
         <!-- The explorer: a Brightspace-familiar outline down the side; click a page to open it in the
              block editor (same move/delete/undo experience as the single-page tool). Edits are kept in
              memory and written into the course on export. -->
         <div id="explorer" hidden>
-          <p class="muted" style="margin:.2rem 0 .7rem;">Explore your course below and open any page or module intro to tweak it — move, delete, or add blocks, just like editing a single page. What you change is applied when you export. Anything you don't open is handled exactly as before. Want fewer pages to click through? Tick <b>Merge</b> on a module.</p>
           <div class="expl">
             <aside class="expl-tree"><div class="expl-tree-head"><div class="ctitle">Course outline<span class="cfold"><button type="button" class="iconbtn" id="fold-open" title="Expand all modules" aria-label="Expand all modules"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 15l5 5 5-5"></path><path d="M7 9l5-5 5 5"></path></svg></button><button type="button" class="iconbtn" id="fold-shut" title="Collapse all modules" aria-label="Collapse all modules"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 20l5-5 5 5"></path><path d="M7 4l5 5 5-5"></path></svg></button></span></div>
               <div class="cfilter"><input type="search" id="cx-filter" placeholder="Find a page…" aria-label="Find a page in the outline" autocomplete="off" spellcheck="false"></div>
@@ -446,9 +464,11 @@
               <p class="cmergenote" id="merge-note"></p></div><div id="expl-list" aria-label="Course outline"></div><p class="cpass" id="cx-nomatch" hidden style="padding:.9rem;">No pages match.</p></aside>
             <div class="expl-edit">
               <div id="cx-empty" class="expl-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6"></path><path d="M4 6h16M4 10h16M4 14h10"></path></svg>
-                <p class="cx-sum" id="cx-sum"></p><p class="cx-sum2"><span id="cx-sum2"></span><span id="cx-sum3"></span></p>
-                <button type="button" class="pri" id="cx-start">Open the first page</button>
-                <p class="muted" style="margin:.6rem 0 0;font-size:.88rem;">or pick any page from the outline.</p></div>
+                <p class="cx-sum">Ready — click <b>Apply the RDP template</b> above.</p>
+                <p class="cx-what" id="cx-sum"></p>
+                <p class="cx-sum2"><span id="cx-sum2"></span><span id="cx-sum3"></span></p>
+                <p class="cx-opt">Want to tweak something first? Open any page from the outline and move, delete or add blocks — your changes are kept when you apply. Tick <b>Merge</b> on a module to fold its back-to-back pages into one.</p>
+                <button type="button" class="linkbtn" id="cx-start">Open the first page →</button></div>
               <div id="cx-pane" hidden>
                 <div class="cx-head"><span class="cx-kicker" id="cx-kicker">Editing page</span><span id="cx-title"></span><span class="cx-nav"><button type="button" class="iconbtn" id="cx-prev" title="Previous page" aria-label="Previous page"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg></button><span id="cx-pos" class="cx-pos"></span><button type="button" class="iconbtn" id="cx-next" title="Next page" aria-label="Next page"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg></button></span><button type="button" class="linkbtn" id="cx-close">Close</button></div>
                 <div id="cx-mount"></div>
@@ -458,16 +478,6 @@
           </div>
         </div>
 
-        <details style="margin-top:.8rem;">
-          <summary class="muted" style="cursor:pointer;">More choices (you can skip these)</summary>
-          <div class="opts">
-            <label><input type="radio" name="mode" value="both" checked> Make both versions (recommended)</label>
-            <label><input type="radio" name="mode" value="restyle"> Styled only</label>
-            <label><input type="radio" name="mode" value="combine"> Styled + combined only</label>
-          </div>
-        </details>
-        <div class="act"><span class="muted" id="fname"></span><button id="go" class="pri" disabled>Apply the RDP template</button></div>
-        <pre id="log" role="status" aria-live="polite"></pre>
       </div>
 
       <div id="s2-page" hidden>
@@ -1581,7 +1591,6 @@ async function setFile(f){
  if(f&&EDITOR&&EDITOR.hasCourseEdits()&&!confirm('You have page edits in the current course that haven’t been exported yet. Loading a different file will discard them. Continue?')){
    $('#file').value='';return;}   // reset the input so re-picking the SAME file still fires change
  FILE=f; MODEL=null; $('#go').disabled=true; FLOW.courseGone();
- $('#fname').textContent=f?`${f.name} (${(f.size/1048576).toFixed(0)} MB)`:'';
  clearDownloads(); $('#log').style.display='none'; $('#log').textContent='';
  $('#explorer').hidden=true; if(EDITOR)EDITOR.resetCourse(); clearAssets();   // drop any explorer edits from a previous course
  if(!f)return;
@@ -1597,7 +1606,6 @@ async function setFile(f){
    // descriptions, quiz/assignment payloads etc., so it takes the d2l-aware combine path.
    const isD2L=/desire2learn\.com\/xsd\/d2lcp/i.test(man);
    MODEL={zip,man,m,isD2L};
-   $('#pkgnote').classList.toggle('hide',!isD2L);
    renderCourseTree();
    $('#go').disabled=false;
    const pages=Object.keys(m.titleByHref).filter(hh=>{const e=m.entryFor(hh);return e&&e.toLowerCase().endsWith('.html');}).length;
@@ -1816,10 +1824,15 @@ $('#cx-filter').addEventListener('keydown',e=>{
  else if(e.key==='ArrowDown'){const b=navList()[0];if(b){e.preventDefault();b.focus();}}});
 // The empty edit pane doubles as a course summary with a way in.
 function updateSummary(){if(!MODEL)return;
- const groups=document.querySelectorAll('#expl-list .cgroup .ctoggle').length,pages=document.querySelectorAll('#expl-list .ctopic').length;
+ const pages=document.querySelectorAll('#expl-list .ctopic').length;
+ // What Apply will do, in one line (same page count as the Stage 1 receipt).
+ const m=MODEL.m,nPages=Object.keys(m.titleByHref).filter(h=>{const e=m.entryFor(h);return e&&e.toLowerCase().endsWith('.html');}).length;
+ const nIntros=Object.values(MODEL.introIsModule||{}).filter(Boolean).length;
+ const what=[nPages?`${nPages} page${nPages===1?'':'s'}`:'',nIntros?`${nIntros} module intro${nIntros===1?'':'s'}`:''].filter(Boolean).join(' and ');
+ $('#cx-sum').textContent=(what?`${what} get the RDP template`:'Nothing here to restyle')
+   +(MODEL.isD2L?'; quizzes, assignments, discussions and links pass through unchanged.':'; everything else passes through unchanged.');
  const edited=document.querySelectorAll('#expl-list [data-edited]:not([hidden])').length;
  const merging=document.querySelector('.expl-tree.nomerge')?0:[...document.querySelectorAll('.modchk')].filter(b=>b.checked).length;
- $('#cx-sum').textContent=`${groups} module${groups===1?'':'s'} · ${pages} page${pages===1?'':'s'} and intros you can edit`;
  $('#cx-sum2').textContent=[edited?`${edited} edited`:'',merging?`${merging} module${merging===1?'':'s'} set to merge`:''].filter(Boolean).join(' · ');
  $('#cx-start').hidden=!pages;
  updateMergePreview();}
@@ -1842,6 +1855,10 @@ async function updateMergePreview(){const M=MODEL,seq=++PREVIEW_SEQ,list=$('#exp
      tag.title=k?`Merges into “${hostTitle}”`:`The next ${n} page${n===1?'':'s'} merge into this one`;
      row.insertBefore(tag,row.querySelector('[data-edited]'));row.classList.add(k?'cfolds':'chost');if(k)folded++;});});
  $('#cx-sum3').textContent=folded?`${folded} fewer page${folded===1?'':'s'} after merging`:'';}
+// The sticky stack (step rail, then Step 2's header) is measured, not guessed, so nothing peeks between.
+(()=>{const rail=document.querySelector('.rail'),sh=document.querySelector('#s2 > .sh'),root=document.documentElement.style;
+ const sync=()=>{root.setProperty('--railh',rail.offsetHeight+'px');root.setProperty('--s2h',sh.offsetHeight+'px');};
+ if(window.ResizeObserver){const ro=new ResizeObserver(sync);ro.observe(rail);ro.observe(sh);}sync();})();
 $('#cx-start').addEventListener('click',()=>{const b=navList()[0]||document.querySelector('#expl-list .ctopic');if(b){NAV_TOP=true;b.click();}});
 $('#expl-list').addEventListener('change',e=>{if(e.target.classList.contains('modchk'))updateSummary();});
 
@@ -1968,6 +1985,7 @@ const FLOW=(()=>{
    // Leaving course mode: hand the reparented editor nodes back to the single-page section first.
    if(kind==='course'&&k!=='course'&&EDITOR)EDITOR.exitCourse();
    kind=k;
+   document.getElementById('s2-act').hidden=k!=='course';   // Apply lives in the step-2 header, course mode only
    for(const n of [2,3]){document.getElementById('s'+n+'-course').hidden=k!=='course';
      document.getElementById('s'+n+'-page').hidden=k!=='page';document.getElementById('s'+n+'-wait').hidden=!!k;}
    // The explorer needs a wider working column than the 780px single-page flow.
