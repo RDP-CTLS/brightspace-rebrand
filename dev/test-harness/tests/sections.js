@@ -8,6 +8,8 @@ R.markers=await paste('<h3>Read</h3><p>Chapter 1.</p><p>Chapter 2.</p><h3>Watch<
 R.nested=await paste('<h2>Week 1</h2><p>Intro.</p><h3>Readings</h3><p>A</p><h2>Week 2</h2><p>B</p>');
 R.boldHead=await paste('<p><strong>Course materials</strong></p><p>Text one.</p><p><strong>Assessment</strong></p><p>Text two.</p>');
 R.noHead=await paste('<p>One.</p><p>Two.</p>');
+// P1-3 B: a no-heading lead-in splits by kind — the links group into one block, the prose is its own
+R.leadInSplit=await paste('<p><a href="https://a.org">Doc A</a></p><p><a href="https://b.org">Doc B</a></p><p>Read these first.</p>');
 // duplicate keeps it a Section; the copy exports the same html twice
 const before=$id('pg-code').value;
 document.querySelector('#pg-canvas>.pgb [data-act="dup"]').click();await w(100);

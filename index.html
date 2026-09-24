@@ -2402,12 +2402,22 @@ const FLOW=(()=>{
  function groupSections(htmls){
    const out=[];let cur=null;
    const close=()=>{if(!cur)return;out.push(cur.items.length>1?{html:cur.items.join('\n'),sec:true}:{html:cur.items[0]});cur=null;};
+   // A lead-in before the first heading used to swallow everything into one giant, unsplittable block
+   // (e.g. a page of file links + a paragraph). Keep only same-kind elements together — links / prose /
+   // list — so it breaks into movable pieces. A heading-led section still takes all that follows it,
+   // and single-kind lead-ins are unchanged, so the export (blocks joined with '\n') is byte-identical (P1-3 B).
+   const kindOf=el=>{const t=el.tagName.toLowerCase();
+     if(t==='ul'||t==='ol')return 'list';
+     if(t==='p'){const c=el.cloneNode(true);c.querySelectorAll('a').forEach(a=>a.remove());
+       return (el.querySelector('a')&&!(c.textContent||'').replace(/\s+/g,'').trim())?'links':'prose';}
+     return t;};
    for(const h of htmls){const el=new DOMParser().parseFromString('<body>'+h+'</body>','text/html').body.firstElementChild;
      if(!el){close();out.push({html:h});continue;}
      if(standalone(h,el)){close();out.push({html:h});continue;}
      const lv=headLevel(el);
      if(lv&&(!cur||!cur.level||lv<=cur.level)){close();cur={level:lv,items:[h]};continue;}
-     if(!cur)cur={level:0,items:[]};
+     if(cur&&!cur.level&&kindOf(el)!==cur.kind)close();   // lead-in: a change of kind starts a new block
+     if(!cur)cur={level:0,kind:kindOf(el),items:[]};
      cur.items.push(h);}
    close();return out;}
  const RAW_LABEL={p:'Paragraph',h1:'Heading',h2:'Heading',h3:'Heading',h4:'Heading',h5:'Heading',h6:'Heading',
@@ -2451,7 +2461,7 @@ const FLOW=(()=>{
      let txt=((f&&headLevel(f)?f.textContent:d.body.textContent)||'').replace(/\s+/g,' ').trim();
      if(!txt){const n=(q,w)=>{const k=d.body.querySelectorAll(q).length;return k?`${k} ${w}${k===1?'':'s'}`:'';};
        txt=[n('img','image'),n('table','table'),n('iframe,video','video')].filter(Boolean).join(', ')||'(empty)';}
-     if(txt.length>48)txt=txt.slice(0,46).replace(/\s+\S*$/,'')+'…';return ['Section',txt];}
+     if(txt.length>48)txt=txt.slice(0,46).replace(/\s+\S*$/,'')+'…';return [f&&headLevel(f)?'Section':'Text',txt];}
    const t=rootTag(b.html);
    let kind=RAW_LABEL[t]||'Block';
    if(t==='p'&&/^\s*<p[^>]*>\s*<img/i.test(b.html))kind='Image';

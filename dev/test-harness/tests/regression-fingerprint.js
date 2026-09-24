@@ -23,7 +23,11 @@ const paste=async html=>{$id('start-blank').click(); await sleep(60); $id('pg-pa
   return {blocks:$id('pg-canvas').querySelectorAll(':scope>.pgb').length, code:$id('pg-code').value};};
 const srcZip=readZip(await (await fetch('/original.zip')).arrayBuffer()); const realPages=srcZip.entries.filter(e=>/\.html$/i.test(e.name)).sort((a,b)=>b.uncompSize-a.uncompSize).slice(0,3);
 R.page_plain=await paste('<h2>Week 1</h2><p>Read <a href="https://example.org/a">this</a> first.</p><ul><li>one</li><li>two</li></ul><table><tr><th>A</th><td>1</td></tr></table><p><img src="pic.png" alt="x" width="40"></p><iframe src="https://www.youtube.com/embed/abc" width="560" height="315"></iframe>');
-let n=0; for(const e of realPages){const raw=await srcZip.text(e.name); R['page_real'+(++n)]=await paste((raw.match(/<body[^>]*>([\s\S]*)<\/body>/i)||[,raw])[1]);}
+// P1-3 B intentionally splits a no-heading lead-in into more (movable) blocks, so a real page's block
+// COUNT is now build-dependent while its exported code stays byte-identical. Fingerprint real pages on
+// code only — the true fidelity invariant. (page_plain / page_blank are heading-led / synthetic, so
+// their block counts stay stable and keep both fields.)
+let n=0; for(const e of realPages){const raw=await srcZip.text(e.name); R['page_real'+(++n)]={code:(await paste((raw.match(/<body[^>]*>([\s\S]*)<\/body>/i)||[,raw])[1])).code};}
 // a blank page with one of every block the chips offer
 $id('start-blank').click(); await sleep(60);
 const kinds=[...new Set([...document.querySelectorAll('#s2-page [data-add]')].map(b=>b.dataset.add))];
