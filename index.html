@@ -1819,7 +1819,7 @@ function paintViews(){const v=$('#cx-views');
  v.querySelectorAll('button').forEach(b=>{const on=b.dataset.view===VIEW;b.setAttribute('aria-pressed',on);
    b.hidden=!CONVERTED&&b.dataset.view!=='original';});
  v.classList.toggle('solo',!CONVERTED);
- $('#cx-viewnote').textContent=CONVERTED?(VIEW==='edit'?'Changes are kept when you download.':VIEW==='styled'?'Exactly what Download will give Brightspace.':'How the page looks today.')
+ $('#cx-viewnote').textContent=CONVERTED?(VIEW==='edit'?'Editing a page means you get the Spread out file only (no Compressed yet).':VIEW==='styled'?'Exactly what Download will give Brightspace.':'How the page looks today.')
    :'Convert the course to see it styled and edit it.';}
 async function showView(btn,seq){if(!MODEL)return;const M=MODEL;
  const entry=btn.dataset.entry,title=btn.dataset.title,intro=isIntroKey(entry);
@@ -2015,6 +2015,10 @@ async function presentStep3(mc,edits){
  if(merged&&folded){const n=coursePageCount();merged.querySelector('.dl-s').textContent=`Each module’s pages combined into one — ${n-folded} page${n-folded===1?'':'s'} instead of ${n}`;}
  const m=MODEL.m,nPages=Object.keys(m.titleByHref).filter(h=>{const e=m.entryFor(h);return e&&e.toLowerCase().endsWith('.html');}).length;
  const nIntros=Object.values(MODEL.introIsModule||{}).filter(Boolean).length,nEdit=Object.keys(edits||{}).length;
+ // Editing forces the styled-only build, so the Compressed file isn't made. Show that loss as a disabled
+ // card next to Spread out instead of a quiet suffix, so it's visible at the moment it happens (P1-2).
+ if(nEdit&&plain&&!merged)plain.insertAdjacentHTML('afterend',
+   `<div class="dl sec" aria-disabled="true" style="opacity:.55;cursor:default"><span class="dl-t">Compressed</span><span class="dl-s">Not built — you edited pages. Undo your edits to get it, or use Spread out.</span></div>`);
  const what=[nPages?`${nPages} page${nPages===1?'':'s'}`:'',nIntros?`${nIntros} module intro${nIntros===1?'':'s'}`:''].filter(Boolean).join(' and ');
  const parts=[what?`${what} restyled`:'Built'];
  if(nEdit)parts.push(`your ${nEdit} edit${nEdit===1?'':'s'} included`);
@@ -2084,7 +2088,6 @@ $('#go').addEventListener('click',async()=>{
    }
    log('All done!','pass');
    await presentStep3(mode==='restyle'?0:await mergeCount(keep),edits);
-   if(nEdit&&document.querySelector('#s3-check'))$('#s3-check').textContent+=' · Compressed skipped while you have edits';
    FLOW.built();
  }catch(err){log('Something went wrong: '+err.message,'err');console.error(err);}
  $('#go').disabled=false;

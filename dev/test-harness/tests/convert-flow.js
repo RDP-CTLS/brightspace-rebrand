@@ -21,7 +21,7 @@ R.after={convert:vis($q('#convert')),download:vis($q('#go')),views:$a('#cx-views
   frameScripts:frameDoc().querySelectorAll('script').length,sandbox:$q('#cx-frame').getAttribute('sandbox')};
 // Edit, add a callout, back to Styled: the preview carries the edit
 $q('#cx-views [data-view="edit"]').click();await until(()=>vis($q('#cx-mount'))&&$a('#pg-canvas>.pgb').length);
-R.edit={mountShown:vis($q('#cx-mount')),previewHidden:!vis($q('#cx-preview')),blocks:$a('#pg-canvas>.pgb').length};
+R.edit={mountShown:vis($q('#cx-mount')),previewHidden:!vis($q('#cx-preview')),blocks:$a('#pg-canvas>.pgb').length,viewNote:$q('#cx-viewnote').textContent};
 $a('#pg-canvas button').find(x=>/^callout$/i.test(x.textContent.trim())).click();await w(150);
 R.edit.edited=Object.keys(EDITOR.courseEdits()).length;
 $q('#cx-frame').srcdoc='';$q('#cx-views [data-view="styled"]').click();await frameReady();
@@ -29,6 +29,10 @@ R.edit.styledShowsCallout=/border-left:4px/i.test(frameDoc().body.innerHTML);
 $q('#cx-frame').srcdoc='';$q('#cx-views [data-view="original"]').click();await frameReady();
 R.edit.originalUnchanged=!/border-left:4px/i.test(frameDoc().body.innerHTML);
 R.edit.compressOffNote=$q('#merge-note').textContent;
+// P1-2: downloading WITH an edit gives Spread out only + a disabled Compressed card
+$q('#go').click();await until(()=>$q('#s3').classList.contains('cur')&&$a('#downloads a').length);await w(150);
+R.editDownload={links:$a('#downloads a').length,disabled:$a('#downloads [aria-disabled="true"]').length,
+  disabledLabel:(($q('#downloads [aria-disabled="true"] .dl-t')||{}).textContent||''),check:$q('#s3-check').textContent};
 // fresh load: compress preview + Download
 await setFile(new File([b],'course-export.zip'));await w(100);$q('#convert').click();await w(200);
 $q('#show-compress').click();await w(400);
