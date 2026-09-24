@@ -1785,7 +1785,7 @@ async function courseAssetUrl(entry,src){
  if(!MODEL)return null;
  const key=assetFolder(entry)+'\n'+src;if(ASSET_URLS.has(key))return ASSET_URLS.get(key);
  const zip=MODEL.zip,name=assetEntry(assetFolder(entry),src);let url=null;
- if(name){const bytes=await zip.bytes(name);
+ if(name){let bytes=null;try{bytes=await zip.bytes(name);}catch(_){}   // a corrupt/undecodable image must not stick the preview on the previous page
    if(bytes&&MODEL&&MODEL.zip===zip&&!ASSET_URLS.has(key)){      // a new file may have been loaded while we inflated
      url=URL.createObjectURL(new Blob([bytes],{type:ASSET_MIME[name.split('.').pop().toLowerCase()]||'application/octet-stream'}));
      ASSET_BACK.set(url,src);}
