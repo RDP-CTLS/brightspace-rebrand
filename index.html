@@ -2296,6 +2296,31 @@ const FLOW=(()=>{
    flush();
    return {blocks:out,wrap};
  }
+ // Group the flat element list into SECTIONS so a page reads as a few meaningful blocks, not one
+ // block per line: a heading (h1–h6, marker subheads are h3, or a short all-bold paragraph) opens a
+ // section that takes everything after it up to the next heading of the same or a higher level.
+ // Boxes that already look like their own thing (banner, card, callout, table-in-a-box, rule) stay
+ // separate and close the current section. A section's html is its elements joined by '\n' — the
+ // same joiner the export uses — and blockPart splits it back per element, so an untouched page
+ // exports byte-for-byte as before.
+ function headLevel(el){const m=/^H([1-6])$/.exec(el.tagName);if(m)return +m[1];
+   if(el.tagName==='P'){const t=el.textContent.replace(/\s+/g,' ').trim();
+     const bold=[...el.querySelectorAll('strong,b')].map(x=>x.textContent).join('').replace(/\s+/g,' ').trim();
+     if(t&&t.length<=90&&bold===t&&!el.querySelector('img,iframe,a'))return 4;}
+   return 0;}
+ function standalone(h,el){return isBanner(h)||el.tagName==='HR'||
+   (el.tagName==='DIV'&&/(box-shadow|border-left:\s*\d|border-top:\s*\d+px solid|background)/i.test(el.getAttribute('style')||''));}
+ function groupSections(htmls){
+   const out=[];let cur=null;
+   const close=()=>{if(!cur)return;out.push(cur.items.length>1?{html:cur.items.join('\n'),sec:true}:{html:cur.items[0]});cur=null;};
+   for(const h of htmls){const el=new DOMParser().parseFromString('<body>'+h+'</body>','text/html').body.firstElementChild;
+     if(!el){close();out.push({html:h});continue;}
+     if(standalone(h,el)){close();out.push({html:h});continue;}
+     const lv=headLevel(el);
+     if(lv&&(!cur||!cur.level||lv<=cur.level)){close();cur={level:lv,items:[h]};continue;}
+     if(!cur)cur={level:0,items:[]};
+     cur.items.push(h);}
+   close();return out;}
  const RAW_LABEL={p:'Paragraph',h1:'Heading',h2:'Heading',h3:'Heading',h4:'Heading',h5:'Heading',h6:'Heading',
    ul:'List',ol:'List',table:'Table',img:'Image',iframe:'Embed',figure:'Figure',blockquote:'Quote',hr:'Divider',div:'Styled box'};
  // The restyle engine's title strip at the top of a card: a flex row pulled out to the card's
@@ -2333,6 +2358,11 @@ const FLOW=(()=>{
      const em=okUrl(nu)&&embedSrc(nu);let sn=(b.model.title||lu||'').trim();
      if(sn.length>48)sn=sn.slice(0,46).replace(/\s+\S*$/,'')+'...';return [em?'Video':'Link / Embed',sn];}
    if(b.kind!=='raw')return [KIND_LABEL[b.kind],b.model?'':'edited by hand'];
+   if(b.sec){const d=new DOMParser().parseFromString('<body>'+b.html+'</body>','text/html'),f=d.body.firstElementChild;
+     let txt=((f&&headLevel(f)?f.textContent:d.body.textContent)||'').replace(/\s+/g,' ').trim();
+     if(!txt){const n=(q,w)=>{const k=d.body.querySelectorAll(q).length;return k?`${k} ${w}${k===1?'':'s'}`:'';};
+       txt=[n('img','image'),n('table','table'),n('iframe,video','video')].filter(Boolean).join(', ')||'(empty)';}
+     if(txt.length>48)txt=txt.slice(0,46).replace(/\s+\S*$/,'')+'…';return ['Section',txt];}
    const t=rootTag(b.html);
    let kind=RAW_LABEL[t]||'Block';
    if(t==='p'&&/^\s*<p[^>]*>\s*<img/i.test(b.html))kind='Image';
@@ -2381,7 +2411,10 @@ ${inner}
    return stripFiller(b.html);}
  function blockPart(b){const c=_partCache.get(b);if(c&&c.html===b.html)return c.part;
    const core=partCore(b);
-   const part=core===null?'':core+((NOPAD.has(rootTag(core))||isBanner(core))?'':'\n<p>&nbsp;</p>');
+   const pad=h=>h+((NOPAD.has(rootTag(h))||isBanner(h))?'':'\n<p>&nbsp;</p>');
+   // a section exports exactly like the separate blocks it was made from (each element padded on its own)
+   const part=core===null?'':b.sec?[...new DOMParser().parseFromString('<body>'+core+'</body>','text/html').body.childNodes]
+       .map(n=>n.nodeType===1?pad(n.outerHTML):(n.textContent.trim()?n.textContent:null)).filter(x=>x!==null).join('\n'):pad(core);
    _partCache.set(b,{html:b.html,part});return part;}
  function pageOut(){
    const parts=BLOCKS.map(blockPart);
@@ -2513,7 +2546,7 @@ ${inner}
    else if(act==='down'&&i<BLOCKS.length-1){snap();[BLOCKS[i+1],BLOCKS[i]]=[BLOCKS[i],BLOCKS[i+1]];renderCanvas();focusBlock(id,'down');flash(id);
      note(`Moved down — now ${i+2} of ${BLOCKS.length}.`);}
    else if(act==='dup'){snap();const src=BLOCKS[i];
-     const copy={id:uid(),kind:src.kind,model:src.model?JSON.parse(JSON.stringify(src.model)):null,html:src.html};
+     const copy={id:uid(),kind:src.kind,model:src.model?JSON.parse(JSON.stringify(src.model)):null,html:src.html,sec:src.sec};
      BLOCKS.splice(i+1,0,copy);SEL=null;LAST=copy.id;renderCanvas();focusBlock(copy.id,'dup');flash(copy.id);
      note('Duplicated.',true);}
    else if(act==='edit'){SEL=SEL===id?null:id;renderCanvas();
@@ -2728,7 +2761,7 @@ ${inner}
    if(!r.blocks.length){FLOW.pasteMsg('Nothing to show — that didn’t look like a page. Copy it from the Source Code (</>) view in Brightspace.',true);return false;}
    snap();
    let fixes=0;
-   BLOCKS=r.blocks.map(x=>{const rp=repairCard(x);if(rp.fixed)fixes++;return {id:uid(),kind:'raw',model:null,html:rp.html};});
+   BLOCKS=groupSections(r.blocks.map(x=>{const rp=repairCard(x);if(rp.fixed)fixes++;return rp.html;})).map(g=>({id:uid(),kind:'raw',model:null,html:g.html,sec:g.sec}));
    WRAP=r.wrap;SEL=null;LAST=null;
    B('pg-paste').value='';renderCanvas();
    FLOW.page('loaded',BLOCKS.length);
@@ -2812,7 +2845,7 @@ ${inner}
      const inCard=tags.length&&/border-radius/i.test(tags[tags.length-1])&&parts.length&&isBannerBare(parts[0]);
      CUR_SHELL={bare:true,open:tags.join(''),banner:inCard?parts[0]:'',close:tags.map(t=>'</'+t.match(/^<(\w+)/)[1]+'>').reverse().join('')};
      if(inCard)parts=parts.slice(1);
-     BLOCKS=parts.map(h=>({id:uid(),kind:'raw',model:null,html:clean(h)}));
+     BLOCKS=groupSections(parts.map(h=>clean(h))).map(g=>({id:uid(),kind:'raw',model:null,html:g.html,sec:g.sec}));
      WRAP=null;HIST=[];REDO=[];SEL=null;LAST=null;EDIT_SNAP=null;CUR_BASE=pageSig();return;}
    const tpl=isTemplated(raw);
    const r=importPage(tpl?raw:renderStandalone(title,raw));
@@ -2822,7 +2855,7 @@ ${inner}
      CUR_SHELL={open:tags.join(''),banner:inCard?parts[0]:'',close:tags.map(t=>'</'+t.match(/^<(\w+)/)[1]+'>').reverse().join('')};
      if(inCard)parts=parts.slice(1);}
    else parts=parts.filter(h=>!isBanner(h));
-   BLOCKS=parts.map(h=>{const rp=repairCard(h);return {id:uid(),kind:'raw',model:null,html:clean(rp.html)};});
+   BLOCKS=groupSections(parts.map(h=>clean(repairCard(h).html))).map(g=>({id:uid(),kind:'raw',model:null,html:g.html,sec:g.sec}));
    WRAP=null;HIST=[];REDO=[];SEL=null;LAST=null;EDIT_SNAP=null;CUR_BASE=pageSig();}
  // What an edited, already-templated page exports to: its own wrappers + banner around the new content.
  function courseFramed(ctx){const sh=ctx.shell,inner=courseInner(ctx.BLOCKS);
