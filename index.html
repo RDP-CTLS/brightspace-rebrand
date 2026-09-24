@@ -1976,7 +1976,10 @@ window.addEventListener('beforeunload',e=>{if(EDITOR&&EDITOR.hasCourseEdits()){e
 // leaking them. Revoking only happens when downloads are replaced, so an in-flight download
 // (which already holds its own reference to the blob) is unaffected.
 let dlUrls=[];
-function clearDownloads(){dlUrls.forEach(u=>URL.revokeObjectURL(u));dlUrls=[];$('#downloads').innerHTML='';$('#s3-check').textContent='';}
+// Signature of the edits baked into the downloads currently on offer (P1-1). Cleared whenever the
+// downloads are, so an edit made AFTER downloading can tell the files no longer match and re-offer.
+let DL_SIG=null;
+function clearDownloads(){dlUrls.forEach(u=>URL.revokeObjectURL(u));dlUrls=[];$('#downloads').innerHTML='';$('#s3-check').textContent='';DL_SIG=null;}
 // Short label on the button, the real filename underneath. safe = Spread out (every page kept); otherwise Compressed.
 function dlButton(blob,name,safe){const url=URL.createObjectURL(blob);dlUrls.push(url);const a=document.createElement('a');
  a.href=url;a.download=name;a.className='dl';a.dataset.kind=safe?'plain':'merged';
@@ -2027,6 +2030,7 @@ $('#go').addEventListener('click',async()=>{
  // only — merging pages is turned off, because the combine path re-reads the raw bodies and
  // wouldn't pick up the edits (and merging an edited page in raises the double-card trap).
  const edits=EDITOR?EDITOR.courseEdits():{};const nEdit=Object.keys(edits).length;
+ DL_SIG=JSON.stringify(edits);   // what these downloads contain; an edit after this point invalidates them (P1-1)
  const mode=nEdit?'restyle':document.querySelector('input[name=mode]:checked').value;
  // The Compressed version covers the whole course: every module becomes one page (keepSep stays in
  // the build functions' signature, empty here).
@@ -2153,6 +2157,13 @@ const FLOW=(()=>{
      if(R[3]&&!/Changed/.test(R[3]))receipt(3,'Changed since you copied');
      if(cur!==1&&R[1]){if(/^New page/.test(R[1]))receipt(1,'New page'+(n?' · '+n+' block'+(n===1?'':'s'):''));
        else receipt(1,R[1].replace(/\d+ blocks?$/,n+' block'+(n===1?'':'s')));}},
+   // Course mode: an edit made AFTER downloading invalidates the files on offer (P1-1). The editor's
+   // save path fires on every canvas render, so compare the edits themselves — opening or re-rendering
+   // a page, or undoing back to the downloaded state, must NOT clear the downloads.
+   courseChanged(){if(kind!=='course'||DL_SIG===null||!document.querySelector('#downloads a'))return;
+     if(!EDITOR||JSON.stringify(EDITOR.courseEdits())===DL_SIG)return;
+     clearDownloads();receipt(3,'');receipt(2,'Edited since your download');
+     document.querySelector('#s3-check').textContent='You changed a page after downloading — click Get the files again to get the new version.';},
    pageNext(n){receipt(2,n+' block'+(n===1?'':'s')+' ready');show(3);},
    built(files){receipt(2,'RDP template applied');receipt(3,'');show(3);},
    // stage 3 outcomes
@@ -2531,7 +2542,7 @@ ${inner}
    if(msg&&undoable&&HIST.length){n.appendChild(document.createTextNode(' '));const u=document.createElement('button');u.type='button';u.className='linkbtn';u.textContent='Undo';u.addEventListener('click',undo);n.appendChild(u);}}
  function syncOut(){B('pg-code').value=pageOut();B('pg-copy').disabled=!BLOCKS.length;B('pg-copyhint').hidden=!!BLOCKS.length;
    B('pg-clear').disabled=!BLOCKS.length;B('pg-undo').disabled=!HIST.length;B('pg-redo').disabled=!REDO.length;save();
-   if(COURSE){B('savestate').textContent='';if(CUR_ENTRY)markEdited(CUR_ENTRY,pageDirty());}
+   if(COURSE){B('savestate').textContent='';if(CUR_ENTRY)markEdited(CUR_ENTRY,pageDirty());FLOW.courseChanged();}
    else B('savestate').textContent=BLOCKS.length?'Saved on this computer':'';
    updateFrame();FLOW.pageChanged(BLOCKS.length);}
 
