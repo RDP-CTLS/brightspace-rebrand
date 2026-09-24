@@ -9,6 +9,9 @@ const r={groups:groups.length,tops:topModules(MODEL.m.org).length,noTicks:$a('.m
 $q('#fold-open').click(); r.expandAllVisible=$a('.ctopic').filter(x=>x.offsetParent).length;
 $q('#fold-shut').click(); r.collapseAllVisible=$a('.ctopic').filter(x=>x.offsetParent).length;
 const t=groups[5].querySelector('.ctoggle'); t.click(); r.toggleOpens=t.getAttribute('aria-expanded')==='true'&&!groups[5].querySelector(':scope>.ctree').hidden;
+r.tickHiddenBeforeConvert=$q('.expl-tree-head .ctools').hidden;   // P3-3: the compress tick only appears after Convert
+$q('#convert').click(); await w(200);
+r.tickShownAfterConvert=!$q('.expl-tree-head .ctools').hidden;
 $q('#show-compress').click(); await w(300); r.previewTags=$a('.cfold-tag').length;
 const ro=$q('input[name=mode][value=restyle]'); ro.checked=true; ro.dispatchEvent(new Event('change')); await w(100);
 r.spreadOnlyClearsPreview=$a('.cfold-tag').length===0&&$q('#show-compress').disabled&&/Spread out only/.test($q('#merge-note').textContent);

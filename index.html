@@ -469,7 +469,7 @@
       <p class="muted" id="s2-wait" style="margin:0;">After step 1.</p>
 
       <div id="s2-course" hidden>
-        <details class="s2-more">
+        <details class="s2-more" hidden>
           <summary class="muted" style="cursor:pointer;">More choices (you can skip these)</summary>
           <div class="opts">
             <label><input type="radio" name="mode" value="both" checked> Both: Spread out and Compressed (recommended)</label>
@@ -534,6 +534,7 @@
 
       <div id="s3-course" hidden>
         <p class="s3-check" id="s3-check" role="status"></p>
+        <p class="muted" style="margin:0 0 .4rem;">Pick one — you import only one file. Not sure? Compressed gives students fewer clicks; Spread out keeps your page list exactly as it is.</p>
         <div id="downloads"></div>
         <p class="s3-then">Then, in Brightspace:</p>
         <ol class="steps">
@@ -1661,7 +1662,8 @@ async function setFile(f){
    renderCourseTree();setConverted(false);
    $('#go').disabled=false;$('#convert').disabled=false;
    const pages=Object.keys(m.titleByHref).filter(hh=>{const e=m.entryFor(hh);return e&&e.toLowerCase().endsWith('.html');}).length;
-   FLOW.course(f.name,pages);
+   const intros=Object.values(MODEL.introIsModule||{}).filter(Boolean).length;
+   FLOW.course(f.name,pages,intros);
  }catch(err){FLOW.dropMsg(FRIENDLY[err.message]||('Could not read this file: '+err.message),true);console.error(err);}
 }
 // The real top-level modules often sit under a single untitled wrapper <item>; descend to them.
@@ -1719,7 +1721,7 @@ function groupsHtml(nodes){
    const inner=empty?'':treeHtml([n]).replace(/^<ul class="ctree"><li><div class="cmodule">.*?<\/div>|<\/li><\/ul>$/g,'');
    return `<li class="cgroup"><div class="cmodhead">`
      +`<button type="button" class="ctoggle" aria-expanded="true"${empty?' disabled':` aria-controls="cg-${i}"`}>${empty?CHEV.replace('class="cchev"','class="cchev" style="visibility:hidden"'):CHEV}<span class="cmodtitle">${esc(n.title)}</span>`
-     +`<span class="ccount" title="${k} page${k===1?'':'s'} to edit">${k}</span><span class="cdot" data-editdot hidden title="Has edits"></span></button>`
+     +`<span class="ccount" title="${k} item${k===1?'':'s'} to check">${k}</span><span class="cdot" data-editdot hidden title="Has edits"></span></button>`
      +`</div>`
      +inner.replace(/^<ul class="ctree">/,`<ul class="ctree" id="cg-${i}">`)+`</li>`;
  }).join('')+`</ul>`;}
@@ -1816,11 +1818,11 @@ $('#expl-list').addEventListener('click',async e=>{
    writes, edits included) · Edit (the block editor). Before Convert only Original is offered. ---- */
 let CONVERTED=false,VIEW='original';
 function paintViews(){const v=$('#cx-views');
- v.querySelectorAll('button').forEach(b=>{const on=b.dataset.view===VIEW;b.setAttribute('aria-pressed',on);
-   b.hidden=!CONVERTED&&b.dataset.view!=='original';});
+ v.querySelectorAll('button[data-view]').forEach(b=>{const on=b.dataset.view===VIEW;b.setAttribute('aria-pressed',on);
+   b.hidden=!CONVERTED;});
  v.classList.toggle('solo',!CONVERTED);
- $('#cx-viewnote').textContent=CONVERTED?(VIEW==='edit'?'Editing a page means you get the Spread out file only (no Compressed yet).':VIEW==='styled'?'Exactly what Get the files will give Brightspace.':'How the page looks today.')
-   :'Convert the course to see it styled and edit it.';}
+ $('#cx-viewnote').innerHTML=CONVERTED?(VIEW==='edit'?'Editing a page means you get the Spread out file only (no Compressed yet).':VIEW==='styled'?'Exactly what Get the files will give Brightspace.':'How the page looks today.')
+   :'Previewing the page as it is today. <button type="button" class="linkbtn" id="cx-convert-inline">Convert course</button> to see it styled and edit it.';}
 async function showView(btn,seq){if(!MODEL)return;const M=MODEL;
  const entry=btn.dataset.entry,title=btn.dataset.title,intro=isIntroKey(entry);
  paintViews();
@@ -1852,12 +1854,13 @@ async function renderPreview(entry,title,raw,seq){
  f.onload=()=>{const fit=()=>{try{f.style.height=f.contentDocument.documentElement.scrollHeight+'px';}catch(_){}};fit();
    try{f.contentDocument.querySelectorAll('img').forEach(i=>i.addEventListener('load',fit));}catch(_){}};
  f.srcdoc='<!DOCTYPE html>'+d.documentElement.outerHTML;}
-$('#cx-views').addEventListener('click',e=>{const b=e.target.closest('button[data-view]');if(!b||b.hidden)return;
+$('#cx-views').addEventListener('click',e=>{if(e.target.closest('#cx-convert-inline')){$('#convert').click();return;}
+ const b=e.target.closest('button[data-view]');if(!b||b.hidden)return;
  VIEW=b.dataset.view;const sel=$('#expl-list .ctopic.sel');paintViews();
  if(sel){const seq=++OPEN_SEQ;showView(sel,seq);}});
 // Convert: from now on the course is shown (and edited) in the RDP style; Download builds the files.
 function setConverted(on){CONVERTED=on;VIEW=on?'styled':'original';
- $('#convert').hidden=on;$('#go').hidden=!on;paintViews();updateSummary();}
+ $('#convert').hidden=on;$('#go').hidden=!on;const ct=$('.expl-tree-head .ctools');if(ct)ct.hidden=!on;paintViews();updateSummary();}
 $('#convert').addEventListener('click',()=>{if(!MODEL)return;setConverted(true);
  const sel=$('#expl-list .ctopic.sel');if(sel){const seq=++OPEN_SEQ;showView(sel,seq);}
  else{const b=navList()[0];if(b){NAV_TOP=true;b.click();}}});
@@ -1875,7 +1878,7 @@ function keepInView(el){const tree=$('.expl-tree');if(!tree||!el)return;
  if(er.top<top)tree.scrollTop-=top-er.top+8;else if(er.bottom>tr.bottom)tree.scrollTop+=er.bottom-tr.bottom+8;}
 const rowName=b=>b.classList.contains('cintro')&&b.dataset.kicker==='Editing module intro'?b.dataset.title+' — intro':b.dataset.title;
 function updateNav(){const list=navList(),i=list.findIndex(b=>b.classList.contains('sel')),q=$('#cx-filter').value.trim();
- $('#cx-pos').textContent=i<0?'':`${i+1} of ${list.length}${q?' found':''}`;
+ $('#cx-pos').textContent=i<0?'':`Item ${i+1} of ${list.length}${q?' found':''}`;
  const lost=i<0&&list.length>0;   // the open page is hidden by the search: Prev/Next jump into the results
  $('#cx-prev').disabled=!lost&&i<=0;$('#cx-next').disabled=!lost&&(i<0||i>=list.length-1);
  [['#cx-prev2',list[i-1],'Previous'],['#cx-next2',list[i+1],'Next']].forEach(([id,b,lab])=>{const el=$(id);el.hidden=i<0||!b;
@@ -2133,7 +2136,7 @@ const FLOW=(()=>{
    const n=EDITOR?Object.keys(EDITOR.courseEdits()).length:0;
    document.getElementById('course-back-msg').textContent=`Your course “${courseInfo.name}” is still open`
      +(n?` — the ${n} change${n===1?'':'s'} you made ${n===1?'is':'are'} kept`:'')+'. You’re working on a single page right now.';}
- function receiptCourse(){receipt(1,'Course loaded · '+courseInfo.name+(courseInfo.pages?' · '+courseInfo.pages+' pages':''));}
+ function receiptCourse(){receipt(1,'Course loaded · '+courseInfo.name+(courseInfo.pages?' · '+courseInfo.pages+' pages':'')+(courseInfo.intros?' · '+courseInfo.intros+' module intro'+(courseInfo.intros===1?'':'s'):''));}
  document.getElementById('course-back-btn').addEventListener('click',()=>{
    if(!MODEL||!courseInfo)return;
    setKind('course');closeCoursePane();receiptCourse();show(2);});
@@ -2146,7 +2149,7 @@ const FLOW=(()=>{
    kind:()=>kind,
    boot(){booted=true;},
    // stage 1 outcomes
-   course(name,pages){courseInfo={name,pages};setKind('course');receiptCourse();
+   course(name,pages,intros){courseInfo={name,pages,intros};setKind('course');receiptCourse();
      receipt(2,'');receipt(3,'');msg('drop-msg','');show(2);},
    // the loaded course went away (another file is being read, or it failed to load)
    courseGone(){courseInfo=null;syncBack();},

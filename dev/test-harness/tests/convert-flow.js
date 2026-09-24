@@ -11,12 +11,13 @@ const R={};
 R.before={convert:vis($q('#convert')),download:vis($q('#go')),ready:$q('#cx-ready').textContent};
 const topics=$a('#expl-list .ctopic'),page=topics.find(t=>!t.classList.contains('cintro'));
 $q('#cx-frame').srcdoc='';page.click();await frameReady();
-R.before.views=$a('#cx-views button').filter(vis).map(x=>x.textContent);
+R.before.views=$a('#cx-views button[data-view]').filter(vis).map(x=>x.textContent);
+R.before.inlineConvert=!!$q('#cx-convert-inline');
 R.before.previewShown=vis($q('#cx-preview'))&&!vis($q('#cx-mount'));
 R.before.originalHasNoCard=!/border-top:4px solid/i.test(frameDoc().body.innerHTML);
 // Convert
 $q('#cx-frame').srcdoc='';$q('#convert').click();await frameReady();
-R.after={convert:vis($q('#convert')),download:vis($q('#go')),views:$a('#cx-views button').filter(vis).map(x=>x.textContent),
+R.after={convert:vis($q('#convert')),download:vis($q('#go')),views:$a('#cx-views button[data-view]').filter(vis).map(x=>x.textContent),
   pressed:$q('#cx-views [aria-pressed="true"]').textContent,styledHasCard:/border-top:4px solid/i.test(frameDoc().body.innerHTML),
   frameScripts:frameDoc().querySelectorAll('script').length,sandbox:$q('#cx-frame').getAttribute('sandbox')};
 // Edit, add a callout, back to Styled: the preview carries the edit
