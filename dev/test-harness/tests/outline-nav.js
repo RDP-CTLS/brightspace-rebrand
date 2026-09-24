@@ -19,9 +19,10 @@ $a('.cgroup').forEach(g=>foldGroup(g,true)); topics[topics.length-1].click(); aw
 const tr=$q('.expl-tree').getBoundingClientRect(),er=sel().getBoundingClientRect();
 r.lastInView=er.top>=tr.top+$q('.expl-tree-head').offsetHeight-1&&er.bottom<=tr.bottom+1;
 r.nextDisabledAtEnd=$q('#cx-next').disabled; r.bottomNextHidden=$q('#cx-next2').hidden; r.bottomPrevLabel=$q('#cx-prev2').textContent;
-// edit survives navigation: add a callout on page 3, go Next, come back
+// edit survives navigation (editing starts after Convert, in the Edit view): add a callout on page 3, go Next, come back
+$q('#convert').click(); await wait(100); $q('#cx-views [data-view="edit"]').click(); await wait(100);
 topics[2].click(); await until(()=>idx()===2); await wait(100);
-[...$a('#pg-canvas .pgb-end button')].find(x=>/callout/i.test(x.textContent))?.click(); await wait(100);
+await until(()=>$a('#pg-canvas>.pgb').length); [...$a('#pg-canvas button')].find(x=>/^callout$/i.test(x.textContent.trim()))?.click(); await wait(100);
 const e3=topics[2].dataset.entry; r.editedBadge=!topics[2].querySelector('[data-edited]').hidden;
 $q('#cx-next').click(); await until(()=>idx()===3); $q('#cx-prev').click(); await until(()=>idx()===2);
 r.editKeptAfterNav=!!EDITOR.courseEdits()[e3]; r.editDotOnModule=!topics[2].closest('.cgroup').querySelector('[data-editdot]').hidden;

@@ -1,4 +1,4 @@
-// Step 2's header carries the next action: Apply in course mode, Continue in single-page mode.
+// Step 2's header carries the next action: Convert then Download in course mode, Continue in single-page mode.
 const $q=s=>document.querySelector(s),vis=s=>{const e=$q(s);return !!e&&e.offsetParent!==null;},wait=ms=>new Promise(z=>setTimeout(z,ms));
 const r={};
 document.getElementById('start-blank').click(); await wait(100);
@@ -10,7 +10,8 @@ $q('#pg-next').click(); await wait(100);
 r.page.continueGoesToStep3=$q('#s3').classList.contains('cur'); r.page.headerActHiddenWhenNotCur=!vis('#pg-next');
 r.page.startOverStillThere=!!$q('#s2-page .act #pg-clear');
 const b=await (await fetch('/original.zip')).blob(); await setFile(new File([b],'course-export.zip')); await wait(300);
-r.course={applyShown:vis('#go'),continueHidden:!vis('#pg-next'),sticky:getComputedStyle($q('#s2>.sh')).position};
+r.course={convertShown:vis('#convert'),downloadHiddenBeforeConvert:!vis('#go'),continueHidden:!vis('#pg-next'),sticky:getComputedStyle($q('#s2>.sh')).position};
+$q('#convert').click(); await wait(50); r.course.downloadAfterConvert=vis('#go')&&!vis('#convert');
 // open a course page then go back to a blank page: the canvas must land back in the single-page section
 document.querySelectorAll('#expl-list .ctopic')[1].click(); await wait(400);
 document.getElementById('start-blank').click(); await wait(100);

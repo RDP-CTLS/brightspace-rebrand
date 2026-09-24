@@ -176,7 +176,8 @@
   .expl-tree-head .ctitle{display:flex;align-items:center;gap:.5rem;}
   .expl-tree-head .cfold{margin-left:auto;display:flex;gap:.2rem;}
   .expl-tree-head .cfold .iconbtn{width:1.6rem;height:1.6rem;}
-  .expl-tree-head .ctools{display:flex;align-items:center;gap:.35rem;margin-top:.3rem;font-weight:500;font-size:.8rem;color:var(--s-muted);flex-wrap:wrap;}
+  .expl-tree-head .ctools{display:flex;align-items:center;gap:.4rem;margin-top:.45rem;font-weight:500;font-size:.8rem;color:var(--s-muted);cursor:pointer;}
+  .expl-tree-head .ctools input{accent-color:var(--plum);margin:0;}
   .expl-tree-head .ctools .linkbtn{font-size:.8rem;}
   .expl-tree-head .cmergenote{margin:.25rem 0 0;font-weight:500;font-size:.74rem;line-height:1.35;color:var(--s-muted);}
   /* Top-level modules: a fold toggle + the "Merge" tick for combining back-to-back pages. */
@@ -235,6 +236,18 @@
   .cx-step-next{margin-left:auto;text-align:right;}
   .cx-step small{display:block;font-size:.72rem;font-weight:600;color:var(--s-muted);text-transform:uppercase;letter-spacing:.04em;}
   .cx-sum{margin:0;font-weight:700;color:var(--s-text);font-size:1.02rem;}
+  .cx-views{display:flex;align-items:center;gap:0;margin:.2rem 0 .7rem;flex-wrap:wrap;}
+  .cx-views button{background:var(--s-surface);border:1px solid var(--s-border);color:var(--forest);font-size:.85rem;font-weight:600;
+        padding:.4rem .9rem;border-radius:0;margin-left:-1px;}
+  .cx-views button:first-child{border-radius:.5rem 0 0 .5rem;margin-left:0;}
+  .cx-views button:nth-child(3){border-radius:0 .5rem .5rem 0;}
+  .cx-views button[aria-pressed="true"]{background:var(--plum);border-color:var(--plum);color:#fff;position:relative;z-index:1;}
+  .cx-views button[hidden]{display:none;}
+  .cx-views.solo button{border-radius:.5rem;}
+  .cx-viewnote{margin-left:.8rem;font-size:.82rem;color:var(--s-muted);}
+  #cx-preview{border:1px solid var(--s-border);border-radius:.8rem;background:#fff;overflow:hidden;}
+  #cx-preview[hidden],#cx-mount[hidden],.cx-foot[hidden]{display:none;}
+  #cx-frame{display:block;width:100%;border:0;min-height:320px;background:#fff;}
   .cx-what{margin:.45rem auto 0;max-width:34rem;font-size:.9rem;color:var(--s-muted);}
   .cx-opt{margin:1.1rem auto .5rem;max-width:34rem;font-size:.9rem;color:var(--s-muted);padding-top:1rem;border-top:1px solid var(--s-active);}
   #cx-start{font-size:.92rem;}
@@ -449,7 +462,7 @@
   <!-- ===== Stage 2: fix it. Which body shows depends on what arrived in stage 1. ===== -->
   <section class="stage later" id="s2" aria-labelledby="h2s">
     <div class="sh"><span class="sn" aria-hidden="true">2</span><h2 id="h2s">Make it yours</h2><span class="receipt" id="r2"></span>
-      <span class="sh-act" id="s2-act" hidden><button id="go" class="pri" disabled>Apply the RDP template</button></span>
+      <span class="sh-act" id="s2-act" hidden><button type="button" id="convert" class="pri" disabled>Convert course</button><button id="go" class="pri" hidden disabled>Download</button></span>
       <span class="sh-act" id="s2-pact" hidden><button type="button" class="pri" id="pg-next">Continue to Put it back</button></span>
       <button type="button" class="linkbtn chg" data-go="2">Open</button></div>
     <div class="sb">
@@ -459,9 +472,9 @@
         <details class="s2-more">
           <summary class="muted" style="cursor:pointer;">More choices (you can skip these)</summary>
           <div class="opts">
-            <label><input type="radio" name="mode" value="both" checked> Both versions (recommended)</label>
-            <label><input type="radio" name="mode" value="restyle"> Styled only</label>
-            <label><input type="radio" name="mode" value="combine"> Merged only</label>
+            <label><input type="radio" name="mode" value="both" checked> Both: Spread out and Compressed (recommended)</label>
+            <label><input type="radio" name="mode" value="restyle"> Spread out only</label>
+            <label><input type="radio" name="mode" value="combine"> Compressed only</label>
           </div>
         </details>
         <pre id="log" role="status" aria-live="polite"></pre>
@@ -473,17 +486,21 @@
           <div class="expl">
             <aside class="expl-tree"><div class="expl-tree-head"><div class="ctitle">Course outline<span class="cfold"><button type="button" class="iconbtn" id="fold-open" title="Expand all modules" aria-label="Expand all modules"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 15l5 5 5-5"></path><path d="M7 9l5-5 5 5"></path></svg></button><button type="button" class="iconbtn" id="fold-shut" title="Collapse all modules" aria-label="Collapse all modules"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 20l5-5 5 5"></path><path d="M7 4l5 5 5-5"></path></svg></button></span></div>
               <div class="cfilter"><input type="search" id="cx-filter" placeholder="Find a page…" aria-label="Find a page in the outline" autocomplete="off" spellcheck="false"></div>
-              <div class="ctools"><span title="Tick Merge on a module to fold each run of back-to-back pages into one. The outline shows what would merge.">Merge pages:</span> <button type="button" class="linkbtn" id="merge-all">All</button> &middot; <button type="button" class="linkbtn" id="merge-none">None</button></div>
+              <label class="ctools" title="The Compressed download makes each module one page. Tick to see which pages it combines."><input type="checkbox" id="show-compress"> Show how Compressed combines pages</label>
               <p class="cmergenote" id="merge-note"></p></div><div id="expl-list" aria-label="Course outline"></div><p class="cpass" id="cx-nomatch" hidden style="padding:.9rem;">No pages match.</p></aside>
             <div class="expl-edit">
               <div id="cx-empty" class="expl-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6"></path><path d="M4 6h16M4 10h16M4 14h10"></path></svg>
-                <p class="cx-sum">Ready — click <b>Apply the RDP template</b> above.</p>
+                <p class="cx-sum" id="cx-ready"></p>
                 <p class="cx-what" id="cx-sum"></p>
                 <p class="cx-sum2"><span id="cx-sum2"></span><span id="cx-sum3"></span></p>
-                <p class="cx-opt">Want to tweak something first? Open any page from the outline and move, delete or add blocks — your changes are kept when you apply. Tick <b>Merge</b> on a module to fold its back-to-back pages into one.</p>
+                <p class="cx-opt" id="cx-opt"></p>
                 <button type="button" class="linkbtn" id="cx-start">Open the first page →</button></div>
               <div id="cx-pane" hidden>
                 <div class="cx-head"><span class="cx-kicker" id="cx-kicker">Editing page</span><span id="cx-title"></span><span class="cx-nav"><button type="button" class="iconbtn" id="cx-prev" title="Previous page" aria-label="Previous page"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg></button><span id="cx-pos" class="cx-pos"></span><button type="button" class="iconbtn" id="cx-next" title="Next page" aria-label="Next page"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg></button></span><button type="button" class="linkbtn" id="cx-close">Close</button></div>
+                <div class="cx-views" id="cx-views" role="group" aria-label="How to show this page">
+                  <button type="button" data-view="original">Original</button><button type="button" data-view="styled">Styled</button><button type="button" data-view="edit">Edit</button>
+                  <span class="cx-viewnote" id="cx-viewnote"></span></div>
+                <div id="cx-preview"><iframe id="cx-frame" sandbox="allow-same-origin" title="Page preview"></iframe></div>
                 <div id="cx-mount"></div>
                 <div class="cx-foot"><button type="button" class="cx-step" id="cx-prev2" data-dir="-1"></button><button type="button" class="cx-step cx-step-next" id="cx-next2" data-dir="1"></button></div>
               </div>
@@ -1193,6 +1210,28 @@ function applyIntroEdits(man,edits){
  const norm=t=>t.replace(/\r\n?/g,'\n');
  for(const id of ids){const it=byId[id];if(!it||norm(it.getAttribute('description')||'')!==norm(want[id]))return {man,n:0,failed:true};}
  return {man:out,n};}
+// What ONE page exports as — shared by the export and the Personalize preview, so the preview is the
+// export's own bytes. how: 'edited' | 'kept' (already templated + untouched: the file ships
+// byte-identical, html is null) | 'restyled'.
+function exportPageHtml(title,body,edit){
+ if(edit!==undefined&&typeof edit==='object'){
+   // an ALREADY-templated page, edited: the editor hands back the finished card(s) — the page's
+   // own card + banner around the new content — so its colour and icon survive exactly.
+   const[tok,svg]=cardTheme(title,'');
+   return {how:'edited',html:pageHtml(title,edit.framed.trim()||card(title,NO_CONTENT,tok,svg))};}
+ if(edit!==undefined){
+   const inner=edit.trim()||NO_CONTENT;
+   const[tok,svg]=cardTheme(title,body);           // theme from the RAW body — markers are intact there
+   return {how:'edited',html:pageHtml(title,card(title,inner,tok,svg))};}
+ if(isTemplated(body))return {how:'kept',html:null}; // second pass, untouched: byte-identical, never re-cleaned
+ return {how:'restyled',html:renderStandalone(title,body)};}
+// What a module intro exports as (the HTML that goes in its description="…"). Mirrors buildRestyle:
+// the teacher's edit wins; else a module intro gets the card unless it already wears one;
+// a link/quiz blurb ships as it is.
+function exportIntroHtml(title,desc,edit,isModule){
+ if(edit!==undefined&&typeof edit==='object')return edit.intro||'';
+ if(!isModule||isTemplatedIntro(desc))return desc;
+ return restyleIntro(title,desc)||desc;}
 async function buildRestyle(zip,man,m,reorder,edits){
  edits=edits||{};
  const htmlEntries={};
@@ -1212,18 +1251,9 @@ async function buildRestyle(zip,man,m,reorder,edits){
    if(htmlEntries[e.name]!==undefined){const raw=await zip.text(e.name);
      const bm=raw.match(/<body[^>]*>([\s\S]*)<\/body>/i);const body=bm?bm[1]:raw;
      const title=htmlEntries[e.name]||m.restyleTitle(e.name);
-     const edit=edits[e.name];
-     if(edit!==undefined&&typeof edit==='object'){
-       // an ALREADY-templated page, edited: the editor hands back the finished card(s) — the page's
-       // own card + banner around the new content — so its colour and icon survive exactly.
-       const[tok,svg]=cardTheme(title,'');
-       await w.addText(e.name,pageHtml(title,edit.framed.trim()||card(title,NO_CONTENT,tok,svg)));ed++;
-     }else if(edit!==undefined){
-       const inner=edit.trim()||NO_CONTENT;
-       const[tok,svg]=cardTheme(title,body);           // theme from the RAW body — markers are intact there
-       await w.addText(e.name,pageHtml(title,card(title,inner,tok,svg)));ed++;
-     }else if(isTemplated(body)){w.copy(e);kept++;}    // second pass, untouched: byte-identical, never re-cleaned
-     else{await w.addText(e.name,renderStandalone(title,body));re++;}
+     const out=exportPageHtml(title,body,edits[e.name]);
+     if(out.how==='kept'){w.copy(e);kept++;}
+     else{await w.addText(e.name,out.html);if(out.how==='edited')ed++;else re++;}
    }
    else{w.copy(e);cp++;}
  }
@@ -1237,25 +1267,25 @@ async function buildRestyle(zip,man,m,reorder,edits){
 /* ===================== BUILD: combine ===================== */
 const INSTR=t=>/instructor info|instructor information/i.test(t);
 function xesc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-// Which pages a combine folds together: each run of 2+ back-to-back plain pages in a module that is
-// NOT in keepSep becomes one group, hosted by its first page. Shared by the export and the outline's
-// "folds into…" preview so the two can never disagree.
+// Which pages the Compressed version folds together: EACH MODULE BECOMES ONE PAGE — every plain
+// content page directly in a module (not in keepSep) joins one group, hosted by the module's first
+// page; quizzes, links, sub-modules etc. stay where they are (Aubs, 2026-09-23). Shared by the export
+// and the outline's preview so the two can never disagree.
 function combineGroups(m,keepSep){
  const groups=[];
- const visit=it=>{let run=[];
-   const flush=()=>{if(run.length>=2)groups.push({sub:titleOf(it),members:run.slice()});run=[];};
+ const visit=it=>{const run=[];
    for(const c of [...it.children].filter(x=>x.tagName==='item')){
      // honor keepSep at EVERY level — real modules often sit under an untitled wrapper item.
      // keepSep holds item identifiers (not titles), so duplicate/untitled modules are distinct.
-     if(keepSep.has(c.getAttribute('identifier'))){flush();continue;}
+     if(keepSep.has(c.getAttribute('identifier')))continue;
      // An item with child items is STRUCTURE (a unit heading), even when it also carries its
      // own content page (D2L exports a module description as identifierref on the module item).
      // Merging one used to delete the whole unit from the manifest — never fold these.
      const hasKids=[...c.children].some(x=>x.tagName==='item');
      const he=m.htmlEntry(c);
      if(he&&!hasKids&&!INSTR(titleOf(c)))run.push(c);
-     else{flush();if(hasKids)visit(c);}}
-   flush();};
+     else if(hasKids)visit(c);}
+   if(run.length>=2)groups.push({sub:titleOf(it),members:run});};
  [...m.org.children].filter(x=>x.tagName==='item').forEach(top=>{if(!keepSep.has(top.getAttribute('identifier')))visit(top);});
  return groups;}
 async function buildCombine(zip,man,m,keepSep,reorder){
@@ -1380,12 +1410,12 @@ function combineGroupsD2L(man,m,keepSep,side){
  const leaf=c=>!hasKids(c)&&rt[c.getAttribute('identifierref')]==='content'&&!!m.htmlEntry(c)&&!INSTR(titleOf(c));
  const groups=[];let guarded=0;
  const visit=it=>{let run=[];
-   const flush=()=>{if(run.length>=2)groups.push({sub:titleOf(it),members:run.slice()});run=[];};
+   // each module becomes one page: its plain pages join one group; anything else stays where it is
    for(const c of [...it.children].filter(x=>x.tagName==='item')){
-     if(keepSep.has(c.getAttribute('identifier'))){flush();continue;}   // keepSep = item identifiers
-     if(leaf(c)){if(referenced(c)){guarded++;flush();}else run.push(c);}
-     else{flush();if(hasKids(c))visit(c);}}
-   flush();};
+     if(keepSep.has(c.getAttribute('identifier')))continue;   // keepSep = item identifiers
+     if(leaf(c)){if(referenced(c))guarded++;else run.push(c);}
+     else if(hasKids(c))visit(c);}
+   if(run.length>=2)groups.push({sub:titleOf(it),members:run});};
  [...m.org.children].filter(x=>x.tagName==='item').forEach(top=>{if(!keepSep.has(top.getAttribute('identifier')))visit(top);});
  return {groups,guarded};}
 async function buildCombineD2L(zip,man,m,keepSep){
@@ -1612,7 +1642,7 @@ async function setFile(f){
  // Explorer edits live in memory only — warn before a new file discards them (guard BEFORE reset).
  if(f&&EDITOR&&EDITOR.hasCourseEdits()&&!confirm('You have page edits in the current course that haven’t been exported yet. Loading a different file will discard them. Continue?')){
    $('#file').value='';return;}   // reset the input so re-picking the SAME file still fires change
- FILE=f; MODEL=null; $('#go').disabled=true; FLOW.courseGone();
+ FILE=f; MODEL=null; $('#go').disabled=true; $('#convert').disabled=true; FLOW.courseGone();
  clearDownloads(); $('#log').style.display='none'; $('#log').textContent='';
  $('#explorer').hidden=true; if(EDITOR)EDITOR.resetCourse(); clearAssets();   // drop any explorer edits from a previous course
  if(!f)return;
@@ -1628,8 +1658,8 @@ async function setFile(f){
    // descriptions, quiz/assignment payloads etc., so it takes the d2l-aware combine path.
    const isD2L=/desire2learn\.com\/xsd\/d2lcp/i.test(man);
    MODEL={zip,man,m,isD2L};
-   renderCourseTree();
-   $('#go').disabled=false;
+   renderCourseTree();setConverted(false);
+   $('#go').disabled=false;$('#convert').disabled=false;
    const pages=Object.keys(m.titleByHref).filter(hh=>{const e=m.entryFor(hh);return e&&e.toLowerCase().endsWith('.html');}).length;
    FLOW.course(f.name,pages);
  }catch(err){FLOW.dropMsg(FRIENDLY[err.message]||('Could not read this file: '+err.message),true);console.error(err);}
@@ -1679,31 +1709,28 @@ function treeHtml(nodes){
    const sub=intro||n.children.length?`<ul class="ctree">${intro}${n.children.length?treeHtml(n.children).replace(/^<ul class="ctree">|<\/ul>$/g,''):''}</ul>`:'';
    return `<li>${row}${sub}</li>`;
  }).join('')+`</ul>`;}
-// Each top-level module is a foldable group whose header carries the "Merge" tick. Those .modchk boxes
-// are what the export reads (unticked = kept as-is), so EVERY top-level item gets one, even if it isn't
-// a module — otherwise a missing box would read as "merge it".
+// Each top-level module is a foldable group: title, page count, and a dot when something inside is edited.
 const CHEV='<svg class="cchev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>';
 function editableCount(n){return (n.isPage||n.introKey?1:0)+n.children.reduce((a,c)=>a+editableCount(c),0);}
 function groupsHtml(nodes){
  return `<ul class="ctree">`+nodes.map((n,i)=>{
-   const chk=`<input type="checkbox" class="modchk" data-id="${xesc(n.id)}" data-title="${xesc(n.title)}"`;
-   if(!n.isModule)return `<li class="cgroup">${treeHtml([n]).replace(/^<ul class="ctree"><li>|<\/li><\/ul>$/g,'')}${chk} hidden></li>`;
+   if(!n.isModule)return `<li class="cgroup">${treeHtml([n]).replace(/^<ul class="ctree"><li>|<\/li><\/ul>$/g,'')}</li>`;
    const k=editableCount(n),empty=!n.children.length&&!n.introKey;   // treeHtml draws an empty module as a plain row
    const inner=empty?'':treeHtml([n]).replace(/^<ul class="ctree"><li><div class="cmodule">.*?<\/div>|<\/li><\/ul>$/g,'');
    return `<li class="cgroup"><div class="cmodhead">`
      +`<button type="button" class="ctoggle" aria-expanded="true"${empty?' disabled':` aria-controls="cg-${i}"`}>${empty?CHEV.replace('class="cchev"','class="cchev" style="visibility:hidden"'):CHEV}<span class="cmodtitle">${esc(n.title)}</span>`
      +`<span class="ccount" title="${k} page${k===1?'':'s'} to edit">${k}</span><span class="cdot" data-editdot hidden title="Has edits"></span></button>`
-     +`<label class="cmerge" title="Fold each run of back-to-back pages in this module into one">${chk} aria-label="Merge pages in ${xesc(n.title)}">Merge</label></div>`
+     +`</div>`
      +inner.replace(/^<ul class="ctree">/,`<ul class="ctree" id="cg-${i}">`)+`</li>`;
  }).join('')+`</ul>`;}
 function foldGroup(g,open){const t=g&&g.querySelector(':scope>.cmodhead>.ctoggle');if(!t)return;
  t.setAttribute('aria-expanded',open);const u=g.querySelector(':scope>.ctree');if(u)u.hidden=!open;}
 // Merging is skipped when "Styled only" is chosen or once there are explorer edits (see #go) — say so.
+// The Compressed download is skipped while there are edits (see #go) or when "Spread out only" is chosen.
 function refreshMerge(){const tree=$('.expl-tree');if(!tree)return;
  const edits=EDITOR&&EDITOR.hasCourseEdits(),mode=(document.querySelector('input[name=mode]:checked')||{}).value;
- const off=edits?'Merging is off while you have edits — the export keeps every page.':mode==='restyle'?'Merging is off: you chose <b>Styled only</b> under More choices.':'';
- tree.classList.toggle('nomerge',!!off);
- tree.querySelectorAll('.modchk').forEach(b=>b.disabled=!!off);
+ const off=edits?'While you have edits, Download gives the spread-out version only.':mode==='restyle'?'You chose <b>Spread out only</b> under More choices.':'';
+ tree.classList.toggle('nomerge',!!off);$('#show-compress').disabled=!!off;
  $('#merge-note').innerHTML=off;$('#merge-note').hidden=!off;
  updateSummary();}
 function renderCourseTree(){
@@ -1781,16 +1808,61 @@ $('#expl-list').addEventListener('click',async e=>{
  foldGroup(btn.closest('.cgroup'),true);keepInView(btn);updateNav();
  const toTop=NAV_TOP;NAV_TOP=false;
  $('#cx-empty').hidden=true;$('#cx-pane').hidden=false;$('#cx-title').textContent=title;
- $('#cx-kicker').textContent=btn.dataset.kicker||'Editing page';
+ await showView(btn,seq);
+ if(seq!==OPEN_SEQ)return;
+ $('#cx-pane').scrollIntoView({behavior:'smooth',block:toTop?'start':'nearest'});
+});
+/* ---- Convert first, then personalize: Original (as the page is now) · Styled (exactly what the export
+   writes, edits included) · Edit (the block editor). Before Convert only Original is offered. ---- */
+let CONVERTED=false,VIEW='original';
+function paintViews(){const v=$('#cx-views');
+ v.querySelectorAll('button').forEach(b=>{const on=b.dataset.view===VIEW;b.setAttribute('aria-pressed',on);
+   b.hidden=!CONVERTED&&b.dataset.view!=='original';});
+ v.classList.toggle('solo',!CONVERTED);
+ $('#cx-viewnote').textContent=CONVERTED?(VIEW==='edit'?'Changes are kept when you download.':VIEW==='styled'?'Exactly what Download will give Brightspace.':'How the page looks today.')
+   :'Convert the course to see it styled and edit it.';}
+async function showView(btn,seq){if(!MODEL)return;const M=MODEL;
+ const entry=btn.dataset.entry,title=btn.dataset.title,intro=isIntroKey(entry);
+ paintViews();
+ const kick=VIEW==='edit'?(btn.dataset.kicker||'Editing page'):(intro?'Module intro':'Page');
+ $('#cx-kicker').textContent=kick;
  const raw=await courseRawBody(entry);
  // Bail if a later click won the race, OR if we've left course mode during the await (e.g. the user
  // pasted a page into Stage 1 while this zip read was pending) — otherwise we'd blank the paste.
- if(seq!==OPEN_SEQ||FLOW.kind()!=='course')return;
- EDITOR.openCoursePage(entry,title,raw);
- $('#cx-pane').scrollIntoView({behavior:'smooth',block:toTop?'start':'nearest'});
-});
+ if(seq!==OPEN_SEQ||FLOW.kind()!=='course'||MODEL!==M)return;
+ const editing=VIEW==='edit'&&CONVERTED;
+ $('#cx-mount').hidden=!editing;$('#cx-preview').hidden=editing;
+ if(editing){EDITOR.openCoursePage(entry,title,raw);return;}
+ await renderPreview(entry,title,raw,seq);}
+// Paint a page into the sandboxed preview frame (no scripts run in it). Course images are swapped for
+// blob: URLs for display only, exactly as the editor does. A module intro sits in a 669px column —
+// the width Brightspace gives module descriptions.
+async function renderPreview(entry,title,raw,seq){
+ const M=MODEL,intro=isIntroKey(entry);let html;
+ if(VIEW==='original')html=intro?`<div style="max-width:669px">${raw}</div>`:((await MODEL.zip.text(entry))||raw);
+ else{const edits=EDITOR?EDITOR.courseEdits():{};
+   if(intro)html=`<div style="max-width:669px">${exportIntroHtml(title,raw,edits[entry],!!(MODEL.introIsModule||{})[entry])}</div>`;
+   else{const out=exportPageHtml(title,raw,edits[entry]);html=out.html||((await MODEL.zip.text(entry))||raw);}}
+ const d=new DOMParser().parseFromString(html,'text/html');
+ d.querySelectorAll('script').forEach(x=>x.remove());
+ await Promise.all([...d.querySelectorAll('img[src]')].map(async img=>{const u=await courseAssetUrl(intro?'':entry,img.getAttribute('src'));if(u)img.setAttribute('src',u);}));
+ if(seq!==OPEN_SEQ||MODEL!==M)return;   // a later click, or another course, won the race
+ d.head.insertAdjacentHTML('afterbegin','<base target="_blank"><style>body{margin:18px;font-family:Lato,"Segoe UI",Arial,sans-serif;color:#202122;line-height:1.5;}img{max-width:100%;height:auto;}</style>');
+ const f=$('#cx-frame');
+ f.onload=()=>{const fit=()=>{try{f.style.height=f.contentDocument.documentElement.scrollHeight+'px';}catch(_){}};fit();
+   try{f.contentDocument.querySelectorAll('img').forEach(i=>i.addEventListener('load',fit));}catch(_){}};
+ f.srcdoc='<!DOCTYPE html>'+d.documentElement.outerHTML;}
+$('#cx-views').addEventListener('click',e=>{const b=e.target.closest('button[data-view]');if(!b||b.hidden)return;
+ VIEW=b.dataset.view;const sel=$('#expl-list .ctopic.sel');paintViews();
+ if(sel){const seq=++OPEN_SEQ;showView(sel,seq);}});
+// Convert: from now on the course is shown (and edited) in the RDP style; Download builds the files.
+function setConverted(on){CONVERTED=on;VIEW=on?'styled':'original';
+ $('#convert').hidden=on;$('#go').hidden=!on;paintViews();updateSummary();}
+$('#convert').addEventListener('click',()=>{if(!MODEL)return;setConverted(true);
+ const sel=$('#expl-list .ctopic.sel');if(sel){const seq=++OPEN_SEQ;showView(sel,seq);}
+ else{const b=navList()[0];if(b){NAV_TOP=true;b.click();}}});
 function closeCoursePane(){if(EDITOR)EDITOR.exitCourse();
- $('#cx-pane').hidden=true;$('#cx-empty').hidden=false;
+ $('#cx-pane').hidden=true;$('#cx-empty').hidden=false;$('#cx-frame').srcdoc='';
  $('#expl-list').querySelectorAll('.ctopic.sel').forEach(x=>x.classList.remove('sel'));updateSummary();}
 $('#cx-close').addEventListener('click',closeCoursePane);
 /* ---- Moving around the outline: Prev/Next, arrow keys, find-a-page, and the empty-state summary ---- */
@@ -1854,17 +1926,20 @@ function updateSummary(){if(!MODEL)return;
  $('#cx-sum').textContent=(what?`${what} get the RDP template`:'Nothing here to restyle')
    +(MODEL.isD2L?'; quizzes, assignments, discussions and links pass through unchanged.':'; everything else passes through unchanged.');
  const edited=document.querySelectorAll('#expl-list [data-edited]:not([hidden])').length;
- const merging=document.querySelector('.expl-tree.nomerge')?0:[...document.querySelectorAll('.modchk')].filter(b=>b.checked).length;
- $('#cx-sum2').textContent=[edited?`${edited} edited`:'',merging?`${merging} module${merging===1?'':'s'} set to merge`:''].filter(Boolean).join(' · ');
+ $('#cx-sum2').textContent=edited?`${edited} edited`:'';
+ $('#cx-ready').innerHTML=CONVERTED?'Converted — every page now shows in the RDP style.':'Ready to convert — click <b>Convert course</b> above.';
+ $('#cx-opt').innerHTML=CONVERTED
+   ?'Open any page to check how it looks, switch to <b>Edit</b> to tweak it, then click <b>Download</b> above.'
+   :'Want to see what’s there first? Open any page from the outline to preview it as it is now. You can edit pages after converting.';
+ $('#cx-start').textContent=CONVERTED?'Check the first page →':'Preview the first page →';
  $('#cx-start').hidden=!pages;
  updateMergePreview();}
 // Tag the outline with what Merge would do, using the export's own grouping (combineGroups / D2L).
 let PREVIEW_SEQ=0;
 async function updateMergePreview(){const M=MODEL,seq=++PREVIEW_SEQ,list=$('#expl-list');if(!M)return;
- const boxes=[...document.querySelectorAll('.modchk')],keep=new Set(boxes.filter(c=>!c.checked).map(c=>c.dataset.id));
- const on=!$('.expl-tree').classList.contains('nomerge')&&keep.size<boxes.length;
+ const keep=new Set(),off=$('.expl-tree').classList.contains('nomerge'),show=!off&&$('#show-compress').checked;
  let groups=[];
- if(on){if(M.isD2L){if(M.side===undefined)M.side=await d2lSidecars(M.zip);groups=combineGroupsD2L(M.man,M.m,keep,M.side).groups;}
+ if(!off){if(M.isD2L){if(M.side===undefined)M.side=await d2lSidecars(M.zip);groups=combineGroupsD2L(M.man,M.m,keep,M.side).groups;}
    else groups=combineGroups(M.m,keep);}
  if(seq!==PREVIEW_SEQ||MODEL!==M)return;   // a newer tick (or another course) won the race
  list.querySelectorAll('.cfold-tag').forEach(t=>t.remove());
@@ -1873,19 +1948,18 @@ async function updateMergePreview(){const M=MODEL,seq=++PREVIEW_SEQ,list=$('#exp
  groups.forEach(g=>{const hostTitle=titleOf(g.members[0]),n=g.members.length-1;
    g.members.forEach((it,k)=>{const e=M.m.htmlEntry(it),row=e&&list.querySelector(`.ctopic[data-entry="${window.CSS&&CSS.escape?CSS.escape(e):e}"]`);if(!row)return;
      const tag=document.createElement('span');tag.className='cfold-tag';
-     tag.textContent=k?'merged':`+${n}`;
-     tag.title=k?`Merges into “${hostTitle}”`:`The next ${n} page${n===1?'':'s'} merge into this one`;
-     row.insertBefore(tag,row.querySelector('[data-edited]'));row.classList.add(k?'cfolds':'chost');if(k)folded++;});});
- $('#cx-sum3').textContent=folded?`${folded} fewer page${folded===1?'':'s'} after merging`:'';}
+     if(k)folded++;if(!show)return;
+     tag.textContent=k?'combined':`+${n}`;
+     tag.title=k?`In Compressed, this page joins “${hostTitle}”`:`In Compressed, ${n} more page${n===1?'':'s'} from this module join${n===1?'s':''} this one`;
+     row.insertBefore(tag,row.querySelector('[data-edited]'));row.classList.add(k?'cfolds':'chost');});});
+ {const n=coursePageCount();$('#cx-sum3').textContent=folded?`Compressed version: ${n-folded} page${n-folded===1?'':'s'} instead of ${n}`:'';}}
 // The sticky stack (step rail, then Step 2's header) is measured, not guessed, so nothing peeks between.
 (()=>{const rail=document.querySelector('.rail'),sh=document.querySelector('#s2 > .sh'),root=document.documentElement.style;
  const sync=()=>{root.setProperty('--railh',rail.offsetHeight+'px');root.setProperty('--s2h',sh.offsetHeight+'px');};
  if(window.ResizeObserver){const ro=new ResizeObserver(sync);ro.observe(rail);ro.observe(sh);}sync();})();
 $('#cx-start').addEventListener('click',()=>{const b=navList()[0]||document.querySelector('#expl-list .ctopic');if(b){NAV_TOP=true;b.click();}});
-$('#expl-list').addEventListener('change',e=>{if(e.target.classList.contains('modchk'))updateSummary();});
 
-$('#merge-all').addEventListener('click',()=>{document.querySelectorAll('.modchk').forEach(b=>b.checked=true);updateSummary();});
-$('#merge-none').addEventListener('click',()=>{document.querySelectorAll('.modchk').forEach(b=>b.checked=false);updateSummary();});
+$('#show-compress').addEventListener('change',updateMergePreview);
 $('#fold-open').addEventListener('click',()=>$('#expl-list').querySelectorAll('.cgroup').forEach(g=>foldGroup(g,true)));
 $('#fold-shut').addEventListener('click',()=>$('#expl-list').querySelectorAll('.cgroup').forEach(g=>foldGroup(g,false)));
 document.querySelectorAll('input[name=mode]').forEach(r=>r.addEventListener('change',refreshMerge));
@@ -1903,10 +1977,10 @@ window.addEventListener('beforeunload',e=>{if(EDITOR&&EDITOR.hasCourseEdits()){e
 // (which already holds its own reference to the blob) is unaffected.
 let dlUrls=[];
 function clearDownloads(){dlUrls.forEach(u=>URL.revokeObjectURL(u));dlUrls=[];$('#downloads').innerHTML='';$('#s3-check').textContent='';}
-// Short label on the button, the real filename underneath. safe = the plain styled build; otherwise the merged one.
+// Short label on the button, the real filename underneath. safe = Spread out (every page kept); otherwise Compressed.
 function dlButton(blob,name,safe){const url=URL.createObjectURL(blob);dlUrls.push(url);const a=document.createElement('a');
  a.href=url;a.download=name;a.className='dl';a.dataset.kind=safe?'plain':'merged';
- a.innerHTML=`<span class="dl-t"><span aria-hidden="true">⬇ </span>${safe?'Template applied':'Pages merged'}</span><span class="dl-s"></span><span class="dl-f">${esc(name)}</span>`;
+ a.innerHTML=`<span class="dl-t"><span aria-hidden="true">⬇ </span>${safe?'Spread out':'Compressed'}</span><span class="dl-s"></span><span class="dl-f">${esc(name)}</span>`;
  a.addEventListener('click',()=>FLOW.downloaded(name));$('#downloads').appendChild(a);}
 
 // One export build finished: verify it, then OFFER the download only when the security belt is clean.
@@ -1927,20 +2001,21 @@ async function mergeCount(keep){const M=MODEL;let groups;
  return {folded:groups.reduce((a,g)=>a+g.members.length-1,0),groups:groups.length};}
 // Step 3: one main download (the merged one when Merge did something), the other as the fallback,
 // and one line saying what was built and whether the checks passed.
+// Content pages in the loaded course (the Stage 1 receipt's number).
+const coursePageCount=()=>{const m=MODEL.m;return Object.keys(m.titleByHref).filter(h=>{const e=m.entryFor(h);return e&&e.toLowerCase().endsWith('.html');}).length;};
 async function presentStep3(mc,edits){
+ // Two equal choices (Aubs: keep both): Spread out keeps every page; Compressed makes each module one
+ // page. If nothing could be combined the two files are identical, so only one is shown.
  const plain=$('#downloads a[data-kind="plain"]'),merged=$('#downloads a[data-kind="merged"]'),folded=mc?mc.folded:0;
- if(merged&&plain&&!folded){merged.hidden=true;}                          // nothing merged: the two files are identical
- const main=merged&&folded?merged:(plain||merged),back=main===merged?plain:null;
- [plain,merged].forEach(a=>{if(a)a.classList.toggle('sec',a!==main);});
- if(main===merged&&folded)merged.querySelector('.dl-s').textContent=`${folded} fewer page${folded===1?'':'s'}, as you chose`;
- if(back)back.querySelector('.dl-s').textContent='No merging — use this if the merged one looks off';
- if(main)main.style.order='-1';   // shown first; DOM order (and so the build order) stays as built
+ if(merged&&plain&&!folded)merged.hidden=true;
+ if(plain)plain.querySelector('.dl-s').textContent='Every page kept as its own page';
+ if(merged&&folded){const n=coursePageCount();merged.querySelector('.dl-s').textContent=`Each module’s pages combined into one — ${n-folded} page${n-folded===1?'':'s'} instead of ${n}`;}
  const m=MODEL.m,nPages=Object.keys(m.titleByHref).filter(h=>{const e=m.entryFor(h);return e&&e.toLowerCase().endsWith('.html');}).length;
  const nIntros=Object.values(MODEL.introIsModule||{}).filter(Boolean).length,nEdit=Object.keys(edits||{}).length;
  const what=[nPages?`${nPages} page${nPages===1?'':'s'}`:'',nIntros?`${nIntros} module intro${nIntros===1?'':'s'}`:''].filter(Boolean).join(' and ');
  const parts=[what?`${what} restyled`:'Built'];
  if(nEdit)parts.push(`your ${nEdit} edit${nEdit===1?'':'s'} included`);
- if(folded)parts.push(`${folded} page${folded===1?'':'s'} merged into ${mc.groups}`);
+ if(folded)parts.push(`Compressed: ${nPages} pages → ${nPages-folded}`);
  const withheld=CHECKS.some(c=>c.withheld),warned=CHECKS.some(c=>!c.ok);
  parts.push(withheld?'a download was withheld for safety — open Step 2 to see why':warned?'the checks flagged something — open Step 2 to see the details':'all checks passed');
  const el=$('#s3-check');el.textContent=(warned?'⚠ ':'✓ ')+parts.join(' · ');el.classList.toggle('warn',warned);}
@@ -1953,10 +2028,9 @@ $('#go').addEventListener('click',async()=>{
  // wouldn't pick up the edits (and merging an edited page in raises the double-card trap).
  const edits=EDITOR?EDITOR.courseEdits():{};const nEdit=Object.keys(edits).length;
  const mode=nEdit?'restyle':document.querySelector('input[name=mode]:checked').value;
- // Sections left UN-ticked are kept as-is (not combined). Key by manifest identifier, not title:
- // two modules can share a title (or be untitled), and a title-keyed set toggles them together
- // or silently misses the untitled ones.
- const keep=new Set([...document.querySelectorAll('.modchk')].filter(c=>!c.checked).map(c=>c.getAttribute('data-id')));
+ // The Compressed version covers the whole course: every module becomes one page (keepSep stays in
+ // the build functions' signature, empty here).
+ const keep=new Set();
  const base=FILE.name.replace(/\.(imscc|zip)$/i,'');
  const {zip,man,m}=MODEL;
  try{
@@ -2006,6 +2080,7 @@ $('#go').addEventListener('click',async()=>{
    }
    log('All done!','pass');
    await presentStep3(mode==='restyle'?0:await mergeCount(keep),edits);
+   if(nEdit&&document.querySelector('#s3-check'))$('#s3-check').textContent+=' · Compressed skipped while you have edits';
    FLOW.built();
  }catch(err){log('Something went wrong: '+err.message,'err');console.error(err);}
  $('#go').disabled=false;
