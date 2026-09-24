@@ -382,8 +382,8 @@
 
   <nav class="rail" aria-label="Progress">
     <button type="button" class="rs cur" data-stage="1" aria-current="step"><span class="n">1</span><span class="t">Bring it in</span></button>
-    <button type="button" class="rs" data-stage="2" disabled><span class="n">2</span><span class="t">Personalize</span></button>
-    <button type="button" class="rs" data-stage="3" disabled><span class="n">3</span><span class="t">Put it back</span></button>
+    <button type="button" class="rs" data-stage="2" disabled><span class="n">2</span><span class="t">Make it yours</span></button>
+    <button type="button" class="rs" data-stage="3" disabled><span class="n">3</span><span class="t">Put it in Brightspace</span></button>
   </nav>
   <!-- A course stays loaded (with any edits) while you work on a single page: this is the way back. -->
   <div id="course-back" class="note" role="status" hidden><span id="course-back-msg"></span> <button type="button" class="linkbtn" id="course-back-btn">Back to your course</button></div>
@@ -462,8 +462,8 @@
   <!-- ===== Stage 2: fix it. Which body shows depends on what arrived in stage 1. ===== -->
   <section class="stage later" id="s2" aria-labelledby="h2s">
     <div class="sh"><span class="sn" aria-hidden="true">2</span><h2 id="h2s">Make it yours</h2><span class="receipt" id="r2"></span>
-      <span class="sh-act" id="s2-act" hidden><button type="button" id="convert" class="pri" disabled>Convert course</button><button id="go" class="pri" hidden disabled>Download</button></span>
-      <span class="sh-act" id="s2-pact" hidden><button type="button" class="pri" id="pg-next">Continue to Put it back</button></span>
+      <span class="sh-act" id="s2-act" hidden><button type="button" id="convert" class="pri" disabled>Convert course</button><button id="go" class="pri" hidden disabled>Get the files →</button></span>
+      <span class="sh-act" id="s2-pact" hidden><button type="button" class="pri" id="pg-next">Continue to step 3 →</button></span>
       <button type="button" class="linkbtn chg" data-go="2">Open</button></div>
     <div class="sb">
       <p class="muted" id="s2-wait" style="margin:0;">After step 1.</p>
@@ -527,7 +527,7 @@
 
   <!-- ===== Stage 3: put it into Brightspace ===== -->
   <section class="stage later" id="s3" aria-labelledby="h3s">
-    <div class="sh"><span class="sn" aria-hidden="true">3</span><h2 id="h3s">Put it into Brightspace</h2><span class="receipt" id="r3"></span>
+    <div class="sh"><span class="sn" aria-hidden="true">3</span><h2 id="h3s">Put it in Brightspace</h2><span class="receipt" id="r3"></span>
       <button type="button" class="linkbtn chg" data-go="3">Open</button></div>
     <div class="sb">
       <p class="muted" id="s3-wait" style="margin:0;">After step 2.</p>
@@ -1729,7 +1729,7 @@ function foldGroup(g,open){const t=g&&g.querySelector(':scope>.cmodhead>.ctoggle
 // The Compressed download is skipped while there are edits (see #go) or when "Spread out only" is chosen.
 function refreshMerge(){const tree=$('.expl-tree');if(!tree)return;
  const edits=EDITOR&&EDITOR.hasCourseEdits(),mode=(document.querySelector('input[name=mode]:checked')||{}).value;
- const off=edits?'While you have edits, Download gives the spread-out version only.':mode==='restyle'?'You chose <b>Spread out only</b> under More choices.':'';
+ const off=edits?'While you have edits, Get the files gives the Spread out file only.':mode==='restyle'?'You chose <b>Spread out only</b> under More choices.':'';
  tree.classList.toggle('nomerge',!!off);$('#show-compress').disabled=!!off;
  $('#merge-note').innerHTML=off;$('#merge-note').hidden=!off;
  updateSummary();}
@@ -1819,7 +1819,7 @@ function paintViews(){const v=$('#cx-views');
  v.querySelectorAll('button').forEach(b=>{const on=b.dataset.view===VIEW;b.setAttribute('aria-pressed',on);
    b.hidden=!CONVERTED&&b.dataset.view!=='original';});
  v.classList.toggle('solo',!CONVERTED);
- $('#cx-viewnote').textContent=CONVERTED?(VIEW==='edit'?'Editing a page means you get the Spread out file only (no Compressed yet).':VIEW==='styled'?'Exactly what Download will give Brightspace.':'How the page looks today.')
+ $('#cx-viewnote').textContent=CONVERTED?(VIEW==='edit'?'Editing a page means you get the Spread out file only (no Compressed yet).':VIEW==='styled'?'Exactly what Get the files will give Brightspace.':'How the page looks today.')
    :'Convert the course to see it styled and edit it.';}
 async function showView(btn,seq){if(!MODEL)return;const M=MODEL;
  const entry=btn.dataset.entry,title=btn.dataset.title,intro=isIntroKey(entry);
@@ -1929,7 +1929,7 @@ function updateSummary(){if(!MODEL)return;
  $('#cx-sum2').textContent=edited?`${edited} edited`:'';
  $('#cx-ready').innerHTML=CONVERTED?'Converted — every page now shows in the RDP style.':'Ready to convert — click <b>Convert course</b> above.';
  $('#cx-opt').innerHTML=CONVERTED
-   ?'Open any page to check how it looks, switch to <b>Edit</b> to tweak it, then click <b>Download</b> above.'
+   ?'Open any page to check how it looks, switch to <b>Edit</b> to tweak it, then click <b>Get the files</b> above.'
    :'Want to see what’s there first? Open any page from the outline to preview it as it is now. You can edit pages after converting.';
  $('#cx-start').textContent=CONVERTED?'Check the first page →':'Preview the first page →';
  $('#cx-start').hidden=!pages;
