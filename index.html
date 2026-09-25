@@ -796,7 +796,7 @@ function titleStyle(t){const k=(t||'').trim().toLowerCase().replace(/[\s:.!-]+$/
 const MARKER_COLOR={introduction:'teal','course learning outcomes':'plum','learning outcomes':'plum',topics:'green',
  'learning activity':'violet',read:'teal',watch:'teal','additional resources':'orange',references:'slate',
  conclusion:'forest','time commitment':'violet','catch up':'green','concepts of the week':'green',bring:'slate',do:'green',overview:'orange',assessment:'plum',
- // Blackboard-era button set (HET trades courses): outcome family stays on plum like 'learning outcomes'
+ // Blackboard-era button set (trades courses): outcome family stays on plum like 'learning outcomes'
  outcome:'plum',outcomes:'plum',objectives:'plum','practice quiz':'green','supervised test':'orange',feedback:'violet',
  // --- activity vocabulary (Sep 2026): one colour per category ---
  // Information Acquisition (passive) -> teal
@@ -964,6 +964,48 @@ function okUrl(v){v=(v||'').trim();if(!v)return false;
 // Pictures may also legitimately arrive as data: URIs (pasted/embedded images). Allow
 // only image/* data URIs — inert in an <img>/background context, never script-bearing.
 function okImg(v){v=(v||'').trim();return okUrl(v)||/^data:image\/[a-z0-9.+-]+[;,]/i.test(v);}
+// Elements no course page needs that can smuggle script past a sanitizer. SVG animation
+// (<animate attributeName="href" values="javascript:…">, <set to=…>) rewrites an href AFTER load,
+// so a scan of href/src never sees it. The raw-text elements and <template> parse one way here
+// (DOMParser runs with scripting OFF) and another in the student's browser (scripting ON) — the
+// noscript/xmp mutation-XSS gap. Matched on localName: SVG names are camelCase.
+const DEAD_TAGS=new Set(['script','style','link','meta','base','noscript','template','xmp','noembed','noframes','plaintext',
+ 'animate','set','animatemotion','animatetransform','animatecolor','discard']);
+// The shared scrub both sanitizers end with: dead elements out; an <iframe> kept only when its src
+// is an allowed scheme (a data:/javascript: iframe is dropped whole — Brightspace renders imported
+// HTML same-origin with no CSP/sandbox, so a bare srcless iframe is the safe outcome); on* / srcdoc /
+// form actions stripped; every url attribute allowlisted.
+function scrubTree(root){
+ [...root.querySelectorAll('*')].forEach(el=>{if(DEAD_TAGS.has(el.localName.toLowerCase()))el.remove();});
+ root.querySelectorAll('iframe').forEach(f=>{let s=(f.getAttribute('src')||'').trim();
+   if(s.startsWith('http://')){s='https://'+s.slice(7);f.setAttribute('src',s);}
+   if(!okUrl(s))f.remove();});
+ root.querySelectorAll('*').forEach(el=>{if(!el.isConnected)return;
+   const tag=el.tagName.toLowerCase();
+   for(const a of [...el.attributes]){
+     const nm=a.name.toLowerCase();
+     if(/^on/.test(nm)||nm==='srcdoc'||nm==='action'||nm==='formaction'){el.removeAttribute(a.name);continue;}
+     if(nm==='href'||nm==='src'||nm==='data'||nm==='xlink:href'||nm==='poster'){
+       const raw=a.value.trim();
+       // a blob: URL is only ever the canvas's stand-in for a course image (see ASSET_BACK): put the
+       // real src back; one we don't know is meaningless outside this tab, so it goes.
+       if(/^blob:/i.test(raw)){const back=ASSET_BACK.get(raw);
+         if(back!==undefined)el.setAttribute(a.name,back);else el.removeAttribute(a.name);continue;}
+       // Allowlist (replaced an older scheme blocklist that missed data:application/xhtml+xml,
+       // data:text/xml, data:image/svg+xml, ...): an image src/poster may also be an inert
+       // data:image/*; every other url attribute must be http/https/mailto. okUrl's new URL() also
+       // defeats tab/newline scheme-obfuscation. Anything else is dropped.
+       const good=((tag==='img'&&nm==='src')||nm==='poster')?okImg(raw):okUrl(raw);
+       if(!good)el.removeAttribute(a.name);}}});}
+// Re-parse a sanitizer's own output and scrub again until it stops changing. Serializing and
+// re-parsing can turn inert text back into live markup (<form><math><mtext></form><form><mglyph>…
+// mXSS), so what ships must be clean as the NEXT parser sees it, not just as this one did. Benign
+// HTML settles on the first pass; anything that won't settle is dropped rather than shipped.
+function settle(html,scrub=scrubTree){
+ for(let i=0;i<4;i++){const d=new DOMParser().parseFromString('<body>'+html+'</body>','text/html');
+   scrub(d.body);const out=d.body.innerHTML;if(out===html)return out;html=out;}
+ log('  a piece of content was left out: its markup kept changing after cleaning, so it could not be proven safe','warn');
+ return '';}
 
 function cleanBody(htmlStr,linkTok){
  htmlStr=htmlStr||'';const LINKC=linkTok||'#003129';   // body links inherit the card's colour; default neutral forest
@@ -972,7 +1014,7 @@ function cleanBody(htmlStr,linkTok){
  const body=doc.body;
  // remove comments
  const cw=doc.createTreeWalker(body,NodeFilter.SHOW_COMMENT);const cm=[];while(cw.nextNode())cm.push(cw.currentNode);cm.forEach(n=>n.remove());
- body.querySelectorAll('script,style,meta,link,base').forEach(e=>e.remove());
+ [...body.querySelectorAll('*')].forEach(el=>{if(DEAD_TAGS.has(el.localName.toLowerCase()))el.remove();});
  // display:none unless holds media
  [...body.querySelectorAll('*')].forEach(el=>{if(!el.isConnected)return;
    const s=(el.getAttribute('style')||'').replace(/\s/g,'').toLowerCase();
@@ -1037,7 +1079,7 @@ function cleanBody(htmlStr,linkTok){
  // remove empty p/div
  [...body.querySelectorAll('p,div')].forEach(el=>{if(!el.isConnected)return;
    if(!el.textContent.trim()&&!el.querySelector('img,iframe,table,hr,br,a,video,audio,embed,object,svg'))el.remove();});
- return body.innerHTML;
+ return settle(body.innerHTML);   // final pass: clean as the next parser sees it (see settle)
 }
 const NO_CONTENT='<p style="margin:0 0 .85rem;color:#5B6770;font-style:italic;">(No page content — see linked file.)</p>';
 function renderStandalone(title,body){const[tok,svg]=cardTheme(title,body);let inner=cleanBody(body,COLORS[tok]);
@@ -1065,7 +1107,7 @@ function templatedInner(body){
  return [...root.children].some(isCardEl)?root.innerHTML:null;}
 const isTemplated=body=>templatedInner(body)!==null;
 /* ---------- module intros (the description="…" a teacher wrote ON a module) ---------- */
-// Some courses (HET trades) carry every lesson in module intros and have no pages at all. An intro
+// Some courses (trades) carry every lesson in module intros and have no pages at all. An intro
 // gets the same RDP card as a page, minus the page frame, built with NO_SVG set: Brightspace strips
 // <svg> from descriptions on import, so the banner is the coloured strip + heading only and marker
 // buttons become dot-labelled subheads. Recognised again on a second pass by that banner inside a
@@ -1272,7 +1314,7 @@ const INSTR=t=>/instructor info|instructor information/i.test(t);
 function xesc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 // Which pages the Compressed version folds together: EACH MODULE BECOMES ONE PAGE — every plain
 // content page directly in a module (not in keepSep) joins one group, hosted by the module's first
-// page; quizzes, links, sub-modules etc. stay where they are (Aubs, 2026-09-23). Shared by the export
+// page; quizzes, links, sub-modules etc. stay where they are (owner decision, 2026-09-23). Shared by the export
 // and the outline's preview so the two can never disagree.
 function combineGroups(m,keepSep){
  const groups=[];
@@ -1524,8 +1566,17 @@ function scanDanger(html,checkUrl=true){
        if(checkUrl){if(!okUrl(v))badUrl=true;}                       // PAGES: strict http/https/mailto allowlist
        else{let p='';try{p=new URL(v,'https://x.invalid/').protocol;}catch(e){}   // DESCRIPTIONS: only the schemes
          if(p==='javascript:'||p==='vbscript:'||p==='data:')badUrl=true;}}}});    // that execute (tel:/sms:/relative pass)
+ // SVG animation aimed at a link's href: it swaps the url in after load, so the href scan above is blind.
+ if([...b.querySelectorAll('*')].some(el=>/^(animate|set|animatemotion|animatetransform|animatecolor)$/i.test(el.localName)
+   &&/^(xlink:)?href$/i.test((el.getAttribute('attributeName')||'').trim())))badUrl=true;
+ // noscript mXSS: this parse has scripting OFF, so a <noscript>'s insides look like harmless elements;
+ // the student's browser (scripting ON) reads them as raw text up to the first "</noscript", and
+ // whatever follows that inside an attribute, comment or <xmp> becomes live markup.
+ let mx=false;b.querySelectorAll('noscript').forEach(ns=>{const w=b.ownerDocument.createTreeWalker(ns,NodeFilter.SHOW_ALL);let n;
+   while((n=w.nextNode()))if(/<\/noscript/i.test(n.nodeType===1?[...n.attributes].map(a=>a.value).join(' '):(n.data||'')))mx=true;});
  if(onAttr)hits.push('event-handler');
  if(badUrl)hits.push('unsafe-link');
+ if(mx)hits.push('noscript-mxss');
  return hits;
 }
 async function verify(blob){
@@ -2021,7 +2072,7 @@ async function mergeCount(keep){const M=MODEL;let groups;
 // Content pages in the loaded course (the Stage 1 receipt's number).
 const coursePageCount=()=>{const m=MODEL.m;return Object.keys(m.titleByHref).filter(h=>{const e=m.entryFor(h);return e&&e.toLowerCase().endsWith('.html');}).length;};
 async function presentStep3(mc,edits){
- // Two equal choices (Aubs: keep both): Spread out keeps every page; Compressed makes each module one
+ // Two equal choices (owner decision: keep both): Spread out keeps every page; Compressed makes each module one
  // page. If nothing could be combined the two files are identical, so only one is shown.
  const plain=$('#downloads a[data-kind="plain"]'),merged=$('#downloads a[data-kind="merged"]'),folded=mc?mc.folded:0;
  if(merged&&plain&&!folded)merged.hidden=true;
@@ -2320,31 +2371,9 @@ const FLOW=(()=>{
  // edits -- and once more at the innerHTML sinks. (The tool shares its github.io origin with
  // sibling projects, and localStorage makes anything that slipped through persistent.)
  function cleanDoc(root){
-   root.querySelectorAll('script,style,link,meta,title,noscript,base,object,embed').forEach(n=>n.remove());
-   // An <iframe> is kept only when its src is an allowed scheme; a data:/javascript:/exotic-scheme
-   // iframe is dropped whole (Brightspace renders imported HTML same-origin with no CSP/sandbox, so a
-   // bare srcless iframe is the safe outcome). Mirrors cleanBody's iframe rule.
-   root.querySelectorAll('iframe').forEach(f=>{let s=(f.getAttribute('src')||'').trim();
-     if(s.startsWith('http://')){s='https://'+s.slice(7);f.setAttribute('src',s);}
-     if(!okUrl(s))f.remove();});
-   root.querySelectorAll('*').forEach(el=>{if(!el.isConnected)return;
-     const tag=el.tagName.toLowerCase();
-     for(const a of [...el.attributes]){
-       const nm=a.name.toLowerCase();
-       if(/^on/.test(nm)||nm==='srcdoc'||nm==='action'||nm==='formaction'){el.removeAttribute(a.name);continue;}
-       if(nm==='href'||nm==='src'||nm==='data'||nm==='xlink:href'||nm==='poster'){
-         const raw=a.value.trim();
-         // a blob: URL is only ever the canvas's stand-in for a course image (see ASSET_BACK): put the
-         // real src back; one we don't know is meaningless outside this tab, so it goes.
-         if(/^blob:/i.test(raw)){const back=ASSET_BACK.get(raw);
-           if(back!==undefined)el.setAttribute(a.name,back);else el.removeAttribute(a.name);continue;}
-         // Allowlist (mirrors cleanBody, replacing an older scheme blocklist that missed
-         // data:application/xhtml+xml, data:text/xml, data:image/svg+xml, ...): an image src/poster may
-         // also be an inert data:image/*; every other url attribute must be http/https/mailto. okUrl's
-         // new URL() also defeats tab/newline scheme-obfuscation. Anything else is dropped.
-         const good=((tag==='img'&&nm==='src')||nm==='poster')?okImg(raw):okUrl(raw);
-         if(!good)el.removeAttribute(a.name);}}});}
- function clean(html){const d=new DOMParser().parseFromString('<body>'+(html||'')+'</body>','text/html');cleanDoc(d);return d.body.innerHTML;}
+ root.querySelectorAll('title,object,embed').forEach(n=>n.remove());   // + the shared DEAD_TAGS, in scrubTree
+ scrubTree(root);}
+ function clean(html){return settle(html||'',cleanDoc);}
  const hasText=el=>[...el.childNodes].some(n=>n.nodeType===3&&n.textContent.trim());
  // A page wrapper is a single outer <div> that (a) the converter or this tool made -- inline
  // max-width, no border/background -- or (b) a bare container with no style at all holding
@@ -2874,7 +2903,7 @@ ${inner}
    if(!r.blocks.length){FLOW.pasteMsg('Nothing to show — that didn’t look like a page. Copy it from the Source Code (</>) view in Brightspace.',true);return false;}
    snap();
    let fixes=0;
-   BLOCKS=groupSections(r.blocks.map(x=>{const rp=repairCard(x);if(rp.fixed)fixes++;return rp.html;})).map(g=>({id:uid(),kind:'raw',model:null,html:g.html,sec:g.sec}));
+   BLOCKS=groupSections(r.blocks.map(x=>{const rp=repairCard(x);if(rp.fixed)fixes++;return clean(rp.html);})).map(g=>({id:uid(),kind:'raw',model:null,html:g.html,sec:g.sec}));
    WRAP=r.wrap;SEL=null;LAST=null;
    B('pg-paste').value='';renderCanvas();
    FLOW.page('loaded',BLOCKS.length);
@@ -2956,7 +2985,7 @@ ${inner}
      const src=!isMod||isTemplatedIntro(raw)?raw:(restyleIntro(title,raw)||raw);
      const r=importPage(src),tags=tagsOf(r.wrap);let parts=r.blocks;
      const inCard=tags.length&&/border-radius/i.test(tags[tags.length-1])&&parts.length&&isBannerBare(parts[0]);
-     CUR_SHELL={bare:true,open:tags.join(''),banner:inCard?parts[0]:'',close:tags.map(t=>'</'+t.match(/^<(\w+)/)[1]+'>').reverse().join('')};
+     CUR_SHELL={bare:true,open:tags.join(''),banner:inCard?clean(parts[0]):'',close:tags.map(t=>'</'+t.match(/^<(\w+)/)[1]+'>').reverse().join('')};
      if(inCard)parts=parts.slice(1);
      BLOCKS=groupSections(parts.map(h=>clean(h))).map(g=>({id:uid(),kind:'raw',model:null,html:g.html,sec:g.sec}));
      WRAP=null;HIST=[];REDO=[];SEL=null;LAST=null;EDIT_SNAP=null;CUR_BASE=pageSig();return;}
@@ -2965,7 +2994,7 @@ ${inner}
    let parts=r.blocks;CUR_SHELL=null;
    if(tpl){const tags=tagsOf(r.wrap).filter(t=>!isFrameStyle(t));   // pageHtml() re-adds the frame on export
      const inCard=tags.length&&/border-radius/i.test(tags[tags.length-1])&&parts.length&&isBanner(parts[0]);
-     CUR_SHELL={open:tags.join(''),banner:inCard?parts[0]:'',close:tags.map(t=>'</'+t.match(/^<(\w+)/)[1]+'>').reverse().join('')};
+     CUR_SHELL={open:tags.join(''),banner:inCard?clean(parts[0]):'',close:tags.map(t=>'</'+t.match(/^<(\w+)/)[1]+'>').reverse().join('')};
      if(inCard)parts=parts.slice(1);}
    else parts=parts.filter(h=>!isBanner(h));
    BLOCKS=groupSections(parts.map(h=>clean(repairCard(h).html))).map(g=>({id:uid(),kind:'raw',model:null,html:g.html,sec:g.sec}));

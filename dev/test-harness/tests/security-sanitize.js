@@ -102,7 +102,51 @@ async function pkg(files){const w=makeZipWriter();for(const[n,t]of Object.entrie
  const v=await verify(await pkg({'imsmanifest.xml':man,'9.html':legacy}));
  R.passthroughNotGated={danger:v.danger};}      // expect danger 0
 
+// ---- (4) the bypasses a one-pass, scripting-off sanitizer can't see (2026-09-25 review) ----
+// Each payload is rendered in a live same-origin frame (scripts ON, like Brightspace), with every svg
+// link clicked; a hit sets parent.__hit. The RAW payload must fire (proves the probe works) and the
+// sanitized output must not.
+const TRICKS={
+  smilAnimate:'<svg><a><animate attributeName="href" values="javascript:parent.__hit=1"/><text y="20">x</text></a></svg>',
+  smilSet:'<svg><a><set attributeName="href" to="javascript:parent.__hit=1"/><text y="20">x</text></a></svg>',
+  noscriptXmp:'<noscript><xmp></noscript><img src=x onerror="parent.__hit=1"></xmp></noscript>',
+  noscriptAttr:'<noscript><p title="</noscript><img src=x onerror=parent.__hit=1>"></p></noscript>',
+  formMath:'<form><math><mtext></form><form><mglyph><xmp></math><img src onerror="parent.__hit=1">',
+};
+async function fires(html){
+  window.__hit=0;const f=document.createElement('iframe');document.body.appendChild(f);
+  f.contentDocument.open();f.contentDocument.write('<!doctype html><body>'+html+'</body>');f.contentDocument.close();
+  await new Promise(r=>setTimeout(r,250));
+  f.contentDocument.querySelectorAll('svg a').forEach(a=>a.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true})));
+  await new Promise(r=>setTimeout(r,250));
+  const hit=window.__hit;f.remove();return hit===1;}
+R.tricks={};
+for(const[k,h]of Object.entries(TRICKS)){
+  // control: the raw payload, or (form/math) one parse+serialize of it, as a one-pass sanitizer ships it
+  const once=new DOMParser().parseFromString('<body>'+h+'</body>','text/html').body.innerHTML;
+  R.tricks[k]={raw:(await fires(h))||(await fires(once)),cleanBody:await fires(cleanBody(h)),editor:await fires(EDITOR.clean(h))};}
+// end to end through the real Stage-1 paste box: the page code a teacher copies into Brightspace
+R.pasteBox={};
+for(const[k,h]of Object.entries(TRICKS)){
+  const ta=document.getElementById('pg-paste');ta.value='<div><p>tail</p>'+h+'</div>';ta.dispatchEvent(new Event('input'));
+  await new Promise(r=>setTimeout(r,500));
+  const code=document.getElementById('pg-code').value;
+  R.pasteBox[k]={loaded:/tail/.test(code),fires:await fires(code)};}
+// what verify() is left with if a trick ever reaches the output bytes: it must withhold the download
+{const man=manifest([{id:'I1',ref:'R1',href:'1.html',title:'P'},{id:'I2',title:'Intro',desc:TRICKS.noscriptXmp}]);
+ const page=pageHtml('P','<p>ok</p>'+TRICKS.smilAnimate);
+ const v=await verify(await pkg({'imsmanifest.xml':man,'1.html':page}));
+ R.tricksGated={danger:v.danger};}             // expect 2 (the page's SMIL href + the description's noscript)
+// benign content must settle unchanged on the editor path and keep its links/embeds on the restyle path
+{const ok='<p>Hi <a href="https://x.org/a">link</a></p><svg viewBox="0 0 2 2"><circle cx="1" cy="1" r="1"/></svg><iframe src="https://www.youtube-nocookie.com/embed/abc"></iframe>';
+ R.benignStable=EDITOR.clean(ok)===EDITOR.clean(EDITOR.clean(ok));
+ const d=new DOMParser().parseFromString('<body>'+cleanBody(ok)+'</body>','text/html');
+ R.benignKept=!!(d.querySelector('a[href="https://x.org/a"]')&&d.querySelector('iframe')&&d.querySelector('circle'));}
+
 const pass =
+  Object.values(R.tricks).every(t=>t.raw&&!t.cleanBody&&!t.editor) &&
+  Object.values(R.pasteBox).every(t=>t.loaded&&!t.fires) &&
+  R.tricksGated.danger===2 && R.benignStable && R.benignKept &&
   R.cleanBodyLeaks.length===0 && R.cleanPasteLeaks.length===0 &&
   R.pasteDataIframes===0 && R.pasteScripts===0 && R.pasteKeepsGoodIframe===1 &&
   R.badPage.danger>0 && R.badPage.ok===false &&
