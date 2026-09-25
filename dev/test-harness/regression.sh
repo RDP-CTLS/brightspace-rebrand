@@ -2,11 +2,12 @@
 # Did a change break what the tool already did?  Runs tests/regression-fingerprint.js against TWO builds
 # of index.html and compares every output file (crc + size), the run logs and the single-page code.
 #   dev/test-harness/regression.sh [baseline-git-ref] [index.html under test]
-# Defaults: baseline = 2debdee (the last build before the course explorer), under test = the repo's
+# Defaults: baseline = 58ce548 (live 2026-09-25: Compressed = each module one page; 2debdee was the
+# last build before the course explorer), under test = the repo's
 # index.html. Pass a downloaded copy of the live page as the 2nd argument to test what is served.
 set -e
 HERE="$(cd "$(dirname "$0")" && pwd)"; REPO="$(cd "$HERE/../.." && pwd)"
-REF="${1:-2debdee}"; NEW="${2:-$REPO/index.html}"; TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
+REF="${1:-58ce548}"; NEW="${2:-$REPO/index.html}"; TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 git -C "$REPO" show "$REF:index.html" > "$TMP/old.html"
 INDEX="$TMP/old.html" "$HERE/run.sh" tests/regression-fingerprint.js 600 > "$TMP/old.json"
 INDEX="$NEW"          "$HERE/run.sh" tests/regression-fingerprint.js 600 > "$TMP/new.json"
