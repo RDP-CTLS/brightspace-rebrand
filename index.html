@@ -1815,7 +1815,10 @@ $('#expl-list').addEventListener('click',async e=>{
  $('#cx-empty').hidden=true;$('#cx-pane').hidden=false;$('#cx-title').textContent=title;
  await showView(btn,seq);
  if(seq!==OPEN_SEQ)return;
- $('#cx-pane').scrollIntoView({behavior:'smooth',block:toTop?'start':'nearest'});
+ // Scrolled down into the previous page? Back to the top of the new one — otherwise a shorter page
+ // leaves the window below its end, showing nothing.
+ const pane=$('#cx-pane'),into=pane.getBoundingClientRect().top<(parseFloat(getComputedStyle(pane).scrollMarginTop)||0)-1;
+ pane.scrollIntoView({behavior:'smooth',block:toTop||into?'start':'nearest'});
 });
 /* ---- Convert first, then personalize: Original (as the page is now) · Styled (exactly what the export
    writes, edits included) · Edit (the block editor). Before Convert only Original is offered. ---- */
