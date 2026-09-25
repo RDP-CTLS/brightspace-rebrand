@@ -477,7 +477,9 @@
             <label><input type="radio" name="mode" value="combine"> Compressed only</label>
           </div>
         </details>
-        <pre id="log" role="status" aria-live="polite"></pre>
+        <!-- The build log is for troubleshooting: tucked away, and opened by itself when something needs a look. -->
+        <details id="logbox" hidden><summary class="muted" style="cursor:pointer;margin-top:1rem;">Build details</summary>
+        <pre id="log" role="status" aria-live="polite"></pre></details>
 
         <!-- The explorer: a Brightspace-familiar outline down the side; click a page to open it in the
              block editor (same move/delete/undo experience as the single-page tool). Edits are kept in
@@ -534,7 +536,7 @@
 
       <div id="s3-course" hidden>
         <p class="s3-check" id="s3-check" role="status"></p>
-        <p class="muted" style="margin:0 0 .4rem;">Pick one — you import only one file. Not sure? Compressed gives students fewer clicks; Spread out keeps your page list exactly as it is.</p>
+        <p class="muted" id="s3-pick" style="margin:0 0 .4rem;"></p>
         <div id="downloads"></div>
         <p class="s3-then">Then, in Brightspace:</p>
         <ol class="steps">
@@ -571,7 +573,7 @@
    Uses native CompressionStream/DecompressionStream + DOMParser.
    ========================================================================= */
 const $=s=>document.querySelector(s);
-const log=(m,cls)=>{const el=$('#log');el.style.display='block';
+const log=(m,cls)=>{const el=$('#log');el.style.display='block';const box=$('#logbox');box.hidden=false;if(cls==='warn'||cls==='err')box.open=true;
   // Insert the message as TEXT, never HTML: m can contain untrusted course-export
   // titles (e.g. a manifest item title), so building innerHTML from it is XSS.
   const node=cls?document.createElement('span'):document.createTextNode(m);
@@ -1644,7 +1646,7 @@ async function setFile(f){
  if(f&&EDITOR&&EDITOR.hasCourseEdits()&&!confirm('You have page edits in the current course that haven’t been exported yet. Loading a different file will discard them. Continue?')){
    $('#file').value='';return;}   // reset the input so re-picking the SAME file still fires change
  FILE=f; MODEL=null; $('#go').disabled=true; $('#convert').disabled=true; FLOW.courseGone();
- clearDownloads(); $('#log').style.display='none'; $('#log').textContent='';
+ clearDownloads(); $('#log').style.display='none'; $('#log').textContent=''; $('#logbox').hidden=true; $('#logbox').open=false;
  $('#explorer').hidden=true; if(EDITOR)EDITOR.resetCourse(); clearAssets();   // drop any explorer edits from a previous course
  if(!f)return;
  FLOW.dropMsg('Reading your course… (a big course can take a moment)');
@@ -1674,12 +1676,12 @@ function topModules(org){
  return kids;
 }
 /* ---------- Course explorer: a Brightspace-familiar outline; click a page to edit it in place ---------- */
-// Non-page items (quizzes, links, assignments…) show a "passes through" chip instead of being clickable.
+// Non-page items (quizzes, links, assignments…) show a type chip ("Quiz") instead of being clickable — the tool doesn't change them.
 const PASS_LABEL={contentmodule:'Module',contentlink:'Link',contentservice:'Activity',
   d2lquiz:'Quiz',quiz:'Quiz',d2ldropbox:'Assignment',dropbox:'Assignment',
   d2ldiscussion:'Discussion',discussion:'Discussion',d2lchecklist:'Checklist',
   d2lsurvey:'Survey',d2lselfassessment:'Self-assessment'};
-function passLabel(k){return PASS_LABEL[k]||'Passes through';}
+function passLabel(k){return PASS_LABEL[k]||'Other';}
 const PAGE_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h10l6 6v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"></path><path d="M14 4v6h6"></path></svg>';
 const INTRO_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16"></path><path d="M4 12h16"></path><path d="M4 18h10"></path></svg>';
 // A Brightspace Package keeps the text a teacher wrote ON a module (its intro) — and the description
@@ -1706,7 +1708,7 @@ function treeHtml(nodes){
      if(n.introKey)intro=`<li><button type="button" class="ctopic cintro" data-entry="${xesc(n.introKey)}" data-title="${xesc(n.title)}" data-kicker="Editing module intro">`
        +INTRO_ICON+`<span class="clabel">Module intro</span>${edited}</button></li>`;}
    else if(n.introKey) row=`<button type="button" class="ctopic cintro" data-entry="${xesc(n.introKey)}" data-title="${xesc(n.title)}" title="${xesc(n.title)}" data-kicker="Editing description">`
-       +INTRO_ICON+`<span class="clabel">${esc(n.title)}</span>${edited}<span class="chip-pass">${esc(passLabel(n.kind))} · description</span></button>`;
+       +INTRO_ICON+`<span class="clabel">${esc(n.title)}</span>${edited}<span class="chip-pass">${esc(passLabel(n.kind))}</span></button>`;
    else row=`<div class="cpass" title="${xesc(n.title)}"><span class="clabel">${esc(n.title)}</span><span class="chip-pass">${esc(passLabel(n.kind))}</span></div>`;
    const sub=intro||n.children.length?`<ul class="ctree">${intro}${n.children.length?treeHtml(n.children).replace(/^<ul class="ctree">|<\/ul>$/g,''):''}</ul>`:'';
    return `<li>${row}${sub}</li>`;
@@ -1721,7 +1723,7 @@ function groupsHtml(nodes){
    const inner=empty?'':treeHtml([n]).replace(/^<ul class="ctree"><li><div class="cmodule">.*?<\/div>|<\/li><\/ul>$/g,'');
    return `<li class="cgroup"><div class="cmodhead">`
      +`<button type="button" class="ctoggle" aria-expanded="true"${empty?' disabled':` aria-controls="cg-${i}"`}>${empty?CHEV.replace('class="cchev"','class="cchev" style="visibility:hidden"'):CHEV}<span class="cmodtitle">${esc(n.title)}</span>`
-     +`<span class="ccount" title="${k} item${k===1?'':'s'} to check">${k}</span><span class="cdot" data-editdot hidden title="Has edits"></span></button>`
+     +`<span class="ccount" title="${k} to look at">${k}</span><span class="cdot" data-editdot hidden title="Has edits"></span></button>`
      +`</div>`
      +inner.replace(/^<ul class="ctree">/,`<ul class="ctree" id="cg-${i}">`)+`</li>`;
  }).join('')+`</ul>`;}
@@ -1729,9 +1731,10 @@ function foldGroup(g,open){const t=g&&g.querySelector(':scope>.cmodhead>.ctoggle
  t.setAttribute('aria-expanded',open);const u=g.querySelector(':scope>.ctree');if(u)u.hidden=!open;}
 // Merging is skipped when "Styled only" is chosen or once there are explorer edits (see #go) — say so.
 // The Compressed download is skipped while there are edits (see #go) or when "Spread out only" is chosen.
+const EDITS_NO_COMPRESSED='Once you edit a page, you get the Spread out file only (no Compressed).';
 function refreshMerge(){const tree=$('.expl-tree');if(!tree)return;
  const edits=EDITOR&&EDITOR.hasCourseEdits(),mode=(document.querySelector('input[name=mode]:checked')||{}).value;
- const off=edits?'While you have edits, Get the files gives the Spread out file only.':mode==='restyle'?'You chose <b>Spread out only</b> under More choices.':'';
+ const off=edits?EDITS_NO_COMPRESSED:mode==='restyle'?'You chose <b>Spread out only</b> under More choices.':'';
  tree.classList.toggle('nomerge',!!off);$('#show-compress').disabled=!!off;
  $('#merge-note').innerHTML=off;$('#merge-note').hidden=!off;
  updateSummary();}
@@ -1821,7 +1824,7 @@ function paintViews(){const v=$('#cx-views');
  v.querySelectorAll('button[data-view]').forEach(b=>{const on=b.dataset.view===VIEW;b.setAttribute('aria-pressed',on);
    b.hidden=!CONVERTED;});
  v.classList.toggle('solo',!CONVERTED);
- $('#cx-viewnote').innerHTML=CONVERTED?(VIEW==='edit'?'Editing a page means you get the Spread out file only (no Compressed yet).':VIEW==='styled'?'Exactly what Get the files will give Brightspace.':'How the page looks today.')
+ $('#cx-viewnote').innerHTML=CONVERTED?(VIEW==='edit'?EDITS_NO_COMPRESSED:VIEW==='styled'?'How it will look in Brightspace.':'How the page looks today.')
    :'Previewing the page as it is today. <button type="button" class="linkbtn" id="cx-convert-inline">Convert course</button> to see it styled and edit it.';}
 async function showView(btn,seq){if(!MODEL)return;const M=MODEL;
  const entry=btn.dataset.entry,title=btn.dataset.title,intro=isIntroKey(entry);
@@ -1878,7 +1881,7 @@ function keepInView(el){const tree=$('.expl-tree');if(!tree||!el)return;
  if(er.top<top)tree.scrollTop-=top-er.top+8;else if(er.bottom>tr.bottom)tree.scrollTop+=er.bottom-tr.bottom+8;}
 const rowName=b=>b.classList.contains('cintro')&&b.dataset.kicker==='Editing module intro'?b.dataset.title+' — intro':b.dataset.title;
 function updateNav(){const list=navList(),i=list.findIndex(b=>b.classList.contains('sel')),q=$('#cx-filter').value.trim();
- $('#cx-pos').textContent=i<0?'':`Item ${i+1} of ${list.length}${q?' found':''}`;
+ $('#cx-pos').textContent=i<0?'':`${i+1} of ${list.length}${q?' found':''}`;
  const lost=i<0&&list.length>0;   // the open page is hidden by the search: Prev/Next jump into the results
  $('#cx-prev').disabled=!lost&&i<=0;$('#cx-next').disabled=!lost&&(i<0||i>=list.length-1);
  [['#cx-prev2',list[i-1],'Previous'],['#cx-next2',list[i+1],'Next']].forEach(([id,b,lab])=>{const el=$(id);el.hidden=i<0||!b;
@@ -1926,14 +1929,14 @@ function updateSummary(){if(!MODEL)return;
  const m=MODEL.m,nPages=Object.keys(m.titleByHref).filter(h=>{const e=m.entryFor(h);return e&&e.toLowerCase().endsWith('.html');}).length;
  const nIntros=Object.values(MODEL.introIsModule||{}).filter(Boolean).length;
  const what=[nPages?`${nPages} page${nPages===1?'':'s'}`:'',nIntros?`${nIntros} module intro${nIntros===1?'':'s'}`:''].filter(Boolean).join(' and ');
- $('#cx-sum').textContent=(what?`${what} get the RDP template`:'Nothing here to restyle')
-   +(MODEL.isD2L?'; quizzes, assignments, discussions and links pass through unchanged.':'; everything else passes through unchanged.');
+ $('#cx-sum').textContent=(what?`${what} ${CONVERTED?'now have':'will get'} the RDP template.`:'Nothing here to restyle.')
+   +(MODEL.isD2L?' Quizzes, assignments, discussions and links stay as they are.':' Everything else stays as it is.');
  const edited=document.querySelectorAll('#expl-list [data-edited]:not([hidden])').length;
  $('#cx-sum2').textContent=edited?`${edited} edited`:'';
- $('#cx-ready').innerHTML=CONVERTED?'Converted — every page now shows in the RDP style.':'Ready to convert — click <b>Convert course</b> above.';
+ $('#cx-ready').innerHTML=CONVERTED?'Converted.':'Ready — click <b>Convert course</b> above.';
  $('#cx-opt').innerHTML=CONVERTED
-   ?'Open any page to check how it looks, switch to <b>Edit</b> to tweak it, then click <b>Get the files</b> above.'
-   :'Want to see what’s there first? Open any page from the outline to preview it as it is now. You can edit pages after converting.';
+   ?'Open any page to check it, click <b>Edit</b> to change it, then click <b>Get the files</b> above.'
+   :'Or open any page on the left to see it as it is now. You can edit pages after converting.';
  $('#cx-start').textContent=CONVERTED?'Check the first page →':'Preview the first page →';
  $('#cx-start').hidden=!pages;
  updateMergePreview();}
@@ -1955,7 +1958,7 @@ async function updateMergePreview(){const M=MODEL,seq=++PREVIEW_SEQ,list=$('#exp
      tag.textContent=k?'combined':`+${n}`;
      tag.title=k?`In Compressed, this page joins “${hostTitle}”`:`In Compressed, ${n} more page${n===1?'':'s'} from this module join${n===1?'s':''} this one`;
      row.insertBefore(tag,row.querySelector('[data-edited]'));row.classList.add(k?'cfolds':'chost');});});
- {const n=coursePageCount();$('#cx-sum3').textContent=folded?`Compressed version: ${n-folded} page${n-folded===1?'':'s'} instead of ${n}`:'';}}
+ {const n=coursePageCount();$('#cx-sum3').textContent=folded&&CONVERTED?`Compressed version: ${n-folded} page${n-folded===1?'':'s'} instead of ${n}`:'';}}
 // The sticky stack (step rail, then Step 2's header) is measured, not guessed, so nothing peeks between.
 (()=>{const rail=document.querySelector('.rail'),sh=document.querySelector('#s2 > .sh'),root=document.documentElement.style;
  const sync=()=>{root.setProperty('--railh',rail.offsetHeight+'px');root.setProperty('--s2h',sh.offsetHeight+'px');};
@@ -1982,7 +1985,7 @@ let dlUrls=[];
 // Signature of the edits baked into the downloads currently on offer (P1-1). Cleared whenever the
 // downloads are, so an edit made AFTER downloading can tell the files no longer match and re-offer.
 let DL_SIG=null;
-function clearDownloads(){dlUrls.forEach(u=>URL.revokeObjectURL(u));dlUrls=[];$('#downloads').innerHTML='';$('#s3-check').textContent='';DL_SIG=null;}
+function clearDownloads(){dlUrls.forEach(u=>URL.revokeObjectURL(u));dlUrls=[];$('#downloads').innerHTML='';$('#s3-check').textContent='';$('#s3-pick').textContent='';DL_SIG=null;}
 // Short label on the button, the real filename underneath. safe = Spread out (every page kept); otherwise Compressed.
 function dlButton(blob,name,safe){const url=URL.createObjectURL(blob);dlUrls.push(url);const a=document.createElement('a');
  a.href=url;a.download=name;a.className='dl';a.dataset.kind=safe?'plain':'merged';
@@ -1995,7 +1998,7 @@ function dlButton(blob,name,safe){const url=URL.createObjectURL(blob);dlUrls.pus
 // download exactly as before; only a security danger blocks.
 let CHECKS=[];   // one {ok,withheld} per build this run, for Step 3's one-line result
 async function checkAndOffer(b,name,safe){
- log('Double-checking it:');
+ log('Checking it:');
  const {ok,danger}=await verify(b);CHECKS.push({ok,withheld:!!danger});
  if(danger){log('  This download was WITHHELD: the checks found unsafe content in the output above, and nothing unsafe should ever reach Brightspace. Nothing was saved. Please report this.','err');log('');return false;}
  dlButton(b,name,safe);log('');return true;
@@ -2014,6 +2017,7 @@ async function presentStep3(mc,edits){
  // page. If nothing could be combined the two files are identical, so only one is shown.
  const plain=$('#downloads a[data-kind="plain"]'),merged=$('#downloads a[data-kind="merged"]'),folded=mc?mc.folded:0;
  if(merged&&plain&&!folded)merged.hidden=true;
+ $('#s3-pick').textContent=plain&&merged&&!merged.hidden?'Pick one — you import only one file. Not sure? Compressed gives learners fewer clicks; Spread out keeps your page list exactly as it is.':'Download this file:';
  if(plain)plain.querySelector('.dl-s').textContent='Every page kept as its own page';
  if(merged&&folded){const n=coursePageCount();merged.querySelector('.dl-s').textContent=`Each module’s pages combined into one — ${n-folded} page${n-folded===1?'':'s'} instead of ${n}`;}
  const m=MODEL.m,nPages=Object.keys(m.titleByHref).filter(h=>{const e=m.entryFor(h);return e&&e.toLowerCase().endsWith('.html');}).length;
@@ -2021,18 +2025,18 @@ async function presentStep3(mc,edits){
  // Editing forces the styled-only build, so the Compressed file isn't made. Show that loss as a disabled
  // card next to Spread out instead of a quiet suffix, so it's visible at the moment it happens (P1-2).
  if(nEdit&&plain&&!merged)plain.insertAdjacentHTML('afterend',
-   `<div class="dl sec" aria-disabled="true" style="opacity:.55;cursor:default"><span class="dl-t">Compressed</span><span class="dl-s">Not built — you edited pages. Undo your edits to get it, or use Spread out.</span></div>`);
+   `<div class="dl sec" aria-disabled="true" style="opacity:.55;cursor:default"><span class="dl-t">Compressed</span><span class="dl-s">Not available once you edit pages. Undo your edits to get it back.</span></div>`);
  const what=[nPages?`${nPages} page${nPages===1?'':'s'}`:'',nIntros?`${nIntros} module intro${nIntros===1?'':'s'}`:''].filter(Boolean).join(' and ');
  const parts=[what?`${what} restyled`:'Built'];
  if(nEdit)parts.push(`your ${nEdit} edit${nEdit===1?'':'s'} included`);
  if(folded)parts.push(`Compressed: ${nPages} pages → ${nPages-folded}`);
  const withheld=CHECKS.some(c=>c.withheld),warned=CHECKS.some(c=>!c.ok);
- parts.push(withheld?'a download was withheld for safety — open Step 2 to see why':warned?'the checks flagged something — open Step 2 to see the details':'all checks passed');
+ parts.push(withheld?'a download was withheld for safety — open Step 2 → Build details to see why':warned?'the checks flagged something — open Step 2 → Build details':'all checks passed');
  const el=$('#s3-check');el.textContent=(warned?'⚠ ':'✓ ')+parts.join(' · ');el.classList.toggle('warn',warned);}
 $('#go').addEventListener('click',async()=>{
  if(!FILE||!MODEL)return;
  if(typeof CompressionStream==='undefined'){log('Your browser is too old — please use a recent Chrome or Edge.','err');return;}
- $('#go').disabled=true;$('#log').textContent='';$('#log').style.display='block';clearDownloads();CHECKS=[];
+ $('#go').disabled=true;$('#log').textContent='';$('#log').style.display='block';$('#logbox').open=true;clearDownloads();CHECKS=[];
  // Edits made in the explorer. When there are any, we export the styled ("Template Applied") build
  // only — merging pages is turned off, because the combine path re-reads the raw bodies and
  // wouldn't pick up the edits (and merging an edited page in raises the double-card trap).
@@ -2051,7 +2055,7 @@ $('#go').addEventListener('click',async()=>{
      log(`Heads-up: this export has NO content pages to style${nI?` — only ${nI} module intro${nI===1?'':'s'} / description${nI===1?'':'s'} (the module intros get the template)`:''}. If you expected pages, the file that opens each topic isn't in the zip: re-export with "Include course files in the export package" ticked.\n`,'warn');}
    if(nEdit){const nI=Object.keys(edits).filter(isIntroKey).length,nP=nEdit-nI;
      const what=[nP?`${nP} page${nP===1?'':'s'}`:'',nI?`${nI} module intro${nI===1?'':'s'}`:''].filter(Boolean).join(' and ');
-     log(`You edited ${what} in the explorer — those edits will be written in. Merging pages is off while there are edits.\n`,'warn');}
+     log(`You edited ${what} — your edits are included. You get the Spread out file only (no Compressed).\n`);}
    // Items that arrived with NO content and NO children were emptied by Brightspace's OWN
    // export (it leaves out web links, quizzes, hidden topics, ...). Say so up front —
    // otherwise the conversion gets blamed for content this file never contained.
@@ -2063,33 +2067,32 @@ $('#go').addEventListener('click',async()=>{
    if(MODEL.isD2L){
      // Brightspace Package: no reorder — the manifest (unit descriptions!) and every D2L data
      // file pass through byte-identical on the styled build, and combine edits it in place.
-     log('Brightspace Package — styling your pages; everything else rides along unchanged …');
      {const allHtml=zip.entries.filter(e=>e.name.toLowerCase().endsWith('.html')).length;
       const topicHtml=new Set(Object.keys(m.titleByHref).map(h=>m.entryFor(h)).filter(e=>e&&e.toLowerCase().endsWith('.html'))).size;
-      if(allHtml>topicHtml)log(`  note: ${allHtml-topicHtml} other page(s) in your course files aren't part of Content (old/loose files) — passed through untouched`);}
+      if(allHtml>topicHtml)log(`Note: ${allHtml-topicHtml} other page${allHtml-topicHtml===1?'':'s'} in your course files ${allHtml-topicHtml===1?"isn't":"aren't"} used in Content — left as ${allHtml-topicHtml===1?'it is':'they are'}.\n`);}
      if(mode==='restyle'||mode==='both'){
-       let b=await buildRestyle(zip,man,m,false,edits);
+       log('Making the Spread out file …');let b=await buildRestyle(zip,man,m,false,edits);
        b=await repairRefs(b);
        await checkAndOffer(b,`${base} - Template Applied.zip`,true);
      }
      if(mode==='combine'||mode==='both'){
-       log('Applying the style, and merging pages …');let b=await buildCombineD2L(zip,man,m,keep);
+       log('Making the Compressed file …');let b=await buildCombineD2L(zip,man,m,keep);
        b=await repairRefs(b);
        await checkAndOffer(b,`${base} - Template Applied (Condensed Content).zip`,false);
      }
    }else{
    if(mode==='restyle'||mode==='both'){
-     log('Applying the style …');let b=await buildRestyle(zip,man,m,true,edits);
+     log('Making the Spread out file …');let b=await buildRestyle(zip,man,m,true,edits);
      b=await repairRefs(b);
      await checkAndOffer(b,`${base} - Template Applied.imscc`,true);
    }
    if(mode==='combine'||mode==='both'){
-     log('Applying the style, and merging pages …');let b=await buildCombine(zip,man,m,keep,true);
+     log('Making the Compressed file …');let b=await buildCombine(zip,man,m,keep,true);
      b=await repairRefs(b);
      await checkAndOffer(b,`${base} - Template Applied (Condensed Content).imscc`,false);
    }
    }
-   log('All done!','pass');
+   log('All done!','pass');if(!CHECKS.some(c=>!c.ok))$('#logbox').open=false;   // tucked away again unless something needs a look
    await presentStep3(mode==='restyle'?0:await mergeCount(keep),edits);
    FLOW.built();
  }catch(err){log('Something went wrong: '+err.message,'err');console.error(err);}
