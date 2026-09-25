@@ -1715,7 +1715,8 @@ function treeHtml(nodes){
  }).join('')+`</ul>`;}
 // Each top-level module is a foldable group: title, page count, and a dot when something inside is edited.
 const CHEV='<svg class="cchev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>';
-function editableCount(n){return (n.isPage||n.introKey?1:0)+n.children.reduce((a,c)=>a+editableCount(c),0);}
+// Pages + module intros (a link's description isn't counted), so the module badges add up to the Step 1 receipt.
+function editableCount(n){return (n.isPage||(n.introKey&&n.isModule)?1:0)+n.children.reduce((a,c)=>a+editableCount(c),0);}
 function groupsHtml(nodes){
  return `<ul class="ctree">`+nodes.map((n,i)=>{
    if(!n.isModule)return `<li class="cgroup">${treeHtml([n]).replace(/^<ul class="ctree"><li>|<\/li><\/ul>$/g,'')}</li>`;
@@ -1883,8 +1884,12 @@ function keepInView(el){const tree=$('.expl-tree');if(!tree||!el)return;
  const tr=tree.getBoundingClientRect(),er=el.getBoundingClientRect(),top=tr.top+$('.expl-tree-head').offsetHeight;
  if(er.top<top)tree.scrollTop-=top-er.top+8;else if(er.bottom>tr.bottom)tree.scrollTop+=er.bottom-tr.bottom+8;}
 const rowName=b=>b.classList.contains('cintro')&&b.dataset.kicker==='Editing module intro'?b.dataset.title+' — intro':b.dataset.title;
+// The position counts what the RDP template is applied to (pages + module intros), the same total as the
+// Step 1 receipt. A link's description can be opened and stepped through, but isn't numbered.
+const isDescRow=b=>b.classList.contains('cintro')&&b.dataset.kicker==='Editing description';
 function updateNav(){const list=navList(),i=list.findIndex(b=>b.classList.contains('sel')),q=$('#cx-filter').value.trim();
- $('#cx-pos').textContent=i<0?'':`${i+1} of ${list.length}${q?' found':''}`;
+ const counted=list.filter(b=>!isDescRow(b)),k=i<0?-1:counted.indexOf(list[i]);
+ $('#cx-pos').textContent=i<0?'':k<0?'Link description':`${k+1} of ${counted.length}${q?' found':''}`;
  const lost=i<0&&list.length>0;   // the open page is hidden by the search: Prev/Next jump into the results
  $('#cx-prev').disabled=!lost&&i<=0;$('#cx-next').disabled=!lost&&(i<0||i>=list.length-1);
  [['#cx-prev2',list[i-1],'Previous'],['#cx-next2',list[i+1],'Next']].forEach(([id,b,lab])=>{const el=$(id);el.hidden=i<0||!b;
