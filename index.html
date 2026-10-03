@@ -166,6 +166,8 @@
   /* ---- Stage 2, course: the explorer (Brightspace-familiar outline + inline page editor) ---- */
   /* When a course is loaded the working column breaks wider so the outline + edit pane both fit. */
   .wrap.wide{max-width:1180px;}
+  /* A lesson link (?lesson=…) shows only its own way in at step 1. */
+  body[data-way="paste"] #s1 [data-in]:not([data-in="paste"]),body[data-way="course"] #s1 [data-in]:not([data-in="course"]),body[data-way="new"] #s1 [data-in]:not([data-in="new"]){display:none;}
   .expl{display:grid;grid-template-columns:300px minmax(0,1fr);gap:1.1rem;margin:.2rem 0 1.1rem;align-items:start;}
   @media (max-width:820px){.expl{grid-template-columns:1fr;}}
   .expl-tree{border:1px solid var(--s-border);border-radius:.8rem;background:var(--s-surface);box-shadow:var(--el1);
@@ -393,25 +395,25 @@
     <div class="sh"><span class="sn" aria-hidden="true">1</span><h2 id="h1s">Bring your content in</h2><span class="receipt" id="r1"></span>
       <button type="button" class="linkbtn chg" data-go="1">Change</button></div>
     <div class="sb">
-      <div id="drop" role="button" tabindex="0" aria-label="Drop your Brightspace course export here, or press Enter to choose the file">
+      <div id="drop" data-in="course" role="button" tabindex="0" aria-label="Drop your Brightspace course export here, or press Enter to choose the file">
         <strong>Restyle a whole course</strong>
         <span class="muted">Drop your Brightspace course export (.zip) here</span>
         <div class="btnrow"><span class="btab">Choose the file</span></div>
         <input id="file" type="file" accept=".zip,.imscc" aria-label="Choose your exported course file" class="hide"></div>
-      <div id="drop-msg" role="status" aria-live="polite"></div>
+      <div id="drop-msg" data-in="course" role="status" aria-live="polite"></div>
 
-      <div class="or">or</div>
-      <label for="pg-paste" style="display:block;font-weight:700;color:var(--plum);margin:0 0 .3rem;">Edit one page that's already in Brightspace
+      <div class="or" data-in="or">or</div>
+      <label for="pg-paste" data-in="paste" style="display:block;font-weight:700;color:var(--plum);margin:0 0 .3rem;">Edit one page that's already in Brightspace
         <span class="muted" style="font-weight:400;">paste its Source Code here — it loads by itself</span></label>
-      <textarea id="pg-paste" spellcheck="false" placeholder="Paste here…"></textarea>
-      <div id="paste-msg" role="status" aria-live="polite"></div>
+      <textarea id="pg-paste" data-in="paste" spellcheck="false" placeholder="Paste here…"></textarea>
+      <div id="paste-msg" data-in="paste" role="status" aria-live="polite"></div>
 
-      <div class="or">or</div>
-      <div class="newpage"><div><strong>Build a new page for a course</strong><span class="muted">Build it from blocks — contact cards, callouts, sections — then add it to Brightspace.</span></div>
+      <div class="or" data-in="or">or</div>
+      <div class="newpage" data-in="new"><div><strong>Build a new page for a course</strong><span class="muted">Build it from blocks — contact cards, callouts, sections — then add it to Brightspace.</span></div>
         <button type="button" class="btab" id="start-blank">Start a new page</button></div>
       <p class="quiet">Nothing leaves your computer: there is no server, it all happens in this tab.</p>
 
-      <details class="help" id="howpaste">
+      <details class="help" id="howpaste" data-in="paste">
         <summary>How do I copy a page's Source Code?</summary>
         <div class="body">
           <ol class="steps">
@@ -422,7 +424,7 @@
         </div>
       </details>
 
-      <details class="help" id="howto">
+      <details class="help" id="howto" data-in="course">
         <summary>Don't have the course export yet? Show me how to get it</summary>
         <div class="body">
           <ol class="steps">
@@ -2263,7 +2265,14 @@ const FLOW=(()=>{
  const B=id=>document.getElementById(id);
  const TOKENS=['forest','green','teal','plum','violet','slate','orange','gold'];
  const CALLOUT_ICONS=['alert','flag','check','star','clock','pin','book','help','compass','resources'];
- const STORE='rdp-page-editor';
+ // A lesson link opens the tool at one way of using it, and shows only that way in at step 1:
+ // ?lesson=new starts a new page; ?lesson=contacts|callout|section|link starts one with that block already
+ // placed; ?lesson=paste and ?lesson=course open at step 1. (#lesson=… works too.) A lesson always starts
+ // clean and keeps its draft apart, so it never picks up, or replaces, the page saved at the plain address.
+ const LESSON=(()=>{let v='';try{v=new URLSearchParams(location.search).get('lesson')||(/^#lesson=([a-z]+)/.exec(location.hash)||[])[1]||'';}catch(e){}
+   return ['new','contacts','callout','section','link','paste','course'].includes(v)?v:'';})();
+ if(LESSON)document.body.dataset.way=(LESSON==='paste'||LESSON==='course')?LESSON:'new';
+ const STORE='rdp-page-editor'+(LESSON?':'+LESSON:'');
  let BLOCKS=[], WRAP=null, SEL=null, HIST=[], REDO=[], DRAG=null, LAST=null, EDIT_SNAP=null;
  // Course-explorer editing: the same canvas/state, but driven by a page from an imported course
  // instead of the localStorage single-page draft. COURSE gates the three side-effects that would
@@ -3049,9 +3058,11 @@ ${inner}
 
  /* ---------- init ---------- */
  try{document.execCommand('defaultParagraphSeparator',false,'p');}catch(e){}
- try{restore();renderCanvas();}
+ try{if(!LESSON)restore();renderCanvas();}
  catch(e){console.error(e);BLOCKS=[];WRAP=null;HIST=[];try{localStorage.removeItem(STORE);}catch(_){}renderCanvas();}
  if(BLOCKS.length){FLOW.page('restored',BLOCKS.length);note('Picked up where you left off.');}
+ else if(GEN[LESSON]){addBlock(LESSON);HIST=[];B('pg-undo').disabled=true;save();}   // the starting block is not an undo step
+ else if(LESSON==='new'){FLOW.page('blank',0);}
  else if(location.hash==='#build'){FLOW.page('blank',0);}
  FLOW.boot();
 })();
