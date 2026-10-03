@@ -2268,7 +2268,8 @@ const FLOW=(()=>{
  // A lesson link opens the tool at one way of using it, and shows only that way in at step 1:
  // ?lesson=new starts a new page; ?lesson=contacts|callout|section|link starts one with that block already
  // placed; ?lesson=paste and ?lesson=course open at step 1. (#lesson=… works too.) A lesson always starts
- // clean and keeps its draft apart, so it never picks up, or replaces, the page saved at the plain address.
+ // clean and saves nothing on the computer, so it never picks up, or replaces, the page saved at the
+ // plain address, and leaves no names or email addresses behind on a shared computer.
  const LESSON=(()=>{let v='';try{v=new URLSearchParams(location.search).get('lesson')||(/^#lesson=([a-z]+)/.exec(location.hash)||[])[1]||'';}catch(e){}
    return ['new','contacts','callout','section','link','paste','course'].includes(v)?v:'';})();
  if(LESSON)document.body.dataset.way=(LESSON==='paste'||LESSON==='course')?LESSON:'new';
@@ -2584,14 +2585,24 @@ ${inner}
  /* ---------- state: autosave, undo ---------- */
  // The last few undo steps are saved too, so "Start over" or "Load page" followed by a reload
  // is not a way to lose a forty-block page.
- function save(){if(COURSE)return;   // course-page edits live in memory only — never touch the single-page draft
+ function save(){if(COURSE||LESSON)return;   // course-page edits live in memory only — never touch the single-page draft; a lesson saves nothing
    try{localStorage.setItem(STORE,JSON.stringify({v:1,blocks:BLOCKS,wrap:WRAP,hist:HIST.slice(-5)}));}catch(e){}}
  function validBlocks(list){return (Array.isArray(list)?list:[]).filter(b=>b&&typeof b==='object'&&typeof b.id==='string'
      &&typeof b.html==='string'&&(b.kind==='raw'||GEN[b.kind]))
    .map(b=>({id:b.id,kind:b.kind,model:(b.kind!=='raw'&&b.model&&typeof b.model==='object')?b.model:null,html:clean(b.html)}));}
+ // The saved page frame is only ever a run of opening <div>/<section>/<article>/<main> tags. Storage is
+ // shared with every other page on this site, so on the way back in keep a tag only if it is exactly
+ // that, with no event handlers, links or scripted styles; anything else is dropped (the page loses
+ // its frame, never its content). Kept tags are passed through untouched.
+ function safeWrap(w){if(typeof w!=='string')return null;
+   const ok=t=>{if(!/^<(div|section|article|main)\b[^<>]*>\s*$/i.test(t))return false;
+     const el=new DOMParser().parseFromString(t,'text/html').body.firstElementChild;if(!el)return false;
+     return [...el.attributes].every(a=>/^(style|class|id|role|lang|dir|title|aria-[a-z-]+|data-[a-z0-9-]+)$/i.test(a.name)
+       &&!(a.name.toLowerCase()==='style'&&/url\s*\(|expression|javascript:|@import|\\/i.test(a.value)));};
+   return tagsOf(w).filter(ok).join('')||null;}
  function restore(){try{const s=JSON.parse(localStorage.getItem(STORE)||'null');
-   if(s&&s.v===1){BLOCKS=validBlocks(s.blocks);WRAP=typeof s.wrap==='string'?s.wrap:null;
-     HIST=(Array.isArray(s.hist)?s.hist:[]).filter(x=>typeof x==='string');}}catch(e){}}
+   if(s&&s.v===1){BLOCKS=validBlocks(s.blocks);WRAP=safeWrap(s.wrap);
+     HIST=(Array.isArray(s.hist)?s.hist:[]).map(x=>{try{const o=JSON.parse(x);o.wrap=safeWrap(o.wrap);return JSON.stringify(o);}catch(e){return null;}}).filter(Boolean);}}catch(e){}}
  function snap(){HIST.push(JSON.stringify({blocks:BLOCKS,wrap:WRAP}));if(HIST.length>30)HIST.shift();REDO=[];
    B('pg-undo').disabled=false;B('pg-redo').disabled=true;}
  function undo(){const s=HIST.pop();if(!s)return;REDO.push(JSON.stringify({blocks:BLOCKS,wrap:WRAP}));if(REDO.length>30)REDO.shift();
@@ -2608,7 +2619,7 @@ ${inner}
  function syncOut(){B('pg-code').value=pageOut();B('pg-copy').disabled=!BLOCKS.length;B('pg-copyhint').hidden=!!BLOCKS.length;
    B('pg-clear').disabled=!BLOCKS.length;B('pg-undo').disabled=!HIST.length;B('pg-redo').disabled=!REDO.length;save();
    if(COURSE){B('savestate').textContent='';if(CUR_ENTRY)markEdited(CUR_ENTRY,pageDirty());FLOW.courseChanged();}
-   else B('savestate').textContent=BLOCKS.length?'Saved on this computer':'';
+   else B('savestate').textContent=!BLOCKS.length?'':LESSON?'Not saved here: copy your page before you leave':'Saved on this computer';
    updateFrame();FLOW.pageChanged(BLOCKS.length);}
 
  /* ---------- the canvas ---------- */
@@ -3058,10 +3069,11 @@ ${inner}
 
  /* ---------- init ---------- */
  try{document.execCommand('defaultParagraphSeparator',false,'p');}catch(e){}
+ if(LESSON)try{localStorage.removeItem(STORE);}catch(e){}   // a draft left by an earlier build
  try{if(!LESSON)restore();renderCanvas();}
  catch(e){console.error(e);BLOCKS=[];WRAP=null;HIST=[];try{localStorage.removeItem(STORE);}catch(_){}renderCanvas();}
  if(BLOCKS.length){FLOW.page('restored',BLOCKS.length);note('Picked up where you left off.');}
- else if(GEN[LESSON]){addBlock(LESSON);HIST=[];B('pg-undo').disabled=true;save();}   // the starting block is not an undo step
+ else if(GEN[LESSON]){addBlock(LESSON);HIST=[];B('pg-undo').disabled=true;}   // the starting block is not an undo step
  else if(LESSON==='new'){FLOW.page('blank',0);}
  else if(location.hash==='#build'){FLOW.page('blank',0);}
  FLOW.boot();

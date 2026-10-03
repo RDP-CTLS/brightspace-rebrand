@@ -1,4 +1,4 @@
-// Lesson links: ?lesson=<name> opens the tool at one way of using it, starts clean every time, and shows only its own way in.
+// Lesson links: ?lesson=<name> opens the tool at one way of using it, starts clean every time, saves nothing on the computer, and shows only its own way in.
 // Each case loads the tool in its own frame (same origin, so they share localStorage like real lesson links do).
 localStorage.clear();
 const open=async q=>{const f=document.createElement('iframe');f.style.cssText='width:860px;height:600px';
@@ -13,7 +13,8 @@ const look=w=>{const d=w.document,vis=s=>{const e=d.querySelector(s);return !!e&
 const out={};
 // 1. each block lesson starts a new page with that block placed
 for(const k of ['contacts','callout','section','link']){const w=await open('?lesson='+k);out[k]=look(w);
-  out[k].kind=JSON.parse(w.localStorage.getItem('rdp-page-editor:'+k)).blocks.map(b=>b.kind).join();}
+  out[k].kind=w.document.querySelector('#pg-canvas .pgb .pgb-form [data-k]').dataset.k;
+  out[k].save=w.document.getElementById('savestate').textContent;}
 // 2. the hash form works too, and reopening a lesson starts clean (a new page with one block, nothing picked up)
 out.hashAgain=look(await open('#lesson=callout'));
 // 2b. ?lesson=new is an empty new page
