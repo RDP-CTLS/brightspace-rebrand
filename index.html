@@ -877,7 +877,7 @@ function iconImg(key,col,size){if(!SVG[key])return '';
 function marker(label,tok,svg){const c=COLORS[tok],bg=BG[tok],badge=BADGE[tok]||c,ink=BADGE_INK[tok]||'#fff';
  // Spacing between the badge and title is the badge's margin-right, NOT a flex gap: Brightspace's
  // description sanitizer strips the CSS `gap` property (margins survive), so gap looked squished on import.
- return `<div style="display:flex;align-items:center;margin:-1.35rem -1.4rem 1.2rem;padding:.9rem 1.4rem;background:${bg};border-bottom:1px solid rgba(0,0,0,.07);box-sizing:border-box;">${NO_SVG?`<span style="display:flex;align-items:center;justify-content:center;width:2.85rem;height:2.85rem;flex-shrink:0;background:${c};border-radius:50%;box-shadow:0 3px 8px rgba(16,40,34,.18);margin-right:1.15rem;box-sizing:border-box;">${iconImg(svg,'white','1.6rem')}</span>`:`<span style="display:flex;align-items:center;justify-content:center;width:2.85rem;height:2.85rem;flex-shrink:0;background:${badge};border-radius:50%;box-shadow:0 3px 8px rgba(16,40,34,.18);margin-right:1.15rem;box-sizing:border-box;"><svg aria-hidden="true" fill="none" height="1.6rem" stroke="${ink}" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="width:1.6rem;height:1.6rem;display:block;" viewBox="0 0 24 24" width="1.6rem">${SVG[svg]}</svg></span>`}<h2 style="margin:0;font-weight:700;font-size:1.08rem;letter-spacing:.04em;text-transform:uppercase;line-height:1.2;color:${c};">${esc(label)}</h2></div>`;}
+ return `<div style="display:flex;align-items:center;margin:-1.35rem -1.4rem 1.2rem;padding:.9rem 1.4rem;background:${bg};border-bottom:1px solid rgba(0,0,0,.07);box-sizing:border-box;">${NO_SVG?`<span style="display:flex;align-items:center;justify-content:center;width:2.85rem;height:2.85rem;flex-shrink:0;background:${c};border-radius:50%;box-shadow:0 3px 8px rgba(16,40,34,.18);margin-right:1.15rem;box-sizing:border-box;">${iconImg(svg,'white','1.6rem')}</span>`:`<span style="display:flex;align-items:center;justify-content:center;width:2.85rem;height:2.85rem;flex-shrink:0;background:${badge};border-radius:50%;box-shadow:0 3px 8px rgba(16,40,34,.18);margin-right:1.15rem;box-sizing:border-box;"><svg aria-hidden="true" fill="none" height="1.6rem" stroke="${ink}" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="width:1.6rem;height:1.6rem;display:block;" viewBox="0 0 24 24" width="1.6rem">${SVG[svg]}</svg></span>`}<h2 class="mceEditable" style="margin:0;font-weight:700;font-size:1.08rem;letter-spacing:.04em;text-transform:uppercase;line-height:1.2;color:${c};">${esc(label)}</h2></div>`;}
 // Parsed with DOMParser, not innerHTML: an inert document doesn't fetch the src of a course's
 // <img>, so a booby-trapped export can't fire onerror at us just by being inspected.
 function markersIn(bodyHtml){const d=new DOMParser().parseFromString('<body>'+(bodyHtml||'')+'</body>','text/html');const out=[];
@@ -927,7 +927,10 @@ function cardTheme(title,body){
  return ['forest','book'];}
 function card(title,inner,tok,svg){if(tok===undefined){[tok,svg]=titleStyle(title);}
  const c=BADGE[tok]||COLORS[tok];
- return `<div style="background:#fff;border:1px solid #E8E8E8;border-top:4px solid ${c};border-radius:1.1rem;box-shadow:0 3px 10px rgba(16,40,34,.06);padding:1.35rem 1.4rem;margin-bottom:1.5rem;overflow:hidden;box-sizing:border-box;">${marker(title,tok,svg)}<div>${inner}</div></div>`;}
+ // mceNonEditable / mceEditable: Brightspace's page editor (TinyMCE) locks the frame and keeps the title
+ // and body editable, so a teacher can click the card's edge and press Delete to remove the whole card
+ // (no empty shell left behind). The editor drops its contenteditable on save, so learners see no change.
+ return `<div class="mceNonEditable" style="background:#fff;border:1px solid #E8E8E8;border-top:4px solid ${c};border-radius:1.1rem;box-shadow:0 3px 10px rgba(16,40,34,.06);padding:1.35rem 1.4rem;margin-bottom:1.5rem;overflow:hidden;box-sizing:border-box;">${marker(title,tok,svg)}<div class="mceEditable">${inner}</div></div>`;}
 function pageHtml(title,body){
  // No external Google-Fonts <link>: a render-blocking external stylesheet makes every page
  // hang on locked-down LMS networks. Inter still shows if installed locally / via the theme.
@@ -2640,6 +2643,7 @@ const FLOW=(()=>{
    if(!c){const m=/border-top:[^;]*?(#[0-9a-f]{3,6})/i.exec((card&&card.getAttribute('style'))||'')
          ||/background:\s*(#[0-9a-f]{3,6})/i.exec((badge&&badge.getAttribute('style'))||'');c=m?m[1]:COLORS.forest;}
    const h2=d.createElement('h2');
+   h2.className='mceEditable';
    h2.setAttribute('style','margin:0;font-weight:700;font-size:1.08rem;letter-spacing:.04em;text-transform:uppercase;line-height:1.2;color:'+c+';');
    strip.appendChild(h2);
    return {html:d.body.innerHTML,fixed:true};}
