@@ -1165,7 +1165,7 @@ function tidyFileLinks(body,linkc){
  body.querySelectorAll('a').forEach(a=>{if(a.children.length)return;
    const t=(a.textContent||'').replace(/\u00a0/g,' ').trim(),m=t.match(/^(.+?)\.(pdf|docx?|xlsx?|pptx?)$/i);
    if(!m||/^(https?:|www\.)|[\/\\]/i.test(m[1]))return;
-   let nm=m[1].replace(/\s*\(\d+\)$/,'').trim();if(!/\s/.test(nm))nm=nm.replace(/_+/g,' ').trim();
+   let nm=m[1].replace(FILE_EXT,'').replace(/\s*\(\d+\)$/,'').trim();   // "Bingo.docx.pdf" -> "Bingo"if(!/\s/.test(nm))nm=nm.replace(/_+/g,' ').trim();
    if(nm)a.textContent=`${nm} (${FILE_KIND[m[2].toLowerCase()]})`;});}
 // A short paragraph that is all bold ("Part 1", "Instructions:") is a subheading: it becomes an <h4>
 // in the design guide's style. It stays a paragraph when it is a bold sentence (ends in a full stop)
