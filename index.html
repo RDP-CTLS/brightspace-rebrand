@@ -1101,7 +1101,13 @@ function cleanBody(htmlStr,linkTok){
      if(/^\d+(\.\d+)?%$/.test(wa))sz='width:'+wa+';';else if(/^\d+(\.\d+)?(px)?$/i.test(wa)&&parseFloat(wa)>0)sz='width:'+parseFloat(wa)+'px;';
      if(sz)el.setAttribute('style',(el.getAttribute('style')||'')+sz);
      el.removeAttribute('width');el.removeAttribute('height');el.setAttribute('loading','lazy');el.setAttribute('decoding','async');}
-   if(name==='iframe'){let s=(el.getAttribute('src')||'').trim();if(s.startsWith('http://')){s='https://'+s.slice(7);el.setAttribute('src',s);}if(!okUrl(s)){el.remove();return;}el.setAttribute('loading','lazy');}
+   if(name==='iframe'){let s=(el.getAttribute('src')||'').trim();if(s.startsWith('http://')){s='https://'+s.slice(7);el.setAttribute('src',s);}if(!okUrl(s)){el.remove();return;}el.setAttribute('loading','lazy');
+     // A video (or slide deck) fills the card's width at its own shape, instead of the fixed 560 x 315
+     // most embed codes carry, which left it about two-thirds wide.
+     if(VIDEO_HOST.test(s)||/^https:\/\/docs\.google\.com\/presentation\//i.test(s)){
+       const w=parseFloat(el.getAttribute('width')),h=parseFloat(el.getAttribute('height'));
+       const ar=w>0&&h>0&&!/%/.test(el.getAttribute('width')+el.getAttribute('height'))?`${w} / ${h}`:'16 / 9';
+       el.setAttribute('style',(el.getAttribute('style')||'')+`width:100%;height:auto;aspect-ratio:${ar};`);}}
    if(name==='video'||name==='audio'||name==='source'||name==='track'||name==='embed'){const s=(el.getAttribute('src')||'').trim();if(s&&!okUrl(s))el.removeAttribute('src');}
    if(name==='source'){const ss=(el.getAttribute('srcset')||'').trim();
      if(ss&&ss.split(',').some(c=>{const u=c.trim().split(/\s+/)[0];return u&&!okImg(u);}))el.removeAttribute('srcset');}
