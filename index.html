@@ -2159,6 +2159,41 @@ function dlButton(blob,name,safe){const url=URL.createObjectURL(blob);dlUrls.pus
  a.innerHTML=`<span class="dl-t"><span aria-hidden="true">⬇ </span>${safe?'Spread out':'Compressed'}</span><span class="dl-s"></span><span class="dl-f">${esc(name)}</span>`;
  a.addEventListener('click',()=>FLOW.downloaded(name));$('#downloads').appendChild(a);}
 
+// Things worth a look before import that the tool cannot fix on its own: old names, pictures with no
+// alt text, "click here" links, web addresses used as link text, and titles carrying a working label or
+// a note to reviewers. Read from the pages as they will ship (an edit replaces the page's own text).
+// Logged once per build; never changes the checks' result.
+const OLD_NAMES=/\b(RDC|Red Deer College|Blackboard|Collaborate Ultra)\b/g;
+async function contentNotes(zip,m,edits){
+ const pages=new Map();for(const[h,t]of Object.entries(m.titleByHref)){const e=m.entryFor(h);if(e&&e.toLowerCase().endsWith('.html')&&!pages.has(e))pages.set(e,t);}
+ const old=[],noAlt=[],vague=[],bare=[];
+ for(const[e,t]of pages){const ed=edits&&edits[e];let body;
+   if(typeof ed==='string')body=ed;else if(ed&&typeof ed==='object')body=ed.framed||'';
+   else{const raw=await zip.text(e);const bm=raw.match(/<body[^>]*>([\s\S]*)<\/body>/i);body=bm?bm[1]:raw;}
+   const d=new DOMParser().parseFromString('<body>'+(body||'')+'</body>','text/html').body;
+   d.querySelectorAll('script,style').forEach(x=>x.remove());
+   const names=[...new Set([...(d.textContent||'').matchAll(OLD_NAMES)].map(x=>x[1]))];if(names.length)old.push(`${t} (${names.join(', ')})`);
+   if([...d.querySelectorAll('img')].some(img=>!(img.getAttribute('alt')||'').trim()&&!markerName(img.getAttribute('src'),img.getAttribute('alt'))))noAlt.push(t);
+   const links=[...d.querySelectorAll('a[href]')].map(a=>(a.textContent||'').replace(/ /g,' ').trim());
+   if(links.some(x=>/\bclick here\b/i.test(x)||/^(here|click|link|this link|click this link)$/i.test(x)))vague.push(t);
+   if(links.some(x=>/^(https?:\/\/|www\.)\S+$/i.test(x)))bare.push(t);}
+ const titles=[];
+ for(const it of m.doc.querySelectorAll('item')){const t=titleOf(it);if(!t)continue;const h=headerTitle(t);
+   const maybe=/\s[-–]\s*[^-–]*\?\s*$|\)\s*[-–]/.test(h.text)||[...h.text.matchAll(/\(([^()]+)\)/g)].some(x=>x[1].trim().split(/\s+/).length>=4);
+   if((h.changed||maybe)&&!titles.includes(t))titles.push(t);}
+ const list=a=>{const n=new Map();a.forEach(x=>n.set(x,(n.get(x)||0)+1));const u=[...n].map(([x,k])=>k>1?`${x} (${k} pages)`:x);
+   return u.slice(0,8).join('; ')+(u.length>8?`; and ${u.length-8} more`:'');};
+ const pg=n=>`${n} page${n===1?'':'s'}`;
+ const lines=[];
+ if(old.length)lines.push(`Old names (RDC, Red Deer College, Blackboard, Collaborate Ultra) on ${pg(old.length)}: ${list(old)}`);
+ if(noAlt.length)lines.push(`Pictures with no alt text (the description screen readers read out) on ${pg(noAlt.length)}: ${list(noAlt)}`);
+ if(vague.length)lines.push(`Links that say "click here" or similar instead of where they go, on ${pg(vague.length)}: ${list(vague)}`);
+ if(bare.length)lines.push(`Links that show a web address instead of a name, on ${pg(bare.length)}: ${list(bare)}`);
+ if(titles.length)lines.push(`Titles with a working label or a note to reviewers (${titles.length}). Page headers leave out the clear ones; rename the topics in Brightspace: ${list(titles.map(t=>'"'+t+'"'))}`);
+ if(!lines.length)return 0;
+ log('Worth a look before you import (these do not stop the import):','warn');
+ lines.forEach(l=>log('  · '+l));log('');
+ return lines.length;}
 // One export build finished: verify it, then OFFER the download only when the security belt is clean.
 // A dangerous construct in our OWN output is a bug — nothing unsanitized should reach Brightspace — so
 // the download is withheld rather than shipped. Cosmetic warnings (blob / tag balance / icons) still
@@ -2231,6 +2266,7 @@ $('#go').addEventListener('click',async()=>{
     if(empt.length){log(`Heads-up: ${empt.length} item(s) in your course file came out of Brightspace EMPTY — the export leaves out things like web links, quizzes and hidden topics. They were already empty before this tool touched them:`,'warn');
       const cnt={};empt.forEach(it=>{const t=titleOf(it);cnt[t]=(cnt[t]||0)+1;});
       Object.entries(cnt).forEach(([t,n])=>log(`  · ${t}${n>1?` (×${n})`:''}`,'warn'));log('');}}
+   const nNotes=await contentNotes(zip,m,edits);
    if(MODEL.isD2L){
      // Brightspace Package: no reorder — the manifest (unit descriptions!) and every D2L data
      // file pass through byte-identical on the styled build, and combine edits it in place.
@@ -2259,7 +2295,7 @@ $('#go').addEventListener('click',async()=>{
      await checkAndOffer(b,`${base} - Template Applied (Condensed Content).imscc`,false);
    }
    }
-   log('All done!','pass');if(!CHECKS.some(c=>!c.ok))$('#logbox').open=false;   // tucked away again unless something needs a look
+   log('All done!','pass');if(!CHECKS.some(c=>!c.ok)&&!nNotes)$('#logbox').open=false;   // tucked away again unless something needs a look
    await presentStep3(mode==='restyle'?0:await mergeCount(keep),edits);
    FLOW.built();
  }catch(err){log('Something went wrong: '+err.message,'err');console.error(err);}
