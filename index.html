@@ -882,6 +882,35 @@ function marker(label,tok,svg){const c=COLORS[tok],bg=BG[tok],badge=BADGE[tok]||
 // <img>, so a booby-trapped export can't fire onerror at us just by being inspected.
 function markersIn(bodyHtml){const d=new DOMParser().parseFromString('<body>'+(bodyHtml||'')+'</body>','text/html');const out=[];
  d.body.querySelectorAll('img').forEach(img=>{const nm=markerName(img.getAttribute('src'),img.getAttribute('alt'));if(nm)out.push(nm);});return out;}
+// Working labels authors leave on topic titles ("READ: …", "ADD RES: …") and reviewer notes left in
+// them ("(We want to take this out)", "- Is there a better fit for this elsewhere?"). The page HEADER
+// drops them; the topic name in the course outline is left as it is (the pre-export notes list these
+// pages so the author can rename the topic). Notes are only dropped when clearly addressed to the
+// team: "(optional)", "(CTL)", "What is Bloom's Taxonomy?" and "… - Annual Reports" stay as they are.
+const WORK_LABEL=/^\s*(read|watch|web|add\s*res(?:ources?)?|draft|to\s*do|todo|tbd)\s*:\s*(?=\S)/i;
+const WORK_LABEL_MARK={read:'read',watch:'watch'};   // a label that names a section word; "add res…" -> additional resources
+const NOTE_WORDS=/\b(we|us|our|take (?:\w+ )?out|remove|delete|duplicate|elsewhere|better fit|do we need|not needed|tbd|todo)\b/i;
+function headerTitle(raw){let t=(raw||'').trim(),label=null;const notes=[];
+ const lm=t.match(WORK_LABEL);
+ if(lm){label=lm[1].toLowerCase().replace(/\s+/g,' ');t=t.slice(lm[0].length);}
+ // a trailing question after a dash: "Title (PSE)- Is there a better fit for this elsewhere?"
+ for(const dm of t.matchAll(/\)\s*[-\u2013]\s*|\s[-\u2013]\s*|[-\u2013]\s+/g)){
+   const cut=dm.index+(dm[0][0]===')'?1:0),tail=t.slice(dm.index+dm[0].length);
+   if(t.slice(0,cut).trim()&&/\?\s*$/.test(tail)&&NOTE_WORDS.test(tail)){notes.push(tail.trim());t=t.slice(0,cut);break;}}
+ // a parenthetical note of three or more words: "(We want to take this out)"
+ t=t.replace(/\s*\(([^()]+)\)/g,(all,inner)=>{if(inner.trim().split(/\s+/).length>=3&&NOTE_WORDS.test(inner)){notes.push(inner.trim());return '';}return all;});
+ t=t.replace(/\s+/g,' ').trim();
+ if(!t)return {text:(raw||'').trim(),label:null,notes:[],changed:false};
+ return {text:t,label,notes,changed:t!==(raw||'').trim()};}
+const shownTitle=t=>headerTitle(t).text;
+// Video hosts whose player, as the main thing on a page, makes it a Watch page rather than a Read one.
+const VIDEO_HOST=/^(?:https?:)?\/\/(?:[a-z0-9-]+\.)*(?:youtube(?:-nocookie)?\.com|youtu\.be|vimeo\.com|kaltura\.com|mediaspace\.[a-z0-9.-]+|panopto\.(?:com|eu|ca)|wistia\.(?:com|net)|loom\.com|ted\.com|dailymotion\.com|brightcove\.(?:com|net)|microsoftstream\.com|screenpal\.com|screencast-o-matic\.com)\//i;
+// A page whose main content is a video: a player from a video host (or a <video>) and not much
+// text around it.
+function videoMain(root){
+ const vids=[...root.querySelectorAll('iframe[src],embed[src]')].filter(f=>VIDEO_HOST.test((f.getAttribute('src')||'').trim())).length+root.querySelectorAll('video').length;
+ return vids>0&&(root.textContent||'').split(/\s+/).filter(Boolean).length<=300;}
+function isVideoPage(bodyHtml){return videoMain(new DOMParser().parseFromString('<body>'+(bodyHtml||'')+'</body>','text/html').body);}
 function cardTheme(title,body){
  // Colour comes from the SECTION/title keyword first (varied colour-map), falling back to
  // the content marker's colour, then forest. Icon rides along from the same source.
@@ -889,7 +918,12 @@ function cardTheme(title,body){
  const tags=markersIn(body);
  if(tags.length){const cnt={};tags.forEach(n=>cnt[n]=(cnt[n]||0)+1);
    let dom=tags[0];for(const n of tags)if(cnt[n]>cnt[dom]||(cnt[n]===cnt[dom]&&tags.indexOf(n)<tags.indexOf(dom)))dom=n;
+   if(dom==='read'&&isVideoPage(body))dom='watch';   // a Read button on a video page (see videoMain)
    return [MARKER_COLOR[dom]||'slate',MARKER_SVG[dom]||'book'];}
+ if(isVideoPage(body))return [MARKER_COLOR.watch,MARKER_SVG.watch];
+ // no keyword and no marker: a working label on the title ("READ: …") still says what the page is
+ const lb=headerTitle(title).label,mk=lb&&(WORK_LABEL_MARK[lb]||(/^add/.test(lb)?'additional resources':null));
+ if(mk)return [MARKER_COLOR[mk],MARKER_SVG[mk]];
  return ['forest','book'];}
 function card(title,inner,tok,svg){if(tok===undefined){[tok,svg]=titleStyle(title);}
  const c=BADGE[tok]||COLORS[tok];
@@ -1070,9 +1104,12 @@ function cleanBody(htmlStr,linkTok){
      if(ss&&ss.split(',').some(c=>{const u=c.trim().split(/\s+/)[0];return u&&!okImg(u);}))el.removeAttribute('srcset');}
    if(name==='object'){const s=(el.getAttribute('data')||'').trim();if(s&&!okUrl(s))el.removeAttribute('data');}
    if(name==='a'){const h=(el.getAttribute('href')||'').trim();if(h&&!okUrl(h)){el.removeAttribute('href');}else if(/^https?:/.test(h)&&!el.getAttribute('target')){el.setAttribute('target','_blank');el.setAttribute('rel','noopener');}}});
- // marker buttons -> subheads (after scrub so their style survives)
+ // marker buttons -> subheads (after scrub so their style survives). A Read button on a page whose
+ // main content is a video says Watch, matching the header (cardTheme).
+ const vidPage=videoMain(body);
  [...body.querySelectorAll('img')].forEach(img=>{if(!img.isConnected)return;
-   const nm=markerName(img.getAttribute('src'),img.getAttribute('alt'));if(!nm)return;
+   let nm=markerName(img.getAttribute('src'),img.getAttribute('alt'));if(!nm)return;
+   if(nm==='read'&&vidPage)nm='watch';
    const tok=MARKER_COLOR[nm]||'slate';
    const tmp=document.createElement('div');tmp.innerHTML=fieldLabel(nm,tok,MARKER_SVG[nm]);const fl=tmp.firstChild;
    let target=img,par=img.parentElement;
@@ -1086,7 +1123,7 @@ function cleanBody(htmlStr,linkTok){
 const NO_CONTENT='<p style="margin:0 0 .85rem;color:#5B6770;font-style:italic;">(No page content — see linked file.)</p>';
 function renderStandalone(title,body){const[tok,svg]=cardTheme(title,body);let inner=cleanBody(body,COLORS[tok]);
  if(!inner.trim())inner=NO_CONTENT;
- return pageHtml(title,card(title,inner,tok,svg));}
+ const shown=shownTitle(title);return pageHtml(shown,card(shown,inner,tok,svg));}
 // A page this tool ALREADY styled (a course coming back for a second pass): the RDP frame holding one
 // or more RDP cards, each opening with its title banner. That content has been through cleanBody once
 // and must NEVER be re-cleaned — the scrub isn't idempotent (KEEP_ATTR has no div/svg/path), so a
@@ -1115,7 +1152,7 @@ const isTemplated=body=>templatedInner(body)!==null;
 // buttons become dot-labelled subheads. Recognised again on a second pass by that banner inside a
 // border-radius card — svg optional, whitespace-tolerant (Brightspace re-spaces styles on save).
 function restyleIntro(title,desc){const[tok,svg]=cardTheme(title,desc);
- NO_SVG=true;try{const inner=cleanBody(desc,COLORS[tok]);if(!inner.trim())return '';return card(title,inner,tok,svg);}finally{NO_SVG=false;}}
+ NO_SVG=true;try{const inner=cleanBody(desc,COLORS[tok]);if(!inner.trim())return '';return card(shownTitle(title),inner,tok,svg);}finally{NO_SVG=false;}}
 function isTemplatedIntro(desc){desc=desc||'';if(!/margin:\s*-/i.test(desc)||!/border-radius/i.test(desc))return false;
  const d=new DOMParser().parseFromString('<body>'+desc+'</body>','text/html');
  return [...d.body.children].some(el=>{if(el.tagName!=='DIV'||!/border-radius/i.test(el.getAttribute('style')||''))return false;
@@ -1136,8 +1173,8 @@ function renderCombined(groupTitle,members){let cards='';
    const done=templatedInner(b);if(done!==null){cards+=done;continue;}   // already a card: reuse it, never re-clean
    const[tok,svg]=cardTheme(t,b);let inner=cleanBody(b,COLORS[tok]);
    if(!inner.trim())inner=NO_CONTENT;
-   cards+=card(t,inner,tok,svg);}
- return pageHtml(groupTitle,cards);}
+   cards+=card(shownTitle(t),inner,tok,svg);}
+ return pageHtml(shownTitle(groupTitle),cards);}
 
 /* ===================== MANIFEST helpers ===================== */
 function stripNs(x){return x.replace(/xmlns(:[A-Za-z0-9]+)?="[^"]*"/g,'')
@@ -1265,11 +1302,11 @@ function exportPageHtml(title,body,edit){
    // an ALREADY-templated page, edited: the editor hands back the finished card(s) — the page's
    // own card + banner around the new content — so its colour and icon survive exactly.
    const[tok,svg]=cardTheme(title,'');
-   return {how:'edited',html:pageHtml(title,edit.framed.trim()||card(title,NO_CONTENT,tok,svg))};}
+   return {how:'edited',html:pageHtml(shownTitle(title),edit.framed.trim()||card(shownTitle(title),NO_CONTENT,tok,svg))};}
  if(edit!==undefined){
    const inner=edit.trim()||NO_CONTENT;
    const[tok,svg]=cardTheme(title,body);           // theme from the RAW body — markers are intact there
-   return {how:'edited',html:pageHtml(title,card(title,inner,tok,svg))};}
+   return {how:'edited',html:pageHtml(shownTitle(title),card(shownTitle(title),inner,tok,svg))};}
  if(isTemplated(body))return {how:'kept',html:null}; // second pass, untouched: byte-identical, never re-cleaned
  return {how:'restyled',html:renderStandalone(title,body)};}
 // What a module intro exports as (the HTML that goes in its description="…"). Mirrors buildRestyle:
