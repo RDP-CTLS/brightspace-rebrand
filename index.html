@@ -1118,8 +1118,77 @@ function cleanBody(htmlStr,linkTok){
  // remove empty p/div
  [...body.querySelectorAll('p,div')].forEach(el=>{if(!el.isConnected)return;
    if(!el.textContent.trim()&&!el.querySelector('img,iframe,table,hr,br,a,video,audio,embed,object,svg'))el.remove();});
+ tidyFileLinks(body,LINKC);
+ boldLinesToHeadings(body);
+ body.querySelectorAll('p,li,h1,h2,h3,h4,h5,h6').forEach(trimLead);
  return settle(body.innerHTML);   // final pass: clean as the next parser sees it (see settle)
 }
+// Links to course files (PDF, Word, Excel, PowerPoint).
+const FILE_KIND={pdf:'PDF',doc:'Word',docx:'Word',xls:'Excel',xlsx:'Excel',ppt:'PowerPoint',pptx:'PowerPoint'};
+const FILE_EXT=/\.(pdf|docx?|xlsx?|pptx?)$/i;
+const isFileLink=a=>FILE_EXT.test((a.getAttribute('href')||'').trim().split(/[?#]/)[0]);
+// A file name as people read it: "Bloom’s Taxonomy.pdf" / "Outcomes Checklist(3).pdf" -> "bloom's taxonomy" / "outcomes checklist"
+const fileKey=t=>(t||'').replace(/\u00a0/g,' ').replace(/[\u2018\u2019]/g,"'").replace(FILE_EXT,'').replace(/\s*\(\d+\)\s*$/,'').replace(/\s+/g,' ').trim().toLowerCase();
+// A block that holds nothing but links to course files (and line breaks).
+function fileLinkBlock(el){if(el.tagName!=='P'&&el.tagName!=='DIV')return false;
+ const links=[...el.querySelectorAll('a')];if(!links.length||!links.every(isFileLink))return false;
+ const c=el.cloneNode(true);c.querySelectorAll('a,br').forEach(x=>x.remove());
+ return !c.textContent.replace(/\u00a0/g,' ').trim()&&!c.querySelector('img,iframe,video,audio,embed,object,table');}
+function tidyFileLinks(body,linkc){
+ // 1) Links to files sitting ABOVE the instructions move under the first paragraph, as a Downloads
+ //    list; a plain list of the same file names (no links) is then a duplicate and goes.
+ const kids=[...body.childNodes];let i=0;const run=[];
+ for(;i<kids.length;i++){const n=kids[i];
+   if(n.nodeType===3&&!n.data.replace(/\u00a0/g,' ').trim()){run.push(n);continue;}
+   if(n.nodeType===1&&(n.tagName==='BR'||fileLinkBlock(n))){run.push(n);continue;}
+   break;}
+ const blocks=run.filter(n=>n.nodeType===1&&n.tagName!=='BR');
+ if(blocks.length){
+   let first=null;
+   for(;i<kids.length;i++){const n=kids[i];if(n.nodeType!==1)continue;
+     if(/^H[1-6]$/.test(n.tagName))continue;   // a section label (Read, Additional Resources...) stays on top
+     if(n.tagName==='P'&&!fileLinkBlock(n)&&n.textContent.replace(/\u00a0/g,' ').trim()){first=n;}
+     break;}
+   if(first){const links=blocks.flatMap(b=>[...b.querySelectorAll('a')]);
+     const keys=new Set(links.map(a=>fileKey(a.textContent)));
+     const doc=body.ownerDocument,tok=TOK_BY_HEX[(linkc||'').toLowerCase()]||'forest';
+     const tmp=doc.createElement('div');tmp.innerHTML=fieldLabel('downloads',tok,'download');
+     const ul=doc.createElement('ul');ul.setAttribute('style',INLINE_STYLE.ul);
+     links.forEach(a=>{const li=doc.createElement('li');li.setAttribute('style',INLINE_STYLE.li);li.appendChild(a);ul.appendChild(li);});
+     first.after(tmp.firstChild,ul);
+     run.forEach(n=>n.remove());
+     const dup=[...body.querySelectorAll('ul,ol')].find(l=>l!==ul&&!l.querySelector('a,img')&&(()=>{
+       const items=[...l.children].filter(x=>x.tagName==='LI').map(x=>fileKey(x.textContent));
+       return items.length===keys.size&&items.every(k=>keys.has(k));})());
+     if(dup)dup.remove();}}
+ // 2) A raw file name as link text reads as a name plus its kind: "Bloom's Taxonomy.pdf" -> "Bloom's Taxonomy (PDF)"
+ body.querySelectorAll('a').forEach(a=>{if(a.children.length)return;
+   const t=(a.textContent||'').replace(/\u00a0/g,' ').trim(),m=t.match(/^(.+?)\.(pdf|docx?|xlsx?|pptx?)$/i);
+   if(!m||/^(https?:|www\.)|[\/\\]/i.test(m[1]))return;
+   let nm=m[1].replace(/\s*\(\d+\)$/,'').trim();if(!/\s/.test(nm))nm=nm.replace(/_+/g,' ').trim();
+   if(nm)a.textContent=`${nm} (${FILE_KIND[m[2].toLowerCase()]})`;});}
+// A short paragraph that is all bold ("Part 1", "Instructions:") is a subheading: it becomes an <h4>
+// in the design guide's style. It stays a paragraph when it is a bold sentence (ends in a full stop)
+// or has nothing under it to head (a run of bold placeholder lines, or the end of the page).
+function boldLine(p){if(!p||p.tagName!=='P'||p.closest('li,td,th,blockquote'))return null;
+ const nodes=[...p.childNodes].filter(n=>!(n.nodeType===3&&!n.data.replace(/\u00a0/g,' ').trim()));
+ if(nodes.length!==1||nodes[0].nodeType!==1||!/^(STRONG|B)$/.test(nodes[0].tagName))return null;
+ const b=nodes[0];if([...b.querySelectorAll('*')].some(x=>!/^(EM|I|U)$/.test(x.tagName)))return null;   // a marker label or picture inside: leave it
+ const t=b.textContent.replace(/\u00a0/g,' ').replace(/\s+/g,' ').trim().replace(/\s*:$/,'');
+ return !t||t.length>80||t.split(' ').length>12||/[.,;!]$/.test(t)?null:t;}
+function boldLinesToHeadings(body){
+ [...body.querySelectorAll('p')].map(p=>[p,boldLine(p)]).filter(([,t])=>t).forEach(([p,t])=>{
+   const nx=p.nextElementSibling;
+   if(!nx||/^H[1-6]$/.test(nx.tagName)||boldLine(nx)||!(nx.textContent.replace(/\u00a0/g,' ').trim()||nx.querySelector('img,iframe,video,audio,embed,object,table')))return;
+   const h=p.ownerDocument.createElement('h4');h.setAttribute('style',INLINE_STYLE.h4);h.textContent=t;p.replaceWith(h);});}
+// Spaces and non-breaking spaces at the start of a paragraph (" RDP has adopted...") go.
+function trimLead(el){let n=el.firstChild;
+ while(n){const next=n.nextSibling;
+   if(n.nodeType===3){const v=n.data.replace(/^[\s\u00a0]+/,'');if(v){n.data=v;return true;}n.remove();}
+   else if(n.nodeType===1){if(!/^(STRONG|B|EM|I|U|A|SPAN|FONT|SUB|SUP|SMALL|MARK|CODE)$/.test(n.tagName)||trimLead(n)||n.querySelector('img,iframe,video,audio,embed,object,svg'))return true;}
+   else n.remove();
+   n=next;}
+ return false;}
 const NO_CONTENT='<p style="margin:0 0 .85rem;color:#5B6770;font-style:italic;">(No page content — see linked file.)</p>';
 function renderStandalone(title,body){const[tok,svg]=cardTheme(title,body);let inner=cleanBody(body,COLORS[tok]);
  if(!inner.trim())inner=NO_CONTENT;
