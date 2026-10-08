@@ -1026,10 +1026,10 @@ function scrubTree(root){
      if(/^on/.test(nm)||nm==='srcdoc'||nm==='action'||nm==='formaction'){el.removeAttribute(a.name);continue;}
      if(nm==='href'||nm==='src'||nm==='data'||nm==='xlink:href'||nm==='poster'){
        const raw=a.value.trim();
-       // a blob: URL is only ever the canvas's stand-in for a course image (see ASSET_BACK): put the
-       // real src back; one we don't know is meaningless outside this tab, so it goes.
-       if(/^blob:/i.test(raw)){const back=ASSET_BACK.get(raw);
-         if(back!==undefined)el.setAttribute(a.name,back);else el.removeAttribute(a.name);continue;}
+       // A canvas stand-in for a course image (a blob: URL, or a data: URL for an SVG; see ASSET_BACK):
+       // put the real src back. A blob: we don't know is meaningless outside this tab, so it goes.
+       {const back=ASSET_BACK.get(raw);if(back!==undefined){el.setAttribute(a.name,back);continue;}}
+       if(/^blob:/i.test(raw)){el.removeAttribute(a.name);continue;}
        // Allowlist (replaced an older scheme blocklist that missed data:application/xhtml+xml,
        // data:text/xml, data:image/svg+xml, ...): an image src/poster may also be an inert
        // data:image/*; every other url attribute must be http/https/mailto. okUrl's new URL() also
@@ -1932,8 +1932,8 @@ async function courseRawBody(entry){
 // is always exact. Everything is revoked when another file is loaded.
 const ASSET_MIME={png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',gif:'image/gif',svg:'image/svg+xml',
   webp:'image/webp',bmp:'image/bmp',avif:'image/avif',ico:'image/x-icon'};
-const ASSET_URLS=new Map(), ASSET_BACK=new Map();      // "folder\nsrc" -> blob url | null ;  blob url -> src
-function clearAssets(){ASSET_BACK.forEach((_,u)=>URL.revokeObjectURL(u));ASSET_URLS.clear();ASSET_BACK.clear();}
+const ASSET_URLS=new Map(), ASSET_BACK=new Map();      // "folder\nsrc" -> stand-in url | null ;  stand-in url -> src
+function clearAssets(){ASSET_BACK.forEach((_,u)=>{if(/^blob:/.test(u))URL.revokeObjectURL(u);});ASSET_URLS.clear();ASSET_BACK.clear();}
 const assetFolder=entry=>isIntroKey(entry)||!entry.includes('/')?'':entry.slice(0,entry.lastIndexOf('/'));   // intros resolve from the zip root
 function assetIndex(){if(MODEL.assetIndex)return MODEL.assetIndex;
  const dec=s=>{try{return decodeURIComponent(s)}catch(e){return s}},byDec=new Map(),byBase={};
@@ -1961,7 +1961,13 @@ async function courseAssetUrl(entry,src){
  const zip=MODEL.zip,name=assetEntry(assetFolder(entry),src);let url=null;
  if(name){let bytes=null;try{bytes=await zip.bytes(name);}catch(_){}   // a corrupt/undecodable image must not stick the preview on the previous page
    if(bytes&&MODEL&&MODEL.zip===zip&&!ASSET_URLS.has(key)){      // a new file may have been loaded while we inflated
-     url=URL.createObjectURL(new Blob([bytes],{type:ASSET_MIME[name.split('.').pop().toLowerCase()]||'application/octet-stream'}));
+     const ext=name.split('.').pop().toLowerCase();
+     // An SVG can carry script. A blob: address shares this page's origin, so "open image in new tab"
+     // would run it here (inside a course, that is Brightspace with the viewer signed in). A data:
+     // address shows the same picture, and browsers refuse to open one as a page.
+     if(ext==='svg'){let bin='';for(let i=0;i<bytes.length;i+=0x8000)bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000));
+       url='data:image/svg+xml;base64,'+btoa(bin);}
+     else url=URL.createObjectURL(new Blob([bytes],{type:ASSET_MIME[ext]||'application/octet-stream'}));
      ASSET_BACK.set(url,src);}
    else if(ASSET_URLS.has(key))return ASSET_URLS.get(key);}
  if(MODEL&&MODEL.zip===zip)ASSET_URLS.set(key,url);

@@ -7,6 +7,8 @@
 #   SAVE_DIR      where a test may keep a file it built: fetch('/save/<name>',{method:'POST',body:blob})
 #   INDEX         the index.html under test (default: the repo's). Point it at a downloaded copy of
 #                 the live site, or at `git show <old>:index.html`, to test that build instead.
+#   LMS=1         load the tool as rdp.brightspace.com (mapped to this machine), so it runs the way it
+#                 does as a file inside a course: Brightspace wording, nothing saved.
 # Defaults are placeholder names in ~/Downloads; point the env vars at your own exports. Each test file is the BODY of an async
 # function evaluated inside the tool's own page (so it sees setFile, MODEL, EDITOR, buildRestyle…)
 # and must `return` a JSON-able result. window.confirm is stubbed; page errors land in __errs.
@@ -24,7 +26,9 @@ ln -s "$HERE/$T" "$WORK/serve/test.js"
 [ -f "$SANDBOX" ] && ln -s "$SANDBOX" "$WORK/serve/sandbox.zip"
 python3 "$HERE/server.py" "$WORK/serve" "$WORK/result.json" "$PORT" & SRV=$!; disown
 sleep 1
-"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --disable-gpu --no-first-run \
-  --user-data-dir="$WORK/profile" "http://127.0.0.1:$PORT/harness.html?t=test.js" >/dev/null 2>&1 & CHR=$!; disown
+HOST=127.0.0.1; MAP=()
+[ -n "$LMS" ] && { HOST=rdp.brightspace.com; MAP=(--host-resolver-rules="MAP rdp.brightspace.com 127.0.0.1"); }
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --disable-gpu --no-first-run "${MAP[@]}" \
+  --user-data-dir="$WORK/profile" "http://$HOST:$PORT/harness.html?t=test.js" >/dev/null 2>&1 & CHR=$!; disown
 for i in $(seq 1 "$MAX"); do [ -s "$WORK/result.json" ] && break; sleep 1; done
 [ -s "$WORK/result.json" ] && cat "$WORK/result.json" || { echo "NO RESULT after ${MAX}s"; exit 1; }
