@@ -379,7 +379,7 @@
   .then{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin:.6rem 0 0;font-size:.95rem;}
   .then .arrow{color:var(--muted);}
 </style></head>
-<body><div class="wrap">
+<body class="mathjax_ignore tex2jax_ignore"><div class="wrap">
   <div class="top"><div class="brand"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#51284F"></rect><path d="M9 11h14M9 16h14M9 21h9" stroke="#fff" stroke-width="2.4" stroke-linecap="round"></path></svg><h1>Course Template Studio</h1></div><span id="savestate" role="status"></span></div>
 
   <nav class="rail" aria-label="Progress">
@@ -2424,6 +2424,19 @@ const FLOW=(()=>{
  const LESSON=(()=>{let v='';try{v=new URLSearchParams(location.search).get('lesson')||(/^#lesson=([a-z]+)/.exec(location.hash)||[])[1]||'';}catch(e){}
    return ['new','contacts','callout','section','link','paste','course'].includes(v)?v:'';})();
  if(LESSON)document.body.dataset.way=(LESSON==='paste'||LESSON==='course')?LESSON:'new';
+ // Running as a file inside a Brightspace course: the wording speaks from inside Brightspace, and
+ // nothing is saved, because there localStorage is shared with every other page on the site.
+ const IN_LMS=/(^|\.)brightspace\.com$/i.test(location.hostname);
+ const NO_SAVE=!!(LESSON||IN_LMS);
+ if(IN_LMS){const say=(sel,html)=>document.querySelectorAll(sel).forEach(el=>{el.innerHTML=html;});
+   say('.rail .rs[data-stage="3"] .t','Put it in your course');
+   say('#h3s','Put it in your course');
+   say('label[for="pg-paste"]','Edit a page from one of your courses <span class="muted" style="font-weight:400;">paste its Source Code here, it loads by itself</span>');
+   say('.newpage .muted','Build it from blocks (contact cards, callouts, sections), then add it to your course.');
+   say('#s1 p.quiet','Nothing you do here is saved or sent anywhere. Your courses only change when you paste or import the result yourself.');
+   say('#howpaste li:first-child','In your course, open the page for editing and click <b>Source Code</b> <span class="ext">&lt;/&gt;</span> in the editor toolbar.');
+   say('#s3 .s3-then','Then, in your own course:');
+   say('#s3-course > p.muted:last-child','Your course does not change until you run the import.');}
  const STORE='rdp-page-editor'+(LESSON?':'+LESSON:'');
  let BLOCKS=[], WRAP=null, SEL=null, HIST=[], REDO=[], DRAG=null, LAST=null, EDIT_SNAP=null;
  // Course-explorer editing: the same canvas/state, but driven by a page from an imported course
@@ -2737,7 +2750,7 @@ ${inner}
  /* ---------- state: autosave, undo ---------- */
  // The last few undo steps are saved too, so "Start over" or "Load page" followed by a reload
  // is not a way to lose a forty-block page.
- function save(){if(COURSE||LESSON)return;   // course-page edits live in memory only — never touch the single-page draft; a lesson saves nothing
+ function save(){if(COURSE||NO_SAVE)return;   // course-page edits live in memory only — never touch the single-page draft; a lesson saves nothing
    try{localStorage.setItem(STORE,JSON.stringify({v:1,blocks:BLOCKS,wrap:WRAP,hist:HIST.slice(-5)}));}catch(e){}}
  function validBlocks(list){return (Array.isArray(list)?list:[]).filter(b=>b&&typeof b==='object'&&typeof b.id==='string'
      &&typeof b.html==='string'&&(b.kind==='raw'||GEN[b.kind]))
@@ -2771,7 +2784,7 @@ ${inner}
  function syncOut(){B('pg-code').value=pageOut();B('pg-copy').disabled=!BLOCKS.length;B('pg-copyhint').hidden=!!BLOCKS.length;
    B('pg-clear').disabled=!BLOCKS.length;B('pg-undo').disabled=!HIST.length;B('pg-redo').disabled=!REDO.length;save();
    if(COURSE){B('savestate').textContent='';if(CUR_ENTRY)markEdited(CUR_ENTRY,pageDirty());FLOW.courseChanged();}
-   else B('savestate').textContent=!BLOCKS.length?'':LESSON?'Not saved here: copy your page before you leave':'Saved on this computer';
+   else B('savestate').textContent=!BLOCKS.length?'':NO_SAVE?'Not saved here: copy your page before you leave':'Saved on this computer';
    updateFrame();FLOW.pageChanged(BLOCKS.length);}
 
  /* ---------- the canvas ---------- */
@@ -3221,8 +3234,8 @@ ${inner}
 
  /* ---------- init ---------- */
  try{document.execCommand('defaultParagraphSeparator',false,'p');}catch(e){}
- if(LESSON)try{localStorage.removeItem(STORE);}catch(e){}   // a draft left by an earlier build
- try{if(!LESSON)restore();renderCanvas();}
+ if(LESSON&&!IN_LMS)try{localStorage.removeItem(STORE);}catch(e){}   // a draft left by an earlier build
+ try{if(!NO_SAVE)restore();renderCanvas();}
  catch(e){console.error(e);BLOCKS=[];WRAP=null;HIST=[];try{localStorage.removeItem(STORE);}catch(_){}renderCanvas();}
  if(BLOCKS.length){FLOW.page('restored',BLOCKS.length);note('Picked up where you left off.');}
  else if(GEN[LESSON]){addBlock(LESSON);HIST=[];B('pg-undo').disabled=true;}   // the starting block is not an undo step
