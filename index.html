@@ -327,6 +327,9 @@
   .pgb-body{padding:.9rem 1rem;overflow-x:auto;cursor:text;}
   .pgb-body:focus{background:#fbf8fc;outline:2px solid var(--plum);outline-offset:-2px;}
   .pgb-body h1,.pgb-body h2,.pgb-body h3,.pgb-body h4{color:revert;font-size:revert;margin:revert;}
+  /* a link in an editable block can't be followed by clicking it, so a click shows this button beside it */
+  .pgb-linkpop{position:absolute;z-index:20;background:var(--plum);color:#fff;font-size:.82rem;font-weight:700;padding:.3rem .7rem;border-radius:4px;text-decoration:none;box-shadow:0 2px 6px rgba(0,0,0,.18);}
+  .pgb-linkpop:hover,.pgb-linkpop:focus{text-decoration:underline;color:#fff;}
   /* a cleared / recovered title keeps its box; this ghost shows where to click and type (canvas only).
      Scoped to the Section header band marker() emits (margin:-1.35rem -1.4rem 1.2rem), so an unrelated
      pasted card with a negative margin doesn't get a spurious "Section title" ghost. We match the
@@ -2824,6 +2827,7 @@ ${inner}
    courseAssetUrl(entry,src).then(u=>{if(u&&img.isConnected&&img.getAttribute('src')===src)img.setAttribute('src',u);});});}
  function renderCanvas(){
    canvas.innerHTML='';
+   document.querySelectorAll('.pgb-linkpop').forEach(x=>{x.hidden=true;});   // its link is gone
    canvas.classList.toggle('editing',!!SEL);
    if(!BLOCKS.length){canvas.innerHTML=`<div class="pgempty"><div class="pgempty-plus">${IC.plus}</div><p class="pgempty-t">Nothing on the page yet — add your first block</p>${chips()}<p class="muted" style="margin:.7rem 0 0;">or go back to step 1 and paste a page in.</p></div>`;syncOut();return;}
    BLOCKS.forEach((b,i)=>{
@@ -2975,6 +2979,25 @@ ${inner}
    if(back&&s.isCollapsed&&bodyWrap&&atContentStart(bodyWrap,s.anchorNode,s.anchorOffset))e.preventDefault();});
  // Click into default / placeholder text and it all gets selected, ready to type over.
  canvas.addEventListener('mouseup',e=>{const body=e.target.closest('.pgb-body');if(body)selectPlaceholder(body);});
+ // A click on a link inside an editable block places the cursor instead of opening it (that's how
+ // browsers treat editable text). So a click shows an "Open link" button beside the link, and
+ // Ctrl-click (Cmd-click on a Mac) opens it straight away. Only web and email addresses.
+ const linkPop=document.createElement('a');linkPop.className='pgb-linkpop';linkPop.target='_blank';linkPop.rel='noopener';
+ linkPop.textContent='Open link';linkPop.hidden=true;document.body.appendChild(linkPop);
+ const hideLinkPop=()=>{linkPop.hidden=true;};
+ canvas.addEventListener('click',e=>{
+   const a=e.target.closest('.pgb-body a[href]');
+   if(!a||!/^(https?:|mailto:)/i.test(a.getAttribute('href').trim())){hideLinkPop();return;}
+   if(e.ctrlKey||e.metaKey){e.preventDefault();hideLinkPop();window.open(a.href,'_blank','noopener');return;}
+   linkPop.href=a.href;linkPop.title=a.href;
+   const r=a.getBoundingClientRect();
+   linkPop.style.left=(r.left+window.scrollX)+'px';linkPop.style.top=(r.bottom+window.scrollY+4)+'px';
+   linkPop.hidden=false;});
+ linkPop.addEventListener('click',()=>setTimeout(hideLinkPop,0));
+ canvas.addEventListener('input',hideLinkPop);
+ document.addEventListener('keydown',e=>{if(e.key==='Escape')hideLinkPop();});
+ document.addEventListener('click',e=>{if(!canvas.contains(e.target)&&e.target!==linkPop)hideLinkPop();});
+ window.addEventListener('resize',hideLinkPop);
  // Pasting. Word / browser clipboards carry styles and classes Brightspace chokes on, so we keep
  // only a safe subset -- links, basic emphasis, paragraphs, lists, line breaks -- and drop every
  // attribute except a safe href. This preserves links copied between blocks (the old handler
