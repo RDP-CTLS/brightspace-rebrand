@@ -407,12 +407,12 @@
 
       <div class="or" data-in="or">or</div>
       <label for="pg-paste" data-in="paste" style="display:block;font-weight:700;color:var(--plum);margin:0 0 .3rem;">Edit one page that's already in Brightspace
-        <span class="muted" style="font-weight:400;">paste its Source Code here — it loads by itself</span></label>
+        <span class="muted" style="font-weight:400;">paste its Source Code here, it loads by itself</span></label>
       <textarea id="pg-paste" data-in="paste" spellcheck="false" placeholder="Paste here…"></textarea>
       <div id="paste-msg" data-in="paste" role="status" aria-live="polite"></div>
 
       <div class="or" data-in="or">or</div>
-      <div class="newpage" data-in="new"><div><strong>Build a new page for a course</strong><span class="muted">Build it from blocks — contact cards, callouts, sections — then add it to Brightspace.</span></div>
+      <div class="newpage" data-in="new"><div><strong>Build a new page for a course</strong><span class="muted">Build it from blocks (contact cards, callouts, sections), then add it to Brightspace.</span></div>
         <button type="button" class="btab" id="start-blank">Start a new page</button></div>
       <p class="quiet">Nothing leaves your computer: there is no server, it all happens in this tab.</p>
 
@@ -423,7 +423,7 @@
             <li>In Brightspace, open the page for editing and click <b>Source Code</b> <span class="ext">&lt;/&gt;</span> in the editor toolbar.</li>
             <li><b>Select all</b> <span class="muted">(Ctrl+A, or &#8984;A on a Mac)</span>, <b>copy</b>, and paste it in the box above.</li>
           </ol>
-          <p class="muted">Why here and not in Brightspace? Its editor can't select or delete a styled box once it's on the page. Here every part of the page is a block you can delete, move, edit or add to.</p>
+          <p class="muted">Why here and not in Brightspace? Here every part of the page is a block you can delete, move, edit or add to, and the RDP style is kept for you.</p>
         </div>
       </details>
 
@@ -432,27 +432,27 @@
         <div class="body">
           <ol class="steps">
             <li><b>Course Admin</b> <span class="muted">(in the course navbar, along the top)</span>
-              <details><summary>Show me</summary><figure class="shot"><img src="shots/1-course-admin.png" alt="The Course Admin link in the Brightspace course navbar" loading="lazy" onerror="this.closest('.shot').classList.add('missing')"><div class="ph">Screenshot goes here &mdash; <code>shots/1-course-admin.png</code></div></figure></details></li>
+              <details><summary>Show me</summary><figure class="shot"><img src="shots/1-course-admin.png" alt="The Course Admin link in the Brightspace course navbar" loading="lazy" onerror="this.closest('.shot').classList.add('missing')"><div class="ph">Screenshot goes here: <code>shots/1-course-admin.png</code></div></figure></details></li>
             <li><b>Import / Export / Copy Components</b>
-              <details><summary>Show me</summary><figure class="shot"><img src="shots/2-import-export.png" alt="The Import / Export / Copy Components option on the Course Admin page" loading="lazy" onerror="this.closest('.shot').classList.add('missing')"><div class="ph">Screenshot goes here &mdash; <code>shots/2-import-export.png</code></div></figure></details></li>
+              <details><summary>Show me</summary><figure class="shot"><img src="shots/2-import-export.png" alt="The Import / Export / Copy Components option on the Course Admin page" loading="lazy" onerror="this.closest('.shot').classList.add('missing')"><div class="ph">Screenshot goes here: <code>shots/2-import-export.png</code></div></figure></details></li>
             <li>Choose <b>Export as Brightspace Package</b> <span class="muted">(not Common Cartridge)</span>
-              <details><summary>Show me</summary><figure class="shot"><img src="shots/3-brightspace-package.png" alt="The three export options, with Export as Brightspace Package selected" loading="lazy" onerror="this.closest('.shot').classList.add('missing')"><div class="ph">Screenshot goes here &mdash; <code>shots/3-brightspace-package.png</code></div></figure></details></li>
+              <details><summary>Show me</summary><figure class="shot"><img src="shots/3-brightspace-package.png" alt="The three export options, with Export as Brightspace Package selected" loading="lazy" onerror="this.closest('.shot').classList.add('missing')"><div class="ph">Screenshot goes here: <code>shots/3-brightspace-package.png</code></div></figure></details></li>
             <li>Tick <b>Select All Components</b>, then <b>Continue</b>
-              <details><summary>Show me</summary><figure class="shot"><img src="shots/4-select-all.png" alt="The Select All Components tick box ticked, with the Continue button below" loading="lazy" onerror="this.closest('.shot').classList.add('missing')"><div class="ph">Screenshot goes here &mdash; <code>shots/4-select-all.png</code></div></figure></details></li>
+              <details><summary>Show me</summary><figure class="shot"><img src="shots/4-select-all.png" alt="The Select All Components tick box ticked, with the Continue button below" loading="lazy" onerror="this.closest('.shot').classList.add('missing')"><div class="ph">Screenshot goes here: <code>shots/4-select-all.png</code></div></figure></details></li>
             <li>Tick <b>Include course files in the export package</b>, then <b>Export</b>
-              <span class="muted">— <b class="warn">don't skip this tick</b>; it's off by default and without it your pages stay behind.</span>
-              <details><summary>Show me</summary><figure class="shot"><img src="shots/5-confirm-include-files.png" alt="The confirm screen with Include course files in the export package ticked, and the Export button below" loading="lazy" onerror="this.closest('.shot').classList.add('missing')"><div class="ph">Screenshot goes here &mdash; <code>shots/5-confirm-include-files.png</code></div></figure></details></li>
+              <span class="muted">(<b class="warn">don't skip this tick</b>: it's off by default, and without it your pages stay behind)</span>
+              <details><summary>Show me</summary><figure class="shot"><img src="shots/5-confirm-include-files.png" alt="The confirm screen with Include course files in the export package ticked, and the Export button below" loading="lazy" onerror="this.closest('.shot').classList.add('missing')"><div class="ph">Screenshot goes here: <code>shots/5-confirm-include-files.png</code></div></figure></details></li>
             <li>Wait for <b>"The course export was successful"</b>, then click <b>download the export Zip package</b>
-              <span class="muted">— a minute or two. Don't click Done until you've downloaded it.</span>
-              <details><summary>Show me</summary><figure class="shot"><img src="shots/6-download-zip.png" alt="The Export Summary screen with the link Click here to download the export Zip package" loading="lazy" onerror="this.closest('.shot').classList.add('missing')"><div class="ph">Screenshot goes here &mdash; <code>shots/6-download-zip.png</code></div></figure></details></li>
+              <span class="muted">This takes a minute or two. Don't click Done until you've downloaded it.</span>
+              <details><summary>Show me</summary><figure class="shot"><img src="shots/6-download-zip.png" alt="The Export Summary screen with the link Click here to download the export Zip package" loading="lazy" onerror="this.closest('.shot').classList.add('missing')"><div class="ph">Screenshot goes here: <code>shots/6-download-zip.png</code></div></figure></details></li>
           </ol>
-          <p style="margin:.7rem 0 0;">Drop that download in the box above <b>exactly as it is</b> &mdash; don't unzip it.</p>
+          <p style="margin:.7rem 0 0;">Drop that download in the box above <b>exactly as it is</b>. Don't unzip it.</p>
           <details class="help">
             <summary>If it went wrong</summary>
             <div class="body">
               <h4>I clicked Done, or navigated away, and never got the download</h4>
-              <p>Nothing is lost. When the export is ready the <b>bell (🔔)</b> in the top bar gets an orange dot; click it and open <b>Export finished</b> to get the download link.</p>
-              <figure class="shot"><img src="shots/bell-export-finished.png" alt="The bell notification list showing Export finished" loading="lazy" onerror="this.closest('.shot').classList.add('missing')"><div class="ph">Screenshot goes here &mdash; <code>shots/bell-export-finished.png</code></div></figure>
+              <p>Nothing is lost. When the export is ready the <b>bell</b> in the top bar gets an orange dot; click it and open <b>Export finished</b> to get the download link.</p>
+              <figure class="shot"><img src="shots/bell-export-finished.png" alt="The bell notification list showing Export finished" loading="lazy" onerror="this.closest('.shot').classList.add('missing')"><div class="ph">Screenshot goes here: <code>shots/bell-export-finished.png</code></div></figure>
               <h4>My Mac turned it into a folder</h4>
               <p>Safari unzipped it. Turn off <b>Safari → Settings → General → "Open safe files after downloading"</b>, then download it again. Don't re-zip the folder yourself.</p>
               <h4>This is a Blackboard course</h4>
@@ -549,7 +549,7 @@
           <li>Choose <b>Import Components → Start</b>, upload the file, then <b>Import All Components</b>.</li>
           <li>Open <b>Content</b> and look it over. If a module now shows up twice, delete the older copy.</li>
         </ol>
-        <p class="muted" style="margin:.7rem 0 0;font-size:.88rem;">Your real course isn't changed by this tool — only by the import you run in Brightspace.</p>
+        <p class="muted" style="margin:.7rem 0 0;font-size:.88rem;">This tool doesn't change your real course. Only the import you run in Brightspace does.</p>
       </div>
 
       <div id="s3-page" hidden>
@@ -559,7 +559,7 @@
         <p class="s3-then">Then, in Brightspace:</p>
         <ol class="steps">
           <li>Open the page for editing and click <b>Source Code</b> <span class="ext">&lt;/&gt;</span>.</li>
-          <li><b>Select all</b>, then <b>paste</b> — it replaces everything that was there.</li>
+          <li><b>Select all</b>, then <b>paste</b>. It replaces everything that was there.</li>
           <li><b>Save.</b></li>
         </ol>
         <p class="muted" id="newpage-hint" style="margin:.5rem 0 0;">Adding a new page? In your course go to <b>Content</b>, open the module, <b>Upload / Create → Create a File</b>, give it a title, then <b>Source Code</b> and paste.</p>
@@ -602,7 +602,7 @@ const TE=new TextEncoder(), TD=new TextDecoder('utf-8');
 // files — replaces the real counts/sizes/offsets with 0xFFFF/0xFFFFFFFF sentinels and stores the
 // true values in a separate ZIP64 record this code doesn't parse. Reading one as 32-bit would
 // slice garbage and silently corrupt the course, so detect it and stop with a clear message.
-const ZIP64MSG='This course export is too large for the in-browser tool: it uses the ZIP64 format (over 4 GB, or more than 65,535 files). Try exporting the course in smaller pieces — fewer components, or splitting very large media out — or reach out to CTLS for help with a course this size.';
+const ZIP64MSG='This course export is too large for the in-browser tool: it uses the ZIP64 format (over 4 GB, or more than 65,535 files). Try exporting the course in smaller pieces (fewer components, or with very large media split out), or reach out to CTLS for help with a course this size.';
 function readZip(buf){
   const dv=new DataView(buf), u8=new Uint8Array(buf);
   // find EOCD (0x06054b50), scanning back over optional comment
@@ -1201,7 +1201,7 @@ function trimLead(el){let n=el.firstChild;
    else n.remove();
    n=next;}
  return false;}
-const NO_CONTENT='<p style="margin:0 0 .85rem;color:#5B6770;font-style:italic;">(No page content — see linked file.)</p>';
+const NO_CONTENT='<p style="margin:0 0 .85rem;color:#5B6770;font-style:italic;">(No page content. See the linked file.)</p>';
 function renderStandalone(title,body){const[tok,svg]=cardTheme(title,body);let inner=cleanBody(body,COLORS[tok]);
  if(!inner.trim())inner=NO_CONTENT;
  const shown=shownTitle(title);return pageHtml(shown,card(shown,inner,tok,svg));}
@@ -1425,7 +1425,7 @@ async function buildRestyle(zip,man,m,reorder,edits){
  log(`  restyled ${re} pages${ed?`, applied your edits to ${ed}`:''}, copied ${cp} files`);
  if(intro.n)log(`  updated ${intro.n} module intro${intro.n===1?'':'s'} / description${intro.n===1?'':'s'} in the course outline file`);
  if(auto.n)log(`  restyled ${auto.n} module intro${auto.n===1?'':'s'} (the text shown at the top of a module) in the course outline file`);
- if(kept)log(`  ${kept} page${kept===1?' already has':'s already have'} the RDP template — left exactly as ${kept===1?'it was':'they were'}`);
+ if(kept)log(`  ${kept} page${kept===1?' already has':'s already have'} the RDP template, left exactly as ${kept===1?'it was':'they were'}`);
  return w.finish();
 }
 
@@ -1585,7 +1585,7 @@ function combineGroupsD2L(man,m,keepSep,side){
  return {groups,guarded};}
 async function buildCombineD2L(zip,man,m,keepSep){
  const {groups,guarded}=combineGroupsD2L(man,m,keepSep,await d2lSidecars(zip));
- if(guarded)log(`  ${guarded} page(s) are referenced by a quiz/grade/link file — kept standalone`);
+ if(guarded)log(`  ${guarded} page(s) are referenced by a quiz/grade/link file, kept standalone`);
 
  const fold=e=>e.includes('/')?e.slice(0,e.lastIndexOf('/')):'';
  const bodyOf=async e=>{const raw=await zip.text(e);const bm=raw.match(/<body[^>]*>([\s\S]*)<\/body>/i);return bm?bm[1]:raw;};
@@ -1756,7 +1756,7 @@ async function verify(blob){
  if(blank){log(`  icons: ${blank} styled page${blank===1?' has':'s have'} an icon that lost its drawing (it would show as an empty box)`,'err');
    blankNotes.forEach(n=>log('    '+n,'err'));}
  if(blobs)log(`  images: ${blobs} file${blobs===1?' points':'s point'} at a temporary in-browser image address that won't exist in Brightspace`,'err');
- if(danger){log(`  SECURITY: ${danger} generated item${danger===1?'':'s'} carry something that must never reach Brightspace (script / event handler / disallowed link) — this download is being withheld`,'err');
+ if(danger){log(`  SECURITY: ${danger} generated item${danger===1?'':'s'} carry something that must never reach Brightspace (script / event handler / disallowed link), so this download is being withheld`,'err');
    dangerNotes.forEach(n=>log('    '+n,'err'));}
  ok=!dangI&&!dangD&&!miss&&!broken&&!unbal&&!blank&&!blobs&&!danger;
  log('  RESULT: '+(ok?'PASS':'CHECK WARNINGS'),ok?'pass':'warn');
@@ -1809,7 +1809,7 @@ async function repairRefs(blob){
 let FILE=null, MODEL=null, EDITOR=null;
 
 const FRIENDLY={
- FOLDER:'That is a folder, not the file. Brightspace gives you one .zip named like D2LExport_….zip — if your Mac unzipped it, download it again.',
+ FOLDER:'That is a folder, not the file. Brightspace gives you one .zip named like D2LExport_….zip. If your Mac unzipped it, download it again.',
  NOTZIP:'That is not a .zip file. The export Brightspace gives you is named like D2LExport_….zip.',
  NOMANIFEST:'There is no course inside this zip. Use the untouched D2LExport_….zip that Brightspace downloaded, not one you zipped yourself.'};
 async function setFile(f){
@@ -2060,7 +2060,7 @@ const navList=()=>[...document.querySelectorAll('#expl-list .ctopic')].filter(b=
 function keepInView(el){const tree=$('.expl-tree');if(!tree||!el)return;
  const tr=tree.getBoundingClientRect(),er=el.getBoundingClientRect(),top=tr.top+$('.expl-tree-head').offsetHeight;
  if(er.top<top)tree.scrollTop-=top-er.top+8;else if(er.bottom>tr.bottom)tree.scrollTop+=er.bottom-tr.bottom+8;}
-const rowName=b=>b.classList.contains('cintro')&&b.dataset.kicker==='Editing module intro'?b.dataset.title+' — intro':b.dataset.title;
+const rowName=b=>b.classList.contains('cintro')&&b.dataset.kicker==='Editing module intro'?b.dataset.title+' (intro)':b.dataset.title;
 // The position counts what the RDP template is applied to (pages + module intros), the same total as the
 // Step 1 receipt. A link's description can be opened and stepped through, but isn't numbered.
 const isDescRow=b=>b.classList.contains('cintro')&&b.dataset.kicker==='Editing description';
@@ -2118,7 +2118,7 @@ function updateSummary(){if(!MODEL)return;
    +(MODEL.isD2L?' Quizzes, assignments, discussions and links stay as they are.':' Everything else stays as it is.');
  const edited=document.querySelectorAll('#expl-list [data-edited]:not([hidden])').length;
  $('#cx-sum2').textContent=edited?`${edited} edited`:'';
- $('#cx-ready').innerHTML=CONVERTED?'Converted.':'Ready — click <b>Convert course</b> above.';
+ $('#cx-ready').innerHTML=CONVERTED?'Converted.':'Ready. Click <b>Convert course</b> above.';
  $('#cx-opt').innerHTML=CONVERTED
    ?'Open any page to check it, click <b>Edit</b> to change it, then click <b>Get the files</b> above.'
    :'Or open any page on the left to see it as it is now. You can edit pages after converting.';
@@ -2237,9 +2237,9 @@ async function presentStep3(mc,edits){
  // page. If nothing could be combined the two files are identical, so only one is shown.
  const plain=$('#downloads a[data-kind="plain"]'),merged=$('#downloads a[data-kind="merged"]'),folded=mc?mc.folded:0;
  if(merged&&plain&&!folded)merged.hidden=true;
- $('#s3-pick').textContent=plain&&merged&&!merged.hidden?'Pick one — you import only one file. Not sure? Compressed gives learners fewer clicks; Spread out keeps your page list exactly as it is.':'Download this file:';
+ $('#s3-pick').textContent=plain&&merged&&!merged.hidden?'Pick one: you import only one file. Not sure? Compressed gives learners fewer clicks; Spread out keeps your page list exactly as it is.':'Download this file:';
  if(plain)plain.querySelector('.dl-s').textContent='Every page kept as its own page';
- if(merged&&folded){const n=coursePageCount();merged.querySelector('.dl-s').textContent=`Each module’s pages combined into one — ${n-folded} page${n-folded===1?'':'s'} instead of ${n}`;}
+ if(merged&&folded){const n=coursePageCount();merged.querySelector('.dl-s').textContent=`Each module’s pages combined into one: ${n-folded} page${n-folded===1?'':'s'} instead of ${n}`;}
  const m=MODEL.m,nPages=Object.keys(m.titleByHref).filter(h=>{const e=m.entryFor(h);return e&&e.toLowerCase().endsWith('.html');}).length;
  const nIntros=Object.values(MODEL.introIsModule||{}).filter(Boolean).length,nEdit=Object.keys(edits||{}).length;
  // Editing forces the styled-only build, so the Compressed file isn't made. Show that loss as a disabled
@@ -2251,11 +2251,11 @@ async function presentStep3(mc,edits){
  if(nEdit)parts.push(`your ${nEdit} edit${nEdit===1?'':'s'} included`);
  if(folded)parts.push(`Compressed: ${nPages} pages → ${nPages-folded}`);
  const withheld=CHECKS.some(c=>c.withheld),warned=CHECKS.some(c=>!c.ok);
- parts.push(withheld?'a download was withheld for safety — open Step 2 → Build details to see why':warned?'the checks flagged something — open Step 2 → Build details':'all checks passed');
+ parts.push(withheld?'a download was withheld for safety. Open Step 2 → Build details to see why':warned?'the checks flagged something. Open Step 2 → Build details':'all checks passed');
  const el=$('#s3-check');el.textContent=(warned?'⚠ ':'✓ ')+parts.join(' · ');el.classList.toggle('warn',warned);}
 $('#go').addEventListener('click',async()=>{
  if(!FILE||!MODEL)return;
- if(typeof CompressionStream==='undefined'){log('Your browser is too old — please use a recent Chrome or Edge.','err');return;}
+ if(typeof CompressionStream==='undefined'){log('Your browser is too old. Please use a recent Chrome or Edge.','err');return;}
  $('#go').disabled=true;$('#log').textContent='';$('#log').style.display='block';$('#logbox').open=true;clearDownloads();CHECKS=[];
  // Edits made in the explorer. When there are any, we export the styled ("Template Applied") build
  // only — merging pages is turned off, because the combine path re-reads the raw bodies and
@@ -2272,16 +2272,16 @@ $('#go').addEventListener('click',async()=>{
    const htmlN=Object.keys(m.titleByHref).filter(h=>{const e=m.entryFor(h);return e&&e.toLowerCase().endsWith('.html');}).length;
    log(`Your course: ${zip.entries.length} files, ${htmlN} pages.\n`);
    if(MODEL.isD2L&&!htmlN){const nI=Object.keys(MODEL.intros||{}).length;
-     log(`Heads-up: this export has NO content pages to style${nI?` — only ${nI} module intro${nI===1?'':'s'} / description${nI===1?'':'s'} (the module intros get the template)`:''}. If you expected pages, the file that opens each topic isn't in the zip: re-export with "Include course files in the export package" ticked.\n`,'warn');}
+     log(`Heads-up: this export has NO content pages to style${nI?`, only ${nI} module intro${nI===1?'':'s'} / description${nI===1?'':'s'} (the module intros get the template)`:''}. If you expected pages, the file that opens each topic isn't in the zip: re-export with "Include course files in the export package" ticked.\n`,'warn');}
    if(nEdit){const nI=Object.keys(edits).filter(isIntroKey).length,nP=nEdit-nI;
      const what=[nP?`${nP} page${nP===1?'':'s'}`:'',nI?`${nI} module intro${nI===1?'':'s'}`:''].filter(Boolean).join(' and ');
-     log(`You edited ${what} — your edits are included. You get the Spread out file only (no Compressed).\n`);}
+     log(`You edited ${what}, and your edits are included. You get the Spread out file only (no Compressed).\n`);}
    // Items that arrived with NO content and NO children were emptied by Brightspace's OWN
    // export (it leaves out web links, quizzes, hidden topics, ...). Say so up front —
    // otherwise the conversion gets blamed for content this file never contained.
    {const empt=[...m.doc.querySelectorAll('item')].filter(it=>!it.getAttribute('identifierref')
      &&![...it.children].some(c=>c.tagName==='item')&&titleOf(it));
-    if(empt.length){log(`Heads-up: ${empt.length} item(s) in your course file came out of Brightspace EMPTY — the export leaves out things like web links, quizzes and hidden topics. They were already empty before this tool touched them:`,'warn');
+    if(empt.length){log(`Heads-up: ${empt.length} item(s) in your course file came out of Brightspace EMPTY. The export leaves out things like web links, quizzes and hidden topics. They were already empty before this tool touched them:`,'warn');
       const cnt={};empt.forEach(it=>{const t=titleOf(it);cnt[t]=(cnt[t]||0)+1;});
       Object.entries(cnt).forEach(([t,n])=>log(`  · ${t}${n>1?` (×${n})`:''}`,'warn'));log('');}}
    const nNotes=await contentNotes(zip,m,edits);
@@ -2290,7 +2290,7 @@ $('#go').addEventListener('click',async()=>{
      // file pass through byte-identical on the styled build, and combine edits it in place.
      {const allHtml=zip.entries.filter(e=>e.name.toLowerCase().endsWith('.html')).length;
       const topicHtml=new Set(Object.keys(m.titleByHref).map(h=>m.entryFor(h)).filter(e=>e&&e.toLowerCase().endsWith('.html'))).size;
-      if(allHtml>topicHtml)log(`Note: ${allHtml-topicHtml} other page${allHtml-topicHtml===1?'':'s'} in your course files ${allHtml-topicHtml===1?"isn't":"aren't"} used in Content — left as ${allHtml-topicHtml===1?'it is':'they are'}.\n`);}
+      if(allHtml>topicHtml)log(`Note: ${allHtml-topicHtml} other page${allHtml-topicHtml===1?'':'s'} in your course files ${allHtml-topicHtml===1?"isn't":"aren't"} used in Content, left as ${allHtml-topicHtml===1?'it is':'they are'}.\n`);}
      if(mode==='restyle'||mode==='both'){
        log('Making the Spread out file …');let b=await buildRestyle(zip,man,m,false,edits);
        b=await repairRefs(b);
@@ -2359,7 +2359,7 @@ const FLOW=(()=>{
    const parked=kind==='page'&&!!MODEL&&!!courseInfo;el.hidden=!parked;if(!parked)return;
    const n=EDITOR?Object.keys(EDITOR.courseEdits()).length:0;
    document.getElementById('course-back-msg').textContent=`Your course “${courseInfo.name}” is still open`
-     +(n?` — the ${n} change${n===1?'':'s'} you made ${n===1?'is':'are'} kept`:'')+'. You’re working on a single page right now.';}
+     +(n?`, and the ${n} change${n===1?'':'s'} you made ${n===1?'is':'are'} kept`:'')+'. You’re working on a single page right now.';}
  function receiptCourse(){receipt(1,'Course loaded · '+courseInfo.name+(courseInfo.pages?' · '+courseInfo.pages+' pages':'')+(courseInfo.intros?' · '+courseInfo.intros+' module intro'+(courseInfo.intros===1?'':'s'):''));}
  document.getElementById('course-back-btn').addEventListener('click',()=>{
    if(!MODEL||!courseInfo)return;
@@ -2393,7 +2393,7 @@ const FLOW=(()=>{
    courseChanged(){if(kind!=='course'||DL_SIG===null||!document.querySelector('#downloads a'))return;
      if(!EDITOR||JSON.stringify(EDITOR.courseEdits())===DL_SIG)return;
      clearDownloads();receipt(3,'');receipt(2,'Edited since your download');
-     document.querySelector('#s3-check').textContent='You changed a page after downloading — click Get the files again to get the new version.';},
+     document.querySelector('#s3-check').textContent='You changed a page after downloading. Click Get the files again to get the new version.';},
    pageNext(n){receipt(2,n+' block'+(n===1?'':'s')+' ready');show(3);},
    built(files){receipt(2,'RDP template applied');receipt(3,'');show(3);},
    // stage 3 outcomes
@@ -2438,14 +2438,15 @@ const FLOW=(()=>{
  const IN_LMS=/(^|\.)brightspace\.com$/i.test(location.hostname);
  const NO_SAVE=!!(LESSON||IN_LMS);
  if(IN_LMS){const say=(sel,html)=>document.querySelectorAll(sel).forEach(el=>{el.innerHTML=html;});
-   say('.rail .rs[data-stage="3"] .t','Put it in your course');
-   say('#h3s','Put it in your course');
-   say('label[for="pg-paste"]','Edit a page from one of your courses <span class="muted" style="font-weight:400;">paste its Source Code here, it loads by itself</span>');
-   say('.newpage .muted','Build it from blocks (contact cards, callouts, sections), then add it to your course.');
-   say('#s1 p.quiet','Nothing you do here is saved or sent anywhere. Your courses only change when you paste or import the result yourself.');
-   say('#howpaste li:first-child','In your course, open the page for editing and click <b>Source Code</b> <span class="ext">&lt;/&gt;</span> in the editor toolbar.');
+   say('.rail .rs[data-stage="3"] .t','Put it in your own course');
+   say('#h3s','Put it in your own course');
+   say('label[for="pg-paste"]','Edit a page from your own course <span class="muted" style="font-weight:400;">paste its Source Code here, it loads by itself</span>');
+   say('.newpage .muted','Build it from blocks (contact cards, callouts, sections), then add it to your own course.');
+   say('#s1 p.quiet','Nothing you do here is saved or sent anywhere, so copy your page before you leave. Your own courses only change when you paste or import the result yourself.');
+   say('#howpaste li:first-child','In your own course, open the page for editing and click <b>Source Code</b> <span class="ext">&lt;/&gt;</span> in the editor toolbar.');
    say('#s3 .s3-then','Then, in your own course:');
-   say('#s3-course > p.muted:last-child','Your course does not change until you run the import.');}
+   say('#s3-course > p.muted:last-child','Your own course does not change until you run the import.');
+   say('#newpage-hint','Adding a new page? In your own course go to <b>Content</b>, open the module, <b>Upload / Create → Create a File</b>, give it a title, then <b>Source Code</b> and paste.');}
  const STORE='rdp-page-editor'+(LESSON?':'+LESSON:'');
  let BLOCKS=[], WRAP=null, SEL=null, HIST=[], REDO=[], DRAG=null, LAST=null, EDIT_SNAP=null;
  // Course-explorer editing: the same canvas/state, but driven by a page from an imported course
@@ -2829,7 +2830,7 @@ ${inner}
    canvas.innerHTML='';
    document.querySelectorAll('.pgb-linkpop').forEach(x=>{x.hidden=true;});   // its link is gone
    canvas.classList.toggle('editing',!!SEL);
-   if(!BLOCKS.length){canvas.innerHTML=`<div class="pgempty"><div class="pgempty-plus">${IC.plus}</div><p class="pgempty-t">Nothing on the page yet — add your first block</p>${chips()}<p class="muted" style="margin:.7rem 0 0;">or go back to step 1 and paste a page in.</p></div>`;syncOut();return;}
+   if(!BLOCKS.length){canvas.innerHTML=`<div class="pgempty"><div class="pgempty-plus">${IC.plus}</div><p class="pgempty-t">Nothing on the page yet. Add your first block</p>${chips()}<p class="muted" style="margin:.7rem 0 0;">or go back to step 1 and paste a page in.</p></div>`;syncOut();return;}
    BLOCKS.forEach((b,i)=>{
      const el=document.createElement('div');el.className='pgb'+(b.id===LAST?' sel':'');el.dataset.id=b.id;
      el.innerHTML=`<div class="pgb-bar"><span class="pgb-grip" title="Drag to move" aria-hidden="true">&#8942;&#8942;</span><span class="pgb-kind"></span><span class="pgb-sn"></span><span class="pgb-acts">`
@@ -2879,9 +2880,9 @@ ${inner}
      if(!(nb&&focusBlock(nb.id,'del')))B('pg-undo').focus();
      note(`Block deleted (${BLOCKS.length} left).`,true);}
    else if(act==='up'&&i>0){snap();[BLOCKS[i-1],BLOCKS[i]]=[BLOCKS[i],BLOCKS[i-1]];renderCanvas();focusBlock(id,'up');flash(id);
-     note(`Moved up — now ${i} of ${BLOCKS.length}.`);}
+     note(`Moved up, now ${i} of ${BLOCKS.length}.`);}
    else if(act==='down'&&i<BLOCKS.length-1){snap();[BLOCKS[i+1],BLOCKS[i]]=[BLOCKS[i],BLOCKS[i+1]];renderCanvas();focusBlock(id,'down');flash(id);
-     note(`Moved down — now ${i+2} of ${BLOCKS.length}.`);}
+     note(`Moved down, now ${i+2} of ${BLOCKS.length}.`);}
    else if(act==='dup'){snap();const src=BLOCKS[i];
      const copy={id:uid(),kind:src.kind,model:src.model?JSON.parse(JSON.stringify(src.model)):null,html:src.html,sec:src.sec};
      BLOCKS.splice(i+1,0,copy);SEL=null;LAST=copy.id;renderCanvas();focusBlock(copy.id,'dup');flash(copy.id);
@@ -2951,7 +2952,7 @@ ${inner}
    if(b.model){b.model=null;if(SEL===b.id)SEL=null;
      const s=el.querySelector('[data-act="edit"]');if(s)s.remove();
      const f=el.querySelector('.pgb-form');if(f)f.remove();
-     setLabel(el,b);note('Now edited by hand — Settings are off for this block. Undo brings them back.');}
+     setLabel(el,b);note('Now edited by hand, so Settings are off for this block. Undo brings them back.');}
    syncOut();});
  // A teacher can clear a Section title, but the title box itself must never be deleted, nor may the
  // body ever be merged up into it -- a header with no title (or a title full of body text) and no
@@ -3081,7 +3082,7 @@ ${inner}
    }else{
      h=fld('Title','title',m.title,'Introduction')
       +`<label><span>Text</span><textarea data-k="body" placeholder="Write your content. Leave a blank line between paragraphs.">${esc(m.body||'')}</textarea></label>`
-      +`<p class="muted" style="margin:.5rem 0 0;">The colour and icon are chosen automatically from the words in your title — the same way the tool styles a course.</p>`;
+      +`<p class="muted" style="margin:.5rem 0 0;">The colour and icon are chosen automatically from the words in your title, the same way the tool styles a course.</p>`;
    }
    f.innerHTML=h+`<button type="button" class="pgb-done" data-done>Done</button>`;
    f.oninput=e=>{const k=e.target.dataset.k;if(!k)return;const i=e.target.dataset.i;
@@ -3114,14 +3115,14 @@ ${inner}
  function loadPasted(html){
    EDITOR.exitCourse();   // leave course-explorer editing FIRST, so its edits aren't overwritten by the paste
    const r=importPage(html);
-   if(!r.blocks.length){FLOW.pasteMsg('Nothing to show — that didn’t look like a page. Copy it from the Source Code (</>) view in Brightspace.',true);return false;}
+   if(!r.blocks.length){FLOW.pasteMsg('Nothing to show: that didn’t look like a page. Copy it from the Source Code (</>) view in Brightspace.',true);return false;}
    snap();
    let fixes=0;
    BLOCKS=groupSections(r.blocks.map(x=>{const rp=repairCard(x);if(rp.fixed)fixes++;return clean(rp.html);})).map(g=>({id:uid(),kind:'raw',model:null,html:g.html,sec:g.sec}));
    WRAP=r.wrap;SEL=null;LAST=null;
    B('pg-paste').value='';renderCanvas();
    FLOW.page('loaded',BLOCKS.length);
-   const fixMsg=fixes?` Re-added a title to ${fixes} card${fixes===1?'':'s'} that had lost one — click the title to name ${fixes===1?'it':'them'}.`:'';
+   const fixMsg=fixes?` Re-added a title to ${fixes} card${fixes===1?'':'s'} that had lost one. Click the title to name ${fixes===1?'it':'them'}.`:'';
    note(`Loaded ${BLOCKS.length} block${BLOCKS.length===1?'':'s'}.${fixMsg} Click a block to delete, move or edit it.`);return true;}
  let pasteT=null;
  B('pg-paste').addEventListener('input',()=>{clearTimeout(pasteT);pasteT=setTimeout(()=>{
@@ -3137,7 +3138,7 @@ ${inner}
    B('pg-copymsg').textContent='';
    FLOW.pageNext(BLOCKS.length);});
  B('pg-frame-rm').addEventListener('click',()=>{snap();WRAP=frameTags().filter(t=>!styledTag(t)).join('')||null;renderCanvas();
-   note('Frame removed — the blocks now sit straight on the page.',true);});
+   note('Frame removed. The blocks now sit straight on the page.',true);});
  B('pg-undo').addEventListener('click',undo);
  B('pg-redo').addEventListener('click',redo);
  // Start over asks once, in place (no browser dialog), then clears. Undo still brings it back.
@@ -3156,7 +3157,7 @@ ${inner}
    if(ok)FLOW.copied();
    // Said in Step 3 itself (Step 2's note is hidden by now); on failure, open the code for a by-hand copy.
    const cm=B('pg-copymsg');cm.classList.toggle('err',!ok);
-   cm.textContent=ok?'Copied ✓ — now follow the steps below.':'Copying didn’t work here — the code is open below: click in it, select all, and copy by hand.';
+   cm.textContent=ok?'Copied ✓. Now follow the steps below.':'Copying didn’t work here. The code is open below: click in it, select all, and copy by hand.';
    if(!ok){const d=t.closest('details');if(d)d.open=true;}
    setTimeout(()=>{btn.textContent='Copy page';btn.classList.remove('ok');},1600);});
 
@@ -3236,7 +3237,7 @@ ${inner}
      if(PAGES.has(entry))ctxLoad(PAGES.get(entry));else loadCourseRaw(title,raw,isIntroKey(entry));
      renderCanvas();
      note(isIntroKey(entry)?'Editing the text Brightspace shows at the top of this module or under this link. Switch any time; your changes are kept.'
-       :'Editing this page — move, delete, duplicate or add blocks. Switch pages any time; your changes are kept.');},
+       :'Editing this page: move, delete, duplicate or add blocks. Switch pages any time; your changes are kept.');},
    // Return to single-page mode: park the current page's context, hand the nodes back, restore the draft.
    exitCourse(){if(!COURSE)return;
      if(CUR_ENTRY)PAGES.set(CUR_ENTRY,ctxSnap());
